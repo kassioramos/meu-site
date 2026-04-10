@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalhes do Concurso - Pro</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .container-detalhes {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+        .btn-voltar {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+            transition: 0.2s;
+        }
+        .btn-voltar:hover { opacity: 0.7; }
+
+        .detalhes-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            border-top: 5px solid var(--primary);
+        }
+        .detalhes-header { 
+            margin-bottom: 25px; 
+            border-bottom: 1px solid var(--border); 
+            padding-bottom: 15px; 
+        }
+        .detalhes-header h1 { color: var(--primary); margin-bottom: 10px; }
+        
+        .grid-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .info-item label {
+            display: block;
+            font-size: 11px;
+            text-transform: uppercase;
+            font-weight: 700;
+            color: var(--text-sub);
+            margin-bottom: 4px;
+        }
+        .info-item span {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+        .sobre-secao {
+            line-height: 1.8;
+            color: var(--text-main);
+            background: var(--bg);
+            padding: 20px;
+            border-radius: 8px;
+        }
+        .btn-edital {
+            display: block;
+            width: 100%;
+            text-align: center;
+            background: var(--success);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 700;
+            margin-top: 30px;
+            transition: transform 0.2s, opacity 0.2s;
+        }
+        .btn-edital:hover {
+            transform: translateY(-2px);
+            opacity: 0.9;
+        }
+        .btn-disabled {
+            background: #94a3b8;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body class="detalhes-body">
+
+<div class="container-detalhes">
+    <a href="index.html" class="btn-voltar">← Voltar para a lista</a>
+
+    <div id="conteudo-detalhes" class="detalhes-card">
+        <div class="loading-msg">Carregando informações detalhadas...</div>
+    </div>
+</div>
+
+<script>
+    // Sincronizar Tema
+    if (localStorage.getItem('tema') === 'dark') {
+        document.body.classList.add('dark-theme');
+    }
+
+    async function carregarDetalhes() {
+        const params = new URLSearchParams(window.location.search);
+        const id = params.get('id');
+        const container = document.getElementById('conteudo-detalhes');
+
+        if (!id) {
+            container.innerHTML = "<div class='loading-msg'>❌ Erro: Concurso não identificado.</div>";
+            return;
+        }
+
+        try {
+            const response = await fetch(`http://localhost:8000/concursos/${id}`);
+            if (!response.ok) throw new Error('Falha na resposta');
+            const c = await response.json();
+
+            const salario = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(c.salario_max || 0);
+            const data = c.data_prova ? new Date(c.data_prova).toLocaleDateString('pt-BR') : 'A definir';
+            
+            // Validação do link do edital
+            const temLink = c.link_oficial && c.link_oficial.startsWith('http');
+            const linkHTML = temLink 
+                ? `<a href="${c.link_oficial}" target="_blank" class="btn-edital">Acessar Edital Oficial</a>`
+                : `<div class="btn-edital btn-disabled">Edital ainda não publicado</div>`;
+
+            container.innerHTML = `
+                <div class="detalhes-header">
+                    <span class="status-tag">${c.status || 'Aberto'}</span>
+                    <h1>${c.orgao}</h1>
+                </div>
+
+                <div class="grid-info">
+                    <div class="info-item">
+                        <label>Cargos</label>
+                        <span>${c.cargos || 'Consultar Edital'}</span>
+                    </div>
+                    <div class="info-item">
+                        <label>Salário Máximo</label>
+                        <span>${salario}</span>
+                    </div>
+                    <div class="info-item">
+                        <label>Data da Prova</label>
+                        <span>${data}</span>
+                    </div>
+                    <div class="info-item">
+                        <label>Localização</label>
+                        <span>${c.cidade || 'Maranhão'}</span>
+                    </div>
+                </div>
+
+                <div class="sobre-secao">
+                    <h3>Sobre este concurso</h3>
+                    <p>Este certame é destinado ao provimento de vagas para o órgão <strong>${c.orgao}</strong>. 
+                    Recomendamos a leitura atenta de todos os requisitos de escolaridade e etapas de avaliação descritos no documento oficial.</p>
+                </div>
+
+                ${linkHTML}
+            `;
+        } catch (e) {
+            container.innerHTML = `
+                <div class="loading-msg">
+                    ❌ Erro ao carregar os dados.<br>
+                    <small>Verifique se o servidor backend está rodando em http://localhost:8000</small>
+                </div>`;
+        }
+    }
+
+    carregarDetalhes();
+</script>
+</body>
+</html>

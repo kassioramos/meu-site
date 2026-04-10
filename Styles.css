@@ -1,0 +1,292 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+
+/* --- 1. CONFIGURAÇÃO DE CORES E VARIÁVEIS --- */
+:root {
+    --primary: #2563eb;
+    --success: #10b981;
+    --text-main: #111827;
+    --text-sub: #4b5563;
+    --bg: #f3f4f6;
+    --white: #ffffff;
+    --card-bg: #ffffff;
+    --border: #e5e7eb;
+    --input-bg: #ffffff;
+    --stat-border: #2563eb;
+}
+
+:root {
+    /* Cores para o Tema Claro (Dia) */
+    --bg-color: #f8fafc;
+    --card-bg: #ffffff;
+    --text-main: #1e293b;
+    --text-muted: #64748b;
+    --border-color: #e2e8f0;
+}
+
+body.dark-theme {
+    /* Cores para o Tema Escuro (Noite) */
+    --bg-color: #0f172a;
+    --card-bg: rgba(255, 255, 255, 0.05);
+    --text-main: #ffffff;
+    --text-muted: #94a3b8;
+    --border-color: rgba(255, 255, 255, 0.1);
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-main);
+    transition: background 0.3s, color 0.3s;
+}
+
+body.dark-theme {
+    --bg: #0f172a;
+    --white: #1e293b;
+    --card-bg: #1e293b;
+    --text-main: #f1f5f9;
+    --text-sub: #94a3b8;
+    --border: #334155;
+    --input-bg: #1e293b;
+    --stat-border: #60a5fa;
+}
+
+/* --- 2. RESET E ESTILOS GERAIS --- */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--bg);
+    color: var(--text-main);
+    line-height: 1.5;
+    transition: background 0.3s, color 0.3s;
+}
+
+/* --- 3. BOTÃO DARK MODE --- */
+.dark-mode-btn {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+    background: var(--primary);
+    border: none;
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+
+/* --- 4. HEADER E BUSCA --- */
+header {
+    background: var(--white);
+    padding: 30px 20px;
+    text-align: center;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 30px;
+}
+
+header h1 { color: var(--primary); margin-bottom: 20px; }
+
+.stats-badge {
+    display: inline-block;
+    color: white;
+    background: var(--primary);
+    padding: 5px 15px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 20px;
+}
+
+.search-container { max-width: 700px; margin: 0 auto; }
+
+input[type="text"] {
+    width: 100%;
+    padding: 14px 20px;
+    border-radius: 8px;
+    border: 2px solid var(--border);
+    background: var(--input-bg);
+    color: var(--text-main);
+    margin-bottom: 20px;
+    outline: none;
+}
+
+input[type="text"]:focus { border-color: var(--primary); }
+
+/* --- 5. FILTROS --- */
+.filter-group { display: flex; flex-direction: column; gap: 12px; }
+.filter-row { display: flex; gap: 8px; justify-content: center; align-items: center; flex-wrap: wrap; }
+.filter-label { font-size: 11px; font-weight: 700; color: var(--text-sub); text-transform: uppercase; }
+
+.btn-filter {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    cursor: pointer;
+    color: var(--text-sub);
+    transition: 0.2s;
+}
+
+.btn-filter:hover { background: var(--primary); color: white; }
+.btn-clear { background: #fee2e2; color: #991b1b; border: none; }
+
+/* --- 6. DASHBOARD (ESTATÍSTICAS) --- */
+.stats-container {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    margin: 0 auto 30px auto;
+    max-width: 1200px;
+    padding: 0 20px;
+    flex-wrap: wrap;
+}
+
+.stat-card {
+    background: var(--card-bg);
+    padding: 15px 25px;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    text-align: center;
+    flex: 1;
+    min-width: 200px;
+    max-width: 300px;
+    border-top: 4px solid var(--stat-border);
+    transition: transform 0.3s ease;
+}
+
+.stat-card:hover { transform: translateY(-3px); }
+
+.stat-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-sub);
+    display: block;
+    margin-bottom: 5px;
+}
+
+.stat-card h3 {
+    margin: 0;
+    font-size: 1.3rem;
+    color: var(--text-main);
+}
+
+/* --- 7. GRID E CARDS --- */
+.concursos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 25px;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.concurso-card {
+    background: var(--card-bg);
+    border-radius: 12px;
+    border-top: 5px solid var(--success);
+    padding: 24px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: transform 0.2s;
+}
+
+.concurso-card:hover { transform: translateY(-5px); }
+
+.status-tag {
+    background: #d1fae5;
+    color: #065f46;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 99px;
+    display: inline-block;
+    margin-bottom: 12px;
+}
+
+.info-row { font-size: 14px; color: var(--text-sub); margin-bottom: 6px; }
+.data-prova { color: #d97706; font-weight: 700; font-size: 13px; text-align: center; flex: 1; }
+
+/* --- 8. FOOTER DO CARD E AÇÕES --- */
+.card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid var(--border);
+    gap: 10px;
+}
+
+.card-actions { display: flex; gap: 6px; }
+
+.btn-icon {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    width: 36px;
+    height: 36px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: 0.2s ease;
+    color: var(--text-main);
+}
+
+.btn-icon:hover { border-color: var(--primary); transform: translateY(-2px); }
+
+.btn-icon.active { 
+    color: #f59e0b; 
+    border-color: #f59e0b; 
+    background: #fffbeb; 
+}
+
+body.dark-theme .btn-icon.active { background: #451a03; }
+
+.btn-detalhes {
+    background: var(--primary);
+    color: white !important;
+    text-decoration: none;
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+    transition: 0.2s;
+}
+
+.btn-detalhes:hover { opacity: 0.85; }
+
+/* --- 9. NOTIFICAÇÃO (TOAST) --- */
+.toast {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: #4caf50;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    display: none;
+    z-index: 1000;
+    animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+    from { transform: translateY(100px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+.loading-msg {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 40px;
+    color: var(--text-sub);
+}
