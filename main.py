@@ -19,7 +19,7 @@ app.add_middleware(
 DB_CONFIG = {
     'host': 'localhost',
     'user': 'root',
-    'password': '2010mariano', 
+    'password': 'pedreiro30', 
     'database': 'concursos_maranhao'
 }
 
