@@ -1,8 +1,8 @@
 from fastapi import FastAPI, HTTPException, Query # Adicione Query aqui no topo
-from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-import mysql.connector
-from mysql.connector import Error
+import psycopg2
+from psycopg2.extras import RealDictCursor
+import os
 import uvicorn
 
 # 1. Criamos a instância do FastAPI (Isso resolve o NameError)
@@ -15,13 +15,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-DB_CONFIG = {
-    'host': 'localhost',
-    'user': 'root',
-    'password': 'pedreiro30', 
-    'database': 'concursos_maranhao'
-}
+DATABASE_URL = os.environ.get("DATABASE_URL")
 
 
 # --- ROTA 1: LISTAR COM PAGINAÇÃO E BUSCA ---
@@ -97,4 +91,4 @@ def get_concurso_por_id(concurso_id: int):
             conn.close()
 
 if __name__ == "__main__":
-    uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)
+    uvicorn.run("main:app", host="0.0.0.0", port=10000, reload=True)
