@@ -1,94 +1,41 @@
-from fastapi import FastAPI, HTTPException, Query # Adicione Query aqui no topo
-from fastapi.middleware.cors import CORSMiddleware
+from fastapi import FastAPI, HTTPException
 import psycopg2
 from psycopg2.extras import RealDictCursor
 import os
-import uvicorn
 
-# 1. Criamos a instância do FastAPI (Isso resolve o NameError)
-app = FastAPI(title="API Concursos Maranhão Pro")
+app = FastAPI()
 
-# 2. Configuração de CORS (Essencial para o Front-end conseguir acessar)
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-DATABASE_URL = os.environ.get("DATABASE_URL")
+def get_db_connection():
+    # Ele vai pegar aquela DATABASE_URL que vc configurou no Render
+    conn = psycopg2.connect(os.getenv("DATABASE_URL"), cursor_factory=RealDictCursor)
+    return conn
 
-
-# --- ROTA 1: LISTAR COM PAGINAÇÃO E BUSCA ---
+# ROTA 1: Listar todos (Essa é a que vc quer ver no navegador)
 @app.get("/concursos")
-def get_concursos(
-    busca: str = None, 
-    skip: int = Query(0, ge=0), 
-    limit: int = Query(100, ge=1)
-):
-    conn = None
+async def listar_concursos():
     try:
-        conn = mysql.connector.connect(**DB_CONFIG)
-        cursor = conn.cursor(dictionary=True)
-        
-        # 1. Lógica da Query principal com LIMIT e OFFSET
-        if busca:
-            query = """SELECT * FROM editais 
-                    WHERE orgao LIKE %s OR cargos LIKE %s 
-                    ORDER BY id DESC LIMIT %s OFFSET %s"""
-            valor = f"%{busca}%"
-            cursor.execute(query, (valor, valor, limit, skip))
-        else:
-            query = "SELECT * FROM editais ORDER BY id DESC LIMIT %s OFFSET %s"
-            cursor.execute(query, (limit, skip))
-        
-        concursos = cursor.fetchall()
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM concursos")
+        dados = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        return {"items": dados, "total": len(dados)}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro no banco: {str(e)}")
 
-        # 2. Query para contar o TOTAL de registros (sem o limite)
-        # Isso é vital para o front-end calcular o número de páginas
-        if busca:
-            cursor.execute("SELECT COUNT(*) as total FROM editais WHERE orgao LIKE %s OR cargos LIKE %s", (valor, valor))
-        else:
-            cursor.execute("SELECT COUNT(*) as total FROM editais")
-        
-        total = cursor.fetchone()['total']
-            
-        # 3. Retornamos um objeto com os itens e o total
-        return {
-            "items": concursos,
-            "total": total,
-            "skip": skip,
-            "limit": limit
-        }
-
-    except Error as e:
-        print(f"Erro MySQL: {e}")
-        raise HTTPException(status_code=500, detail="Erro ao acessar o banco de dados")
-    finally:
-        if conn and conn.is_connected():
-            cursor.close()
-            conn.close()
-
-# --- ROTA 2: BUSCAR POR ID (Para a página de detalhes) ---
+# ROTA 2: Buscar por ID
 @app.get("/concursos/{concurso_id}")
-def get_concurso_por_id(concurso_id: int):
-    conn = None
+async def get_concurso(concurso_id: int):
     try:
-        conn = mysql.connector.connect(**DB_CONFIG)
-        cursor = conn.cursor(dictionary=True)
-        query = "SELECT * FROM editais WHERE id = %s"
-        cursor.execute(query, (concurso_id,))
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM concursos WHERE id = %s", (concurso_id,))
         concurso = cursor.fetchone()
-        
+        cursor.close()
+        conn.close()
         if not concurso:
             raise HTTPException(status_code=404, detail="Concurso não encontrado")
         return concurso
-    except Error as e:
-        print(f"Erro MySQL: {e}")
+    except Exception as e:
         raise HTTPException(status_code=500, detail="Erro interno")
-    finally:
-        if conn and conn.is_connected():
-            cursor.close()
-            conn.close()
-
-if __name__ == "__main__":
-    uvicorn.run("main:app", host="0.0.0.0", port=10000, reload=True)
