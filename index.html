@@ -312,14 +312,21 @@ function gerarPDF() {
         calcularEstatisticas(filtrados);
     }
 
-    function calcularEstatisticas(dados) {
-        const sals = dados.map(c => c.salario_max || 0);
-        const fmt = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
-        const media = sals.length ? sals.reduce((a, b) => a + b, 0) / sals.length : 0;
-        const maior = sals.length ? Math.max(...sals) : 0;
-        document.getElementById('media-salarial').innerText = fmt.format(media);
-        document.getElementById('maior-salario').innerText = fmt.format(maior);
-    }
+function calcularEstatisticas(dados) {
+    // Converte e garante que valores como 8 virão 8000 se o texto da matéria dizia "8 mil"
+    const sals = dados.map(c => {
+        let s = c.salario_max || 0;
+        if (s > 0 && s < 100) return s * 1000; // Ajuste para "8 mil" -> 8000
+        return s;
+    });
+    
+    const fmt = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
+    const media = sals.length ? sals.reduce((a, b) => a + b, 0) / sals.length : 0;
+    const maior = sals.length ? Math.max(...sals) : 0;
+    
+    document.getElementById('media-salarial').innerText = fmt.format(media);
+    document.getElementById('maior-salario').innerText = fmt.format(maior);
+}
 
     function renderizarGraficos(dados) {
     // Substitua a linha antiga por esta:

@@ -16,8 +16,35 @@ TERMOS_BUSCA = [
     "AGENTE", "PROCESSO", "SIMPLIFICADO", "PSS", "UEMA"
 ]
 
+# --- 2. FUNÇÕES DE APOIO ---
+
 def gerar_hash(texto):
     return hashlib.sha256(texto.encode('utf-8')).hexdigest()
+
+def buscar_links_reais(url_noticia):
+    """Entra na matéria para buscar o link do edital ou inscrição"""
+    try:
+        res = requests.get(url_noticia, timeout=10)
+        s = BeautifulSoup(res.text, 'html.parser')
+        
+        link_edital = url_noticia 
+        link_inscricao = url_noticia
+
+        links = s.find_all('a', href=True)
+        for link in links:
+            t = link.text.lower()
+            h = link['href']
+            
+            # Busca link que pareça ser o edital
+            if "edital" in t or h.endswith('.pdf'):
+                link_edital = h
+            # Busca link que pareça ser de inscrição
+            if "inscri" in t or "clique aqui" in t or "página" in t:
+                link_inscricao = h
+                
+        return link_edital, link_inscricao
+    except:
+        return url_noticia, url_noticia
 
 def salvar_no_banco(concursos):
     try:
@@ -25,7 +52,6 @@ def salvar_no_banco(concursos):
         cursor = conn.cursor()
         novos_inseridos = 0
         for c in concursos:
-            # SQL atualizado com as novas colunas
             sql = """INSERT INTO concursos 
                      (orgao, status, cargos, salario_min, salario_max, escolaridade, link_oficial, link_inscricao, hash_edital) 
                      VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
@@ -55,7 +81,7 @@ def salvar_no_banco(concursos):
     except Exception as e:
         print(f"[ERRO BANCO] {e}")
 
-# --- 2. RASTREADORES ---
+# --- 3. RASTREADORES ---
 
 def scraper_g1():
     print("-> Rastreando G1 Maranhão (Concursos)...")
@@ -67,8 +93,14 @@ def scraper_g1():
         for item in soup.select('.feed-post-body'):
             link_tag = item.find('a')
             if link_tag:
+                url_noticia = link_tag['href']
                 texto = link_tag.text.strip().upper()
+                
                 if any(p in texto for p in TERMOS_BUSCA):
+                    print(f"   - Investigando matéria: {texto[:40]}...")
+                    # Aqui acontece a mágica: ele entra no G1 para buscar o link real
+                    edital, inscricao = buscar_links_reais(url_noticia)
+                    
                     concursos.append({
                         "orgao": texto[:100],
                         "status": "Aberto",
@@ -76,8 +108,8 @@ def scraper_g1():
                         "salario_min": 0.00,
                         "salario_max": 0.00,
                         "escolaridade": "Ver Edital",
-                        "link_oficial": link_tag['href'],
-                        "link_inscricao": link_tag['href']
+                        "link_oficial": edital, 
+                        "link_inscricao": inscricao
                     })
         return concursos
     except: return []
@@ -155,17 +187,19 @@ def scraper_doema():
         return concursos
     except: return []
 
-# --- 3. EXECUÇÃO PRINCIPAL ---
+# --- 4. EXECUÇÃO PRINCIPAL ---
 
 if __name__ == "__main__":
     print("=== INICIANDO ROBÔ - ENVIANDO PARA O SUPABASE ===\n")
     lista_geral = []
+    
+    # Rodando os scrapers
     lista_geral.extend(scraper_g1())
     lista_geral.extend(scraper_sousandrade())
     lista_geral.extend(scraper_pci())
     lista_geral.extend(scraper_doema())
     
-    # TESTE MANUAL
+    # TESTE MANUAL (Opcional, pode remover se quiser)
     lista_geral.append({
         "orgao": "TESTE DE CONEXÃO LUCAS",
         "status": "Aberto",
