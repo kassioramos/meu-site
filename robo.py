@@ -1,43 +1,39 @@
 import requests
 from bs4 import BeautifulSoup
-import mysql.connector
+import psycopg2  # Mudamos de mysql para psycopg2 para usar o Supabase
 import hashlib
 from datetime import datetime
 
-# --- 1. CONFIGURAÇÕES DO SEU BANCO DE DADOS ---
-DB_CONFIG = {
-    'host': 'localhost',
-    'user': 'root',
-    'password': 'ANTONIOCASSIO2010Mariano', # <--- COLOQUE SUA SENHA DO MYSQL AQUI
-    'database': 'concursos_maranhao'
-}
+# --- 1. CONFIGURAÇÃO DO SUPABASE ---
+# Use a DATABASE_URL que você configurou no Render (SEM os colchetes na senha)
+DATABASE_URL = "postgresql://postgres.mczmhvuxujvhrudqmpvg:ANTONIOCASSIO2010Mariano@aws-1-us-east-1.pooler.supabase.com:5432/postgres"
 
 def gerar_hash(texto):
     """Cria um ID único para evitar duplicatas no banco."""
     return hashlib.sha256(texto.encode('utf-8')).hexdigest()
 
 def salvar_no_banco(concursos):
-    """Conecta ao MySQL e insere os editais novos."""
+    """Conecta ao PostgreSQL (Supabase) e insere os editais novos."""
     try:
-        conn = mysql.connector.connect(**DB_CONFIG)
+        # Conexão direta com a URL do Supabase
+        conn = psycopg2.connect(DATABASE_URL)
         cursor = conn.cursor()
         novos_inseridos = 0
 
         for c in concursos:
-            # SQL baseado na sua tabela 'editais'
-            sql = """INSERT IGNORE INTO editais 
-                     (orgao, status, cargos, salario_max, data_prova, link_oficial, hash_edital) 
-                     VALUES (%s, %s, %s, %s, %s, %s, %s)"""
+            # SQL para a tabela 'concursos' (nome que você criou no Supabase)
+            sql = """INSERT INTO concursos 
+                     (orgao, status, cargos, salario_max, link_oficial, hash_edital) 
+                     VALUES (%s, %s, %s, %s, %s, %s)
+                     ON CONFLICT (hash_edital) DO NOTHING"""
             
             hash_id = gerar_hash(c['link_oficial'])
             
-            # Preparando os valores (salario_max e data_prova começam nulos/zero)
             vals = (
                 c['orgao'][:255], 
                 c['status'], 
                 c['cargos'], 
-                0.00,  # salario_max inicial
-                None,  # data_prova inicial
+                0.00, 
                 c['link_oficial'], 
                 hash_id
             )
@@ -47,13 +43,13 @@ def salvar_no_banco(concursos):
                 novos_inseridos += 1
         
         conn.commit()
-        print(f"\n[BANCO] Sucesso: {novos_inseridos} novos editais adicionados.")
+        print(f"\n[BANCO] Sucesso: {novos_inseridos} novos editais adicionados ao Supabase.")
         cursor.close()
         conn.close()
     except Exception as e:
         print(f"[ERRO BANCO] {e}")
 
-# --- 2. RASTREADORES (SCRAPERS) ---
+# --- 2. RASTREADORES (Mantive seus scrapers que já estão funcionando) ---
 
 def scraper_sousandrade():
     print("-> Rastreando Fundação Sousândrade...")
@@ -81,7 +77,6 @@ def scraper_pci():
         res = requests.get(url, timeout=10)
         soup = BeautifulSoup(res.text, 'html.parser')
         concursos = []
-        # O PCI lista concursos dentro de classes específicas
         for item in soup.select('.ca > .me'):
             link_tag = item.find('a')
             if link_tag:
@@ -117,19 +112,15 @@ def scraper_doema():
 # --- 3. EXECUÇÃO PRINCIPAL ---
 
 if __name__ == "__main__":
-    print("=== INICIANDO SISTEMA DE RASTREAMENTO - CONCURSOS MA ===\n")
-    
+    print("=== INICIANDO ROBÔ - ENVIANDO PARA O SUPABASE ===\n")
     lista_geral = []
-    
-    # Coletando de todas as fontes
     lista_geral.extend(scraper_sousandrade())
     lista_geral.extend(scraper_pci())
     lista_geral.extend(scraper_doema())
     
     if lista_geral:
-        print(f"\nTotal de editais capturados nas fontes: {len(lista_geral)}")
+        print(f"\nTotal de editais capturados: {len(lista_geral)}")
         salvar_no_banco(lista_geral)
     else:
-        print("\nNenhum concurso encontrado nas fontes no momento.")
-    
+        print("\nNenhum concurso encontrado nas fontes.")
     print("\n=== PROCESSO FINALIZADO ===")
