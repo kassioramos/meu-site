@@ -111,7 +111,7 @@
         }
 
         try {
-            const response = await fetch(`http://localhost:8000/concursos/${id}`);
+            const response = await fetch(`https://meu-site-aodm.onrender.com/concursos/${id}`);
             if (!response.ok) throw new Error('Falha na resposta');
             const c = await response.json();
 
