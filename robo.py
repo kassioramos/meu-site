@@ -8,7 +8,7 @@ from datetime import datetime
 DB_CONFIG = {
     'host': 'localhost',
     'user': 'root',
-    'password': '2010mariano', # <--- COLOQUE SUA SENHA DO MYSQL AQUI
+    'password': 'ANTONIOCASSIO2010Mariano', # <--- COLOQUE SUA SENHA DO MYSQL AQUI
     'database': 'concursos_maranhao'
 }
 
