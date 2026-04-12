@@ -101,14 +101,14 @@
 <main id="grid-concursos"></main>
 
 <script>
-    const API_URL = 'https://meu-site-aodm.onrender.com/concursos';
+    const API_URL = 'https://meu-site-aodm.onrender.com';
     let todosOsConcursos = [];
     let graficoBarras = null;
     let graficoPizza = null;
 
     async function inicializar() {
         try {
-            const response = await fetch(API_URL + "?limit=100");
+            const response = await fetch(`${API_URL}/concursos?limit=100`);
             const data = await response.json();
             todosOsConcursos = data.items ? data.items : data;
             
