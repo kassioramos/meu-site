@@ -25,12 +25,25 @@ def salvar_no_banco(concursos):
         cursor = conn.cursor()
         novos_inseridos = 0
         for c in concursos:
+            # SQL atualizado para incluir a nova coluna link_inscricao
             sql = """INSERT INTO concursos 
-                     (orgao, status, cargos, salario_max, link_oficial, hash_edital) 
-                     VALUES (%s, %s, %s, %s, %s, %s)
+                     (orgao, status, cargos, salario_max, link_oficial, link_inscricao, hash_edital) 
+                     VALUES (%s, %s, %s, %s, %s, %s, %s)
                      ON CONFLICT (hash_edital) DO NOTHING"""
+            
             hash_id = gerar_hash(c['link_oficial'])
-            vals = (c['orgao'][:255], c['status'], c['cargos'], 0.00, c['link_oficial'], hash_id)
+            
+            # Valores organizados para preencher as 7 colunas (incluindo o link_inscricao como cópia do oficial por padrão)
+            vals = (
+                c['orgao'][:255], 
+                c['status'], 
+                c['cargos'], 
+                0.00, 
+                c['link_oficial'], 
+                c['link_oficial'], # Preenche link_inscricao com o mesmo link oficial
+                hash_id
+            )
+            
             cursor.execute(sql, vals)
             if cursor.rowcount > 0:
                 novos_inseridos += 1

@@ -65,22 +65,29 @@
             display: block;
             width: 100%;
             text-align: center;
-            background: var(--success);
+            background: var(--primary);
             color: white;
             padding: 15px;
             border-radius: 8px;
             text-decoration: none;
             font-weight: 700;
-            margin-top: 30px;
+            margin-top: 15px;
             transition: transform 0.2s, opacity 0.2s;
         }
         .btn-edital:hover {
             transform: translateY(-2px);
             opacity: 0.9;
         }
+        .btn-inscricao {
+            background: var(--success);
+            margin-top: 15px;
+        }
         .btn-disabled {
             background: #94a3b8;
             cursor: not-allowed;
+        }
+        .container-acoes {
+            margin-top: 30px;
         }
     </style>
 </head>
@@ -115,14 +122,29 @@
             if (!response.ok) throw new Error('Falha na resposta');
             const c = await response.json();
 
-            const salario = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(c.salario_max || 0);
+            // Melhoria na exibição do salário para evitar R$ 0,00
+            const salarioNumerico = parseFloat(c.salario_max);
+            const salario = salarioNumerico > 0 
+                ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(salarioNumerico)
+                : 'Consultar Edital';
+
             const data = c.data_prova ? new Date(c.data_prova).toLocaleDateString('pt-BR') : 'A definir';
             
-            // Validação do link do edital
-            const temLink = c.link_oficial && c.link_oficial.startsWith('http');
-            const linkHTML = temLink 
-                ? `<a href="${c.link_oficial}" target="_blank" class="btn-edital">Acessar Edital Oficial</a>`
-                : `<div class="btn-edital btn-disabled">Edital ainda não publicado</div>`;
+            // Validação dos links (Edital e Inscrição)
+            const temEdital = c.link_oficial && c.link_oficial.startsWith('http');
+            const temInscricao = c.link_inscricao && c.link_inscricao.startsWith('http');
+
+            const botoesHTML = `
+                <div class="container-acoes">
+                    ${temEdital 
+                        ? `<a href="${c.link_oficial}" target="_blank" class="btn-edital">Acessar Edital Oficial</a>`
+                        : `<div class="btn-edital btn-disabled">Edital não disponível</div>`}
+                    
+                    ${temInscricao 
+                        ? `<a href="${c.link_inscricao}" target="_blank" class="btn-edital btn-inscricao">Fazer Inscrição Agora</a>`
+                        : ''}
+                </div>
+            `;
 
             container.innerHTML = `
                 <div class="detalhes-header">
@@ -137,7 +159,7 @@
                     </div>
                     <div class="info-item">
                         <label>Salário Máximo</label>
-                        <span>${salario}</span>
+                        <span style="color: var(--success);">${salario}</span>
                     </div>
                     <div class="info-item">
                         <label>Data da Prova</label>
@@ -155,13 +177,13 @@
                     Recomendamos a leitura atenta de todos os requisitos de escolaridade e etapas de avaliação descritos no documento oficial.</p>
                 </div>
 
-                ${linkHTML}
+                ${botoesHTML}
             `;
         } catch (e) {
             container.innerHTML = `
                 <div class="loading-msg">
                     ❌ Erro ao carregar os dados.<br>
-                    <small>Verifique se o servidor backend está rodando em http://localhost:8000</small>
+                    <small>Verifique a conexão com o servidor.</small>
                 </div>`;
         }
     }
