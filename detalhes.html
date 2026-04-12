@@ -145,8 +145,7 @@
                         : ''}
                 </div>
             `;
-
-            container.innerHTML = `
+container.innerHTML = `
                 <div class="detalhes-header">
                     <span class="status-tag">${c.status || 'Aberto'}</span>
                     <h1>${c.orgao}</h1>
@@ -158,12 +157,15 @@
                         <span>${c.cargos || 'Consultar Edital'}</span>
                     </div>
                     <div class="info-item">
-                        <label>Salário Máximo</label>
-                        <span style="color: var(--success);">${salario}</span>
+                        <label>Escolaridade</label>
+                        <span>${c.escolaridade || 'Não informada'}</span>
                     </div>
                     <div class="info-item">
-                        <label>Data da Prova</label>
-                        <span>${data}</span>
+                        <label>Faixa Salarial</label>
+                        <span style="color: var(--success);">
+                            ${c.salario_min > 0 ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(c.salario_min) : '---'} 
+                            até ${salario}
+                        </span>
                     </div>
                     <div class="info-item">
                         <label>Localização</label>

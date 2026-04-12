@@ -7,7 +7,7 @@ from datetime import datetime
 # --- 1. CONFIGURAÇÃO DO SUPABASE ---
 DATABASE_URL = "postgresql://postgres.mczmhvuxujvhrudqmpvg:ANTONIOCASSIO2010Mariano@aws-1-us-east-1.pooler.supabase.com:5432/postgres"
 
-# Lista Mestra de Termos (Usada em todos os scrapers)
+# Lista Mestra de Termos
 TERMOS_BUSCA = [
     "PREFEITURA", "MUNICIPAL", "CÂMARA", "LEGISLATIVO", 
     "ESTADUAL", "GOVERNO", "SELETIVO", "CONCURSO", 
@@ -25,22 +25,23 @@ def salvar_no_banco(concursos):
         cursor = conn.cursor()
         novos_inseridos = 0
         for c in concursos:
-            # SQL atualizado para incluir a nova coluna link_inscricao
+            # SQL atualizado com as novas colunas
             sql = """INSERT INTO concursos 
-                     (orgao, status, cargos, salario_max, link_oficial, link_inscricao, hash_edital) 
-                     VALUES (%s, %s, %s, %s, %s, %s, %s)
+                     (orgao, status, cargos, salario_min, salario_max, escolaridade, link_oficial, link_inscricao, hash_edital) 
+                     VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
                      ON CONFLICT (hash_edital) DO NOTHING"""
             
             hash_id = gerar_hash(c['link_oficial'])
             
-            # Valores organizados para preencher as 7 colunas (incluindo o link_inscricao como cópia do oficial por padrão)
             vals = (
-                c['orgao'][:255], 
-                c['status'], 
-                c['cargos'], 
-                0.00, 
-                c['link_oficial'], 
-                c['link_oficial'], # Preenche link_inscricao com o mesmo link oficial
+                c.get('orgao', '')[:255], 
+                c.get('status', 'Aberto'), 
+                c.get('cargos', ''), 
+                c.get('salario_min', 0.00),
+                c.get('salario_max', 0.00),
+                c.get('escolaridade', 'Não Informado'),
+                c.get('link_oficial'), 
+                c.get('link_inscricao'), 
                 hash_id
             )
             
@@ -71,8 +72,12 @@ def scraper_g1():
                     concursos.append({
                         "orgao": texto[:100],
                         "status": "Aberto",
-                        "cargos": "Veja no G1",
-                        "link_oficial": link_tag['href']
+                        "cargos": "Veja detalhes na matéria",
+                        "salario_min": 0.00,
+                        "salario_max": 0.00,
+                        "escolaridade": "Ver Edital",
+                        "link_oficial": link_tag['href'],
+                        "link_inscricao": link_tag['href']
                     })
         return concursos
     except: return []
@@ -87,11 +92,16 @@ def scraper_sousandrade():
         for link in soup.find_all('a', href=True):
             texto = link.text.strip().upper()
             if any(p in texto for p in TERMOS_BUSCA):
+                url_final = "https://www.fsadu.org.br/c/concursos/" + link['href']
                 concursos.append({
                     "orgao": texto,
                     "status": "Aberto",
                     "cargos": "Consulte o Edital",
-                    "link_oficial": "https://www.fsadu.org.br/c/concursos/" + link['href']
+                    "salario_min": 0.00,
+                    "salario_max": 0.00,
+                    "escolaridade": "Ver Edital",
+                    "link_oficial": url_final,
+                    "link_inscricao": url_final
                 })
         return concursos
     except: return []
@@ -111,7 +121,11 @@ def scraper_pci():
                     "orgao": nome_orgao,
                     "status": "Aberto",
                     "cargos": "Vários cargos",
-                    "link_oficial": link_tag['href']
+                    "salario_min": 0.00,
+                    "salario_max": 0.00,
+                    "escolaridade": "Ver no Site",
+                    "link_oficial": link_tag['href'],
+                    "link_inscricao": link_tag['href']
                 })
         return concursos
     except: return []
@@ -127,16 +141,19 @@ def scraper_doema():
         for link in soup.find_all('a', href=True):
             texto = link.text.strip().upper()
             if any(p in texto for p in TERMOS_BUSCA):
+                url_final = "http://ba.doema.ma.gov.br/" + link['href'] if not link['href'].startswith('http') else link['href']
                 concursos.append({
                     "orgao": "Governo do Estado (DOE-MA)",
                     "status": "Aberto",
-                    "cargos": texto,
-                    "link_oficial": "http://ba.doema.ma.gov.br/" + link['href'] if not link['href'].startswith('http') else link['href']
+                    "cargos": texto[:255],
+                    "salario_min": 0.00,
+                    "salario_max": 0.00,
+                    "escolaridade": "Ver DOE",
+                    "link_oficial": url_final,
+                    "link_inscricao": url_final
                 })
         return concursos
-    except: 
-        print("   [!] DOE-MA fora do ar no momento.")
-        return []
+    except: return []
 
 # --- 3. EXECUÇÃO PRINCIPAL ---
 
@@ -148,12 +165,16 @@ if __name__ == "__main__":
     lista_geral.extend(scraper_pci())
     lista_geral.extend(scraper_doema())
     
-    # TESTE MANUAL: Garante que o site nunca fique com total: 0
+    # TESTE MANUAL
     lista_geral.append({
         "orgao": "TESTE DE CONEXÃO LUCAS",
         "status": "Aberto",
         "cargos": "Desenvolvedor Python",
-        "link_oficial": "https://google.com/teste-do-lucas-" + datetime.now().strftime("%H%M")
+        "salario_min": 1500.00,
+        "salario_max": 8000.00,
+        "escolaridade": "Superior",
+        "link_oficial": "https://google.com/edital-" + datetime.now().strftime("%H%M"),
+        "link_inscricao": "https://google.com/inscricao-" + datetime.now().strftime("%H%M")
     })
     
     if lista_geral:
