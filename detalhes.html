@@ -173,11 +173,13 @@ container.innerHTML = `
                     </div>
                 </div>
 
-                <div class="sobre-secao">
-                    <h3>Sobre este concurso</h3>
-                    <p>Este certame é destinado ao provimento de vagas para o órgão <strong>${c.orgao}</strong>. 
-                    Recomendamos a leitura atenta de todos os requisitos de escolaridade e etapas de avaliação descritos no documento oficial.</p>
-                </div>
+// --- COLE ISSO NO LUGAR ---
+<div class="sobre-secao">
+    <h3>Sobre este concurso</h3>
+    <p>
+        ${c.sobre_concurso ? c.sobre_concurso : `Este certame é destinado ao provimento de vagas para o órgão <strong>${c.orgao}</strong>. Recomendamos a leitura atenta de todos os requisitos de escolaridade e etapas de avaliação descritos no documento oficial.`}
+    </p>
+</div>
 
                 ${botoesHTML}
             `;
