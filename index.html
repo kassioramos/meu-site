@@ -410,7 +410,50 @@ function alternarTema() {
     renderizarGraficos(todosOsConcursos);
 }
 
-    inicializar();
+// Função para manter o Render acordado enquanto o usuário está com o site aberto
+function manterServidorAcordado() {
+    // Faz um ping a cada 10 minutos (600.000 ms)
+    setInterval(() => {
+        fetch(`${API_URL}/concursos?limit=1`).then(() => {
+            console.log("Ping de atividade enviado para manter o servidor acordado.");
+        }).catch(err => console.error("Erro no ping:", err));
+    }, 600000); 
+}
+
+// Chame a função antes da inicialização
+manterServidorAcordado();
+
+async function inicializar() {
+    const grid = document.getElementById('grid-concursos');
+    
+    // 1. Mostrar Skeletons (Esboços cinzas) antes de carregar
+    grid.innerHTML = Array(6).fill(0).map(() => `
+        <div class="concurso-card skeleton" style="height: 250px; background: rgba(255,255,255,0.05); border-radius: 12px; animation: pulse 1.5s infinite ease-in-out;">
+            <div style="padding: 20px;">
+                <div style="width: 30%; height: 20px; background: rgba(255,255,255,0.1); border-radius: 4px; margin-bottom: 10px;"></div>
+                <div style="width: 80%; height: 30px; background: rgba(255,255,255,0.1); border-radius: 4px; margin-bottom: 20px;"></div>
+                <div style="width: 100%; height: 60px; background: rgba(255,255,255,0.1); border-radius: 4px;"></div>
+            </div>
+        </div>
+    `).join('');
+
+    try {
+        const response = await fetch(`${API_URL}/concursos?limit=100`);
+        const data = await response.json();
+        todosOsConcursos = data.items ? data.items : data;
+        
+        renderizar(todosOsConcursos);
+        renderizarGraficos(todosOsConcursos);
+        calcularEstatisticas(todosOsConcursos);
+        atualizarBadgeFavoritos();
+        verificarNovosConcursos(todosOsConcursos); 
+
+    } catch (error) {
+        console.error("Erro na inicialização:", error);
+        grid.innerHTML = "<p style='color:white; text-align:center;'>Erro ao conectar com o servidor. Tente atualizar a página.</p>";
+        document.getElementById('stats-counter').innerText = "Erro na conexão";
+    }
+}
 </script>
 </body>
 </html>

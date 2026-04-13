@@ -13,6 +13,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Adicione esta rota simples logo após o app.add_middleware
+@app.get("/health")
+async def health_check():
+    return {"status": "online"}
+
 def get_db_connection():
     # Ele vai pegar aquela DATABASE_URL que vc configurou no Render
     conn = psycopg2.connect(os.getenv("DATABASE_URL"), cursor_factory=RealDictCursor)

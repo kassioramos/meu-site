@@ -1,5 +1,12 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
 
+@keyframes pulse {
+    0% { opacity: 0.6; }
+    50% { opacity: 0.3; }
+    100% { opacity: 0.6; }
+}
+.skeleton { pointer-events: none; border: none !important; }
+
 /* --- 1. CONFIGURAÇÃO DE CORES E VARIÁVEIS --- */
 :root {
     --primary: #2563eb;
