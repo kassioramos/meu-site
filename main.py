@@ -6,6 +6,7 @@ import os
 
 app = FastAPI()
 
+# Configuração de CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -14,23 +15,29 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# ROTA RAIZ: Evita erro 404 quando o Render ou o navegador acessa o link principal
+@app.get("/")
+async def root():
+    return {"status": "Online", "message": "Concursos Maranhão API"}
+
+# ROTA HEALTH: Usada para monitoramento e para manter o servidor acordado
 @app.get("/health")
 async def health_check():
-    return {"status": "online"}
+    return {"status": "healthy"}
 
 def get_db_connection():
-    # Pega a URL do Render
+    # Pega a URL do Banco de Dados das variáveis de ambiente do Render
     conn = psycopg2.connect(os.getenv("DATABASE_URL"), cursor_factory=RealDictCursor)
     return conn
 
-# ROTA 1: Listar todos - CORRIGIDA
+# ROTA 1: Listar todos os concursos
 @app.get("/concursos")
 async def listar_concursos():
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
         
-        # SQL ajustado para garantir que a coluna 'cidade' não venha vazia
+        # SQL ajustado para garantir que a coluna 'cidade' não venha vazia (COALESCE)
         query = """
             SELECT id, orgao, status, cargos, salario_min, salario_max, 
             escolaridade, link_oficial, link_inscricao, 
@@ -46,11 +53,10 @@ async def listar_concursos():
         
         return {"items": dados, "total": len(dados)}
     except Exception as e:
-        # Importante para você ver o erro real nos logs do Render
         print(f"Erro no banco: {e}")
         raise HTTPException(status_code=500, detail=f"Erro no banco: {str(e)}")
 
-# ROTA 2: Buscar por ID
+# ROTA 2: Buscar detalhes de um concurso por ID
 @app.get("/concursos/{concurso_id}")
 async def get_concurso(concurso_id: int):
     try:
@@ -65,4 +71,5 @@ async def get_concurso(concurso_id: int):
             raise HTTPException(status_code=404, detail="Concurso não encontrado")
         return concurso
     except Exception as e:
-        raise HTTPException(status_code=500, detail="Erro interno")
+        print(f"Erro ao buscar ID: {e}")
+        raise HTTPException(status_code=500, detail="Erro interno no servidor")
