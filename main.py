@@ -37,10 +37,17 @@ async def listar_concursos():
         conn = get_db_connection()
         cursor = conn.cursor()
         
-# SQL com ALIAS (as) para garantir que o JavaScript receba 'salario_max'
+# ROTA 1: Listar todos os concursos (CORRIGIDA)
+@app.get("/concursos")
+async def listar_concursos():
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # SQL usando o nome real da coluna: salario_max
         query = """
             SELECT id, orgao, status, cargos, salario_min, 
-            COALESCE(salario_maximo, 0) as salario_max, 
+            COALESCE(salario_max, 0) as salario_max, 
             escolaridade, link_oficial, link_inscricao, 
             COALESCE(cidade, 'Maranhão') as cidade 
             FROM concursos 
@@ -52,6 +59,10 @@ async def listar_concursos():
         cursor.close()
         conn.close()
         
+        return {"items": dados, "total": len(dados)}
+    except Exception as e:
+        print(f"Erro no banco: {e}")
+        raise HTTPException(status_code=500, detail=f"Erro no banco: {str(e)}")
         return {"items": dados, "total": len(dados)}
     except Exception as e:
         print(f"Erro no banco: {e}")
