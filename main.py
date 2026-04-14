@@ -29,7 +29,7 @@ async def listar_concursos():
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
-        cursor.execute("SELECT * FROM editais")
+        cursor.execute("SELECT * FROM concursos")
         dados = cursor.fetchall()
         cursor.close()
         conn.close()
@@ -43,7 +43,7 @@ async def get_concurso(concurso_id: int):
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
-        cursor.execute("SELECT * FROM editais WHERE id = %s", (concurso_id,))
+        cursor.execute("SELECT * FROM concursos WHERE id = %s", (concurso_id,))
         concurso = cursor.fetchone()
         cursor.close()
         conn.close()
