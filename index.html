@@ -3,12 +3,63 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Concursos Maranhão - Pro</title>
+    
+    <title>Concursos Maranhão Pro 2026 | Vagas, Editais e Salários no MA</title>
+    <meta name="description" content="A maior lista de concursos abertos no Maranhão em 2026. Encontre vagas na UEMA, Prefeituras e Órgãos Estaduais com salários de até R$ 8.000,00.">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://concursosma.pro/">
+
+    <meta property="og:locale" content="pt_BR">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Concursos Maranhão Pro - Vagas Atualizadas Hoje">
+    <meta property="og:description" content="Buscando estabilidade? Veja os concursos abertos no MA com inscrições hoje.">
+    <meta property="og:image" content="https://concursosma.pro/img/banner-social.png">
+    <meta property="og:site_name" content="Concursos Maranhão Pro">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Concursos Maranhão Pro 2026">
+    <meta name="twitter:description" content="Salários, bancas e datas de prova de todos os concursos do Maranhão.">
+
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "GovernmentService",
+      "name": "Concursos Maranhão Pro",
+      "description": "Plataforma de agregação de concursos públicos e seletivos no estado do Maranhão.",
+      "provider": {
+        "@type": "Organization",
+        "name": "Concursos MA Pro"
+      },
+      "serviceType": "Public Examination Information",
+      "areaServed": {
+        "@type": "State",
+        "name": "Maranhão"
+      },
+      "hasOfferCatalog": {
+        "@type": "OfferCatalog",
+        "name": "Lista de Concursos",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Concursos Nível Superior Maranhão"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Concursos Nível Médio Maranhão"
+          }
+        ]
+      }
+    }
+    </script>
+
     <style>
         * { font-family: 'Inter', sans-serif; }
         #toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 9999; }
@@ -47,7 +98,7 @@
     <button id="darkModeToggle" class="dark-mode-btn" onclick="alternarTema()">🌙</button>
 
     <header>
-        <h1>Concursos Maranhão</h1>
+        <h1>Concursos Maranhão Pro</h1>
         <div id="stats-counter" class="stats-badge">Carregando dados...</div>
 
         <div class="search-container">
@@ -111,7 +162,6 @@
         let graficoBarras = null;
         let graficoPizza = null;
 
-        // Inicia tudo
         window.onload = () => {
             manterServidorAcordado();
             inicializar();
@@ -119,8 +169,6 @@
 
         async function inicializar() {
             const grid = document.getElementById('grid-concursos');
-            
-            // 1. Mostrar Skeletons
             grid.innerHTML = Array(6).fill(0).map(() => `
                 <div class="concurso-card skeleton" style="height: 250px; background: rgba(255,255,255,0.05); border-radius: 12px;">
                     <div style="padding: 20px;">
@@ -134,7 +182,6 @@
             try {
                 const response = await fetch(`${API_URL}/concursos`);
                 if (!response.ok) throw new Error('Erro na rede');
-                
                 const data = await response.json();
                 todosOsConcursos = data.items || []; 
                 
@@ -145,94 +192,81 @@
                     atualizarBadgeFavoritos();
                     verificarNovosConcursos(todosOsConcursos); 
                 } else {
-                    grid.innerHTML = "<p style='color:white; text-align:center;'>Nenhum dado encontrado no banco.</p>";
+                    grid.innerHTML = "<p style='color:white; text-align:center;'>Nenhum concurso encontrado.</p>";
                 }
-
             } catch (error) {
                 console.error("Erro fatal:", error);
-                grid.innerHTML = `<p style='color:white; text-align:center;'>Erro ao conectar: ${error.message}</p>`;
+                grid.innerHTML = `<p style='color:white; text-align:center;'>Erro ao conectar ao servidor.</p>`;
                 document.getElementById('stats-counter').innerText = "Erro na conexão";
             }
         }
-function renderizar(dados) {
-    const grid = document.getElementById('grid-concursos');
-    const counter = document.getElementById('stats-counter');
-    counter.innerText = `${dados.length} concursos encontrados`;
-    grid.innerHTML = "";
 
-    const favs = JSON.parse(localStorage.getItem('favoritos') || '[]');
+        function renderizar(dados) {
+            const grid = document.getElementById('grid-concursos');
+            const counter = document.getElementById('stats-counter');
+            counter.innerText = `${dados.length} concursos encontrados`;
+            grid.innerHTML = "";
 
-    dados.forEach(c => {
-        const isFav = favs.includes(c.orgao);
-        
-        // Formatação do Salário
-        const salarioTexto = (c.salario_max && c.salario_max > 0) 
-            ? `R$ ${Number(c.salario_max).toLocaleString('pt-BR', {minimumFractionDigits: 2})}` 
-            : 'A consultar';
+            const favs = JSON.parse(localStorage.getItem('favoritos') || '[]');
 
-        // Formatação do Prazo (Inscrições)
-        const prazo = c.fim_inscricao 
-            ? new Date(c.fim_inscricao).toLocaleDateString('pt-BR') 
-            : 'Ver edital';
+            dados.forEach(c => {
+                const isFav = favs.includes(c.orgao);
+                const salarioTexto = (c.salario_max && c.salario_max > 0) 
+                    ? `R$ ${Number(c.salario_max).toLocaleString('pt-BR', {minimumFractionDigits: 2})}` 
+                    : 'A consultar';
 
-        // Formatação da Data da Prova
-        const dataProva = c.data_prova 
-            ? new Date(c.data_prova).toLocaleDateString('pt-BR') 
-            : 'A definir';
+                const prazo = c.fim_inscricao 
+                    ? new Date(c.fim_inscricao).toLocaleDateString('pt-BR') 
+                    : 'Ver edital';
 
-        const card = document.createElement('div');
-        card.className = 'concurso-card';
-        card.innerHTML = `
-            <div style="background: rgba(255,255,255,0.05); padding: 20px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); height: 100%; display: flex; flex-direction: column;">
-                
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                    <span style="background: #2563eb; color: white; padding: 4px 10px; border-radius: 6px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase;">
-                        ${c.cidade || 'Maranhão'}
-                    </span>
-                    <button onclick="toggleFavorito(this, '${c.orgao}')" style="background: none; color: #ffffff; border: none; cursor: pointer; font-size: 1.2rem;">
-                        ${isFav ? '⭐' : '☆'}
-                    </button>
-                </div>
+                const dataProva = c.data_prova 
+                    ? new Date(c.data_prova).toLocaleDateString('pt-BR') 
+                    : 'A definir';
 
-                <h3 style="color: white; margin-bottom: 15px; font-size: 1rem; line-height: 1.4; min-height: 2.8em; overflow: hidden;">
-                    ${c.orgao}
-                </h3>
-
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px 8px; margin-bottom: 15px; background: rgba(255,255,255,0.03); padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
-                    <div>
-                        <small style="color: #64748b; font-size: 0.55rem; display: block; text-transform: uppercase; font-weight: 700;">🎓 Nível</small>
-                        <span style="color: #f1f5f9; font-size: 0.75rem; font-weight: 600;">${c.escolaridade || 'Ver edital'}</span>
+                const card = document.createElement('div');
+                card.className = 'concurso-card';
+                card.innerHTML = `
+                    <div style="background: rgba(255,255,255,0.05); padding: 20px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); height: 100%; display: flex; flex-direction: column;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                            <span style="background: #2563eb; color: white; padding: 4px 10px; border-radius: 6px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase;">
+                                ${c.cidade || 'Maranhão'}
+                            </span>
+                            <button onclick="toggleFavorito(this, '${c.orgao}')" style="background: none; color: #ffffff; border: none; cursor: pointer; font-size: 1.2rem;">
+                                ${isFav ? '⭐' : '☆'}
+                            </button>
+                        </div>
+                        <h3 style="color: white; margin-bottom: 15px; font-size: 1rem; line-height: 1.4; min-height: 2.8em; overflow: hidden;">${c.orgao}</h3>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px 8px; margin-bottom: 15px; background: rgba(255,255,255,0.03); padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
+                            <div>
+                                <small style="color: #64748b; font-size: 0.55rem; display: block; text-transform: uppercase; font-weight: 700;">🎓 Nível</small>
+                                <span style="color: #f1f5f9; font-size: 0.75rem; font-weight: 600;">${c.escolaridade || 'Ver edital'}</span>
+                            </div>
+                            <div>
+                                <small style="color: #64748b; font-size: 0.55rem; display: block; text-transform: uppercase; font-weight: 700;">📝 Banca</small>
+                                <span style="color: #f1f5f9; font-size: 0.75rem; font-weight: 600;">${c.banca || 'Própria'}</span>
+                            </div>
+                            <div>
+                                <small style="color: #64748b; font-size: 0.55rem; display: block; text-transform: uppercase; font-weight: 700;">📅 Inscrições</small>
+                                <span style="color: #f1f5f9; font-size: 0.75rem; font-weight: 600;">Até ${prazo}</span>
+                            </div>
+                            <div>
+                                <small style="color: #64748b; font-size: 0.55rem; display: block; text-transform: uppercase; font-weight: 700;">✍️ Prova</small>
+                                <span style="color: #f1f5f9; font-size: 0.75rem; font-weight: 600;">${dataProva}</span>
+                            </div>
+                        </div>
+                        <div style="margin-top: auto; display: flex; justify-content: space-between; align-items: center; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1);">
+                            <div>
+                                <small style="color: #64748b; display: block; font-size: 0.65rem; font-weight: 700;">SALÁRIO ATÉ</small>
+                                <span style="color: #10b981; font-weight: 800; font-size: 0.9rem;">${salarioTexto}</span>
+                            </div>
+                            <a href="detalhes.html?id=${c.id}" style="background: #3b82f6; color: white; padding: 8px 14px; border-radius: 6px; text-decoration: none; font-size: 0.75rem; font-weight: 700;">Ver Detalhes</a>
+                        </div>
                     </div>
-                    <div>
-                        <small style="color: #64748b; font-size: 0.55rem; display: block; text-transform: uppercase; font-weight: 700;">📝 Banca</small>
-                        <span style="color: #f1f5f9; font-size: 0.75rem; font-weight: 600;">${c.banca || 'Própria'}</span>
-                    </div>
-                    <div>
-                        <small style="color: #64748b; font-size: 0.55rem; display: block; text-transform: uppercase; font-weight: 700;">📅 Inscrições</small>
-                        <span style="color: #f1f5f9; font-size: 0.75rem; font-weight: 600;">Até ${prazo}</span>
-                    </div>
-                    <div>
-                        <small style="color: #64748b; font-size: 0.55rem; display: block; text-transform: uppercase; font-weight: 700;">✍️ Prova</small>
-                        <span style="color: #f1f5f9; font-size: 0.75rem; font-weight: 600;">${dataProva}</span>
-                    </div>
-                </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
 
-                <div style="margin-top: auto; display: flex; justify-content: space-between; align-items: center; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1);">
-                    <div>
-                        <small style="color: #64748b; display: block; font-size: 0.65rem; font-weight: 700;">SALÁRIO ATÉ</small>
-                        <span style="color: #10b981; font-weight: 800; font-size: 0.9rem;">${salarioTexto}</span>
-                    </div>
-                    <a href="detalhes.html?id=${c.id}" style="background: #3b82f6; color: white; padding: 8px 14px; border-radius: 6px; text-decoration: none; font-size: 0.75rem; font-weight: 700; transition: 0.2s;">
-                        Ver Detalhes
-                    </a>
-                </div>
-            </div>
-        `;
-        grid.appendChild(card);
-    });
-}
-
-        // --- Funções de lógica (PDF, Filtros, Favoritos, etc) ---
         function mostrarToast(mensagem, tipo) {
             const container = document.getElementById('toast-container');
             const toast = document.createElement('div');
@@ -345,9 +379,7 @@ function renderizar(dados) {
         }
 
         function manterServidorAcordado() {
-            setInterval(() => {
-                fetch(`${API_URL}/health`).catch(() => {});
-            }, 600000); 
+            setInterval(() => { fetch(`${API_URL}/health`).catch(() => {}); }, 600000); 
         }
 
         function verificarNovosConcursos(listaNova) {
@@ -363,10 +395,10 @@ function renderizar(dados) {
         function gerarPDF() {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF({ orientation: "landscape" });
-            doc.text("Concursos Maranhão - Lista", 14, 20);
+            doc.text("Concursos Maranhão - Lista Atualizada", 14, 20);
             const rows = todosOsConcursos.map(c => [c.orgao, c.cidade || 'MA', c.cargos || 'Ver edital', `R$ ${c.salario_max || 0}`]);
             doc.autoTable({ head: [["Órgão", "Cidade", "Cargos", "Salário"]], body: rows, startY: 30 });
-            doc.save("concursos_ma.pdf");
+            doc.save("concursos_ma_pro.pdf");
         }
 
         document.getElementById('inputBusca').addEventListener('input', (e) => filtrar(e.target.value));
