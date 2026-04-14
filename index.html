@@ -21,29 +21,10 @@
       "@type": "WebSite",
       "name": "Concursos Maranhão Pro",
       "url": "https://concursosma.pro/",
-      "description": "Portal de notícias e agregação de concursos públicos no Estado do Maranhão.",
-      "publisher": {
-        "@type": "Organization",
-        "name": "Concursos Maranhão Pro",
-        "logo": {
-          "@type": "ImageObject",
-          "url": "https://concursosma.pro/img/logo.png"
-        }
-      },
-      "mainEntity": {
-        "@type": "ItemList",
-        "itemListElement": [
-          {
-            "@type": "ListItem",
-            "position": 1,
-            "name": "Concursos Abertos Maranhão"
-          },
-          {
-            "@type": "ListItem",
-            "position": 2,
-            "name": "Seletivos e Estágios MA"
-          }
-        ]
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "https://concursosma.pro/?s={search_term_string}",
+        "query-input": "required name=search_term_string"
       }
     }
     </script>
@@ -56,24 +37,20 @@
 
     <style>
         * { font-family: 'Inter', sans-serif; box-sizing: border-box; }
-        body { margin: 0; transition: background 0.3s; }
+        body { margin: 0; transition: background 0.3s; background-color: #0f172a; color: white; }
+        body.light-theme { background-color: #f8fafc; color: #1e293b; }
         #toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 9999; }
         .toast { padding: 12px 20px; margin-top: 10px; border-radius: 8px; color: white; font-weight: 500; box-shadow: 0 4px 12px rgba(0,0,0,0.15); display: flex; align-items: center; gap: 10px; animation: slideIn 0.3s ease-out; }
         @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
         .toast-success { background-color: #10b981; }
         .toast-error { background-color: #ef4444; }
-        
-        #grid-concursos { 
-            display: grid; 
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); 
-            gap: 20px; padding: 20px; max-width: 1200px; margin: 0 auto; 
-        }
-
+        #grid-concursos { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; padding: 20px; max-width: 1200px; margin: 0 auto; }
         .concurso-card { width: 100%; transition: transform 0.2s; }
         .concurso-card:hover { transform: translateY(-5px); }
         .chart-container { position: relative; height: 280px; width: 100%; }
         .skeleton { animation: pulse 1.5s infinite ease-in-out; background: rgba(255,255,255,0.05); border-radius: 12px; }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .dark-theme { background-color: #0f172a; }
     </style>
 </head>
 <body class="dark-theme"> 
@@ -86,7 +63,6 @@
 
         <div class="search-container">
             <input type="text" id="inputBusca" placeholder="Ex: Professor, São Luís, UFMA...">
-            
             <div class="filter-group">
                 <div class="filter-row">
                     <span class="filter-label">CIDADES:</span>
@@ -94,7 +70,6 @@
                     <button onclick="filtrar('Imperatriz')" class="btn-filter">Imperatriz</button>
                     <button onclick="filtrar('Caxias')" class="btn-filter">Caxias</button>
                 </div>
-                
                 <div class="filter-row">
                     <span class="filter-label">AÇÕES:</span>
                     <button id="btn-meus-favoritos" onclick="filtrarFavoritos()" class="btn-filter" style="border: 1px solid #ffca28;">⭐ Favoritos (0)</button>
@@ -116,7 +91,6 @@
                 <h3 id="maior-salario">Calculando...</h3>
             </div>
         </div>
-
         <div style="display: flex; flex-wrap: wrap; gap: 20px; justify-content: center;">
             <div class="stat-card" style="flex: 1; min-width: 300px; max-width: 580px; background: rgba(255,255,255,0.05); padding: 20px; border-radius: 12px;">
                 <h3 style="margin-bottom: 15px; font-size: 1rem; text-align: center;">📊 Vagas por Cidade</h3>
@@ -129,8 +103,7 @@
         </div>
     </section>
 
-    <main id="grid-concursos">
-        </main>
+    <main id="grid-concursos"></main>
 
     <script>
         const API_URL = 'https://meu-site-aodm.onrender.com';
@@ -138,7 +111,6 @@
         let graficoBarras = null;
         let graficoPizza = null;
 
-        // Início
         window.onload = () => {
             inicializar();
             manterServidorAcordado();
@@ -146,7 +118,6 @@
 
         async function inicializar() {
             const grid = document.getElementById('grid-concursos');
-            // Mock de carregamento
             grid.innerHTML = Array(6).fill('<div class="skeleton" style="height:300px"></div>').join('');
 
             try {
@@ -159,20 +130,56 @@
                     renderizarGraficos(todosOsConcursos);
                     calcularEstatisticas(todosOsConcursos);
                     atualizarBadgeFavoritos();
+                    gerarSchemaMarkup(todosOsConcursos); // NOVIDADE: Gera o SEO para o Google
                 } else {
                     grid.innerHTML = "<p style='color:white; grid-column: 1/-1; text-align:center;'>Nenhum concurso ativo no momento.</p>";
                 }
             } catch (error) {
-                grid.innerHTML = `<p style='color:white; grid-column: 1/-1; text-align:center;'>Erro ao conectar com o banco de dados. Tente atualizar a página.</p>`;
+                grid.innerHTML = `<p style='color:white; grid-column: 1/-1; text-align:center;'>Erro ao carregar dados. Verifique sua conexão.</p>`;
             }
+        }
+
+        // FUNÇÃO DE OURO: Faz o Google detectar as vagas individualmente
+        function gerarSchemaMarkup(dados) {
+            const oldScript = document.getElementById('dynamic-schema');
+            if (oldScript) oldScript.remove();
+
+            const schema = {
+                "@context": "https://schema.org",
+                "@type": "ItemList",
+                "numberOfItems": dados.length,
+                "itemListElement": dados.slice(0, 15).map((c, i) => ({
+                    "@type": "ListItem",
+                    "position": i + 1,
+                    "item": {
+                        "@type": "JobPosting",
+                        "title": c.orgao,
+                        "description": `Concurso público e seletivo para ${c.orgao}. Escolaridade: ${c.escolaridade || 'Não informada'}.`,
+                        "hiringOrganization": { "@type": "Organization", "name": c.orgao },
+                        "jobLocation": {
+                            "@type": "Place",
+                            "address": { "@type": "PostalAddress", "addressLocality": c.cidade || "Maranhão", "addressRegion": "MA", "addressCountry": "BR" }
+                        },
+                        "baseSalary": {
+                            "@type": "MonetaryAmount",
+                            "currency": "BRL",
+                            "value": { "@type": "QuantitativeValue", "value": c.salario_max || 0, "unitText": "MONTH" }
+                        }
+                    }
+                }))
+            };
+
+            const script = document.createElement('script');
+            script.id = 'dynamic-schema';
+            script.type = 'application/ld+json';
+            script.text = JSON.stringify(schema);
+            document.head.appendChild(script);
         }
 
         function renderizar(dados) {
             const grid = document.getElementById('grid-concursos');
-            const counter = document.getElementById('stats-counter');
-            counter.innerText = `${dados.length} editais encontrados`;
+            document.getElementById('stats-counter').innerText = `${dados.length} editais encontrados`;
             grid.innerHTML = "";
-
             const favs = JSON.parse(localStorage.getItem('favoritos') || '[]');
 
             dados.forEach(c => {
@@ -185,12 +192,8 @@
                 card.innerHTML = `
                     <div style="background: rgba(255,255,255,0.05); padding: 20px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); height: 100%; display: flex; flex-direction: column;">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                            <span style="background: #2563eb; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.65rem; font-weight: bold;">
-                                ${c.cidade || 'Maranhão'}
-                            </span>
-                            <button onclick="toggleFavorito(this, '${c.orgao}')" style="background:none; border:none; cursor:pointer; font-size: 1.2rem; color:white;">
-                                ${isFav ? '⭐' : '☆'}
-                            </button>
+                            <span style="background: #2563eb; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.65rem; font-weight: bold;">${c.cidade || 'MA'}</span>
+                            <button onclick="toggleFavorito(this, '${c.orgao}')" style="background:none; border:none; cursor:pointer; font-size: 1.2rem; color:white;">${isFav ? '⭐' : '☆'}</button>
                         </div>
                         <h2 style="color: white; font-size: 0.95rem; margin: 10px 0; line-height: 1.3; flex-grow: 1;">${c.orgao}</h2>
                         <div style="background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px; font-size: 0.75rem; color: #cbd5e1; margin-bottom: 15px;">
@@ -210,17 +213,11 @@
             });
         }
 
-        // Funções de Favoritos e UI
         function toggleFavorito(btn, nome) {
             let favs = JSON.parse(localStorage.getItem('favoritos') || '[]');
             const idx = favs.indexOf(nome);
-            if(idx === -1) {
-                favs.push(nome); btn.innerText = '⭐';
-                mostrarToast("Adicionado aos favoritos!", "success");
-            } else {
-                favs.splice(idx, 1); btn.innerText = '☆';
-                mostrarToast("Removido dos favoritos", "error");
-            }
+            if(idx === -1) { favs.push(nome); btn.innerText = '⭐'; mostrarToast("Favoritado!", "success"); }
+            else { favs.splice(idx, 1); btn.innerText = '☆'; mostrarToast("Removido", "error"); }
             localStorage.setItem('favoritos', JSON.stringify(favs));
             atualizarBadgeFavoritos();
         }
@@ -239,14 +236,9 @@
             setTimeout(() => t.remove(), 3000);
         }
 
-        // Busca e Filtros
         function filtrar(termo) {
             const busca = termo.toLowerCase();
-            const res = todosOsConcursos.filter(c => 
-                c.orgao.toLowerCase().includes(busca) || 
-                (c.cidade && c.cidade.toLowerCase().includes(busca))
-            );
-            renderizar(res);
+            renderizar(todosOsConcursos.filter(c => c.orgao.toLowerCase().includes(busca) || (c.cidade && c.cidade.toLowerCase().includes(busca))));
         }
 
         function verTudo() { renderizar(todosOsConcursos); }
@@ -256,7 +248,6 @@
             renderizar(todosOsConcursos.filter(c => favs.includes(c.orgao)));
         }
 
-        // Estatísticas e Gráficos
         function calcularEstatisticas(dados) {
             const sals = dados.map(c => c.salario_max || 0).filter(s => s > 0);
             const media = sals.length ? sals.reduce((a,b)=>a+b)/sals.length : 0;
@@ -267,33 +258,20 @@
         }
 
         function renderizarGraficos(dados) {
-            const isDark = document.body.classList.contains('dark-theme');
-            const labelColor = isDark ? '#fff' : '#333';
-            
+            const labelColor = '#fff';
             if(graficoBarras) graficoBarras.destroy();
             if(graficoPizza) graficoPizza.destroy();
 
-            // Lógica Cidades
             const cidMap = {};
             dados.forEach(c => { const n = c.cidade || "MA"; cidMap[n] = (cidMap[n] || 0) + 1; });
             const top5 = Object.entries(cidMap).sort((a,b) => b[1]-a[1]).slice(0,5);
 
             graficoBarras = new Chart(document.getElementById('graficoVagasCidade'), {
                 type: 'bar',
-                data: {
-                    labels: top5.map(x => x[0]),
-                    datasets: [{ label: 'Editais', data: top5.map(x => x[1]), backgroundColor: '#3b82f6' }]
-                },
-                options: { 
-                    indexAxis: 'y', 
-                    responsive: true, 
-                    maintainAspectRatio: false,
-                    scales: { x: { ticks: { color: labelColor } }, y: { ticks: { color: labelColor } } },
-                    plugins: { legend: { display: false } }
-                }
+                data: { labels: top5.map(x => x[0]), datasets: [{ label: 'Editais', data: top5.map(x => x[1]), backgroundColor: '#3b82f6' }] },
+                options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, scales: { x: { ticks: { color: labelColor } }, y: { ticks: { color: labelColor } } }, plugins: { legend: { display: false } } }
             });
 
-            // Lógica Áreas
             const areas = { 'Educação':0, 'Saúde':0, 'Segurança':0, 'Outros':0 };
             dados.forEach(c => {
                 const txt = (c.orgao + (c.cargos || "")).toLowerCase();
@@ -305,21 +283,15 @@
 
             graficoPizza = new Chart(document.getElementById('graficoVagasArea'), {
                 type: 'doughnut',
-                data: {
-                    labels: Object.keys(areas),
-                    datasets: [{ data: Object.values(areas), backgroundColor: ['#60a5fa', '#34d399', '#f87171', '#94a3b8'] }]
-                },
-                options: { 
-                    responsive: true, 
-                    maintainAspectRatio: false,
-                    plugins: { legend: { position: 'bottom', labels: { color: labelColor } } }
-                }
+                data: { labels: Object.keys(areas), datasets: [{ data: Object.values(areas), backgroundColor: ['#60a5fa', '#34d399', '#f87171', '#94a3b8'] }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: labelColor } } } }
             });
         }
 
         function alternarTema() {
-            document.body.classList.toggle('dark-theme');
-            renderizarGraficos(todosOsConcursos);
+            document.body.classList.toggle('light-theme');
+            const isLight = document.body.classList.contains('light-theme');
+            document.getElementById('darkModeToggle').innerText = isLight ? '☀️' : '🌙';
         }
 
         function manterServidorAcordado() {
