@@ -5,6 +5,7 @@ from psycopg2.extras import RealDictCursor
 import os
 
 app = FastAPI()
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -13,28 +14,40 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Adicione esta rota simples logo após o app.add_middleware
 @app.get("/health")
 async def health_check():
     return {"status": "online"}
 
 def get_db_connection():
-    # Ele vai pegar aquela DATABASE_URL que vc configurou no Render
+    # Pega a URL do Render
     conn = psycopg2.connect(os.getenv("DATABASE_URL"), cursor_factory=RealDictCursor)
     return conn
 
-# ROTA 1: Listar todos (Essa é a que vc quer ver no navegador)
+# ROTA 1: Listar todos - CORRIGIDA
 @app.get("/concursos")
 async def listar_concursos():
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
-        cursor.execute("SELECT * FROM concursos")
+        
+        # SQL ajustado para garantir que a coluna 'cidade' não venha vazia
+        query = """
+            SELECT id, orgao, status, cargos, salario_min, salario_max, 
+            escolaridade, link_oficial, link_inscricao, 
+            COALESCE(cidade, 'Maranhão') as cidade 
+            FROM concursos 
+            ORDER BY id DESC
+        """
+        cursor.execute(query)
         dados = cursor.fetchall()
+        
         cursor.close()
         conn.close()
+        
         return {"items": dados, "total": len(dados)}
     except Exception as e:
+        # Importante para você ver o erro real nos logs do Render
+        print(f"Erro no banco: {e}")
         raise HTTPException(status_code=500, detail=f"Erro no banco: {str(e)}")
 
 # ROTA 2: Buscar por ID
@@ -47,6 +60,7 @@ async def get_concurso(concurso_id: int):
         concurso = cursor.fetchone()
         cursor.close()
         conn.close()
+        
         if not concurso:
             raise HTTPException(status_code=404, detail="Concurso não encontrado")
         return concurso

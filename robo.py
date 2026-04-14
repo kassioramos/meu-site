@@ -1,6 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
 import psycopg2 
+from psycopg2.extras import RealDictCursor
 import hashlib
 from datetime import datetime
 
@@ -35,10 +36,8 @@ def buscar_links_reais(url_noticia):
             t = link.text.lower()
             h = link['href']
             
-            # Busca link que pareça ser o edital
             if "edital" in t or h.endswith('.pdf'):
                 link_edital = h
-            # Busca link que pareça ser de inscrição
             if "inscri" in t or "clique aqui" in t or "página" in t:
                 link_inscricao = h
                 
@@ -51,14 +50,17 @@ def salvar_no_banco(concursos):
         conn = psycopg2.connect(DATABASE_URL)
         cursor = conn.cursor()
         novos_inseridos = 0
+        
         for c in concursos:
+            # SQL ATUALIZADO COM COLUNA CIDADE
             sql = """INSERT INTO concursos 
-                     (orgao, status, cargos, salario_min, salario_max, escolaridade, link_oficial, link_inscricao, hash_edital) 
-                     VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                     (orgao, status, cargos, salario_min, salario_max, escolaridade, link_oficial, link_inscricao, hash_edital, cidade) 
+                     VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                      ON CONFLICT (hash_edital) DO NOTHING"""
             
             hash_id = gerar_hash(c['link_oficial'])
             
+            # VALORES ATUALIZADOS (Incluindo cidade)
             vals = (
                 c.get('orgao', '')[:255], 
                 c.get('status', 'Aberto'), 
@@ -68,12 +70,14 @@ def salvar_no_banco(concursos):
                 c.get('escolaridade', 'Não Informado'),
                 c.get('link_oficial'), 
                 c.get('link_inscricao'), 
-                hash_id
+                hash_id,
+                c.get('cidade', 'Maranhão') # Pega a cidade do scraper ou define padrão
             )
             
             cursor.execute(sql, vals)
             if cursor.rowcount > 0:
                 novos_inseridos += 1
+                
         conn.commit()
         print(f"\n[BANCO] Sucesso: {novos_inseridos} novos editais adicionados ao Supabase.")
         cursor.close()
@@ -97,8 +101,6 @@ def scraper_g1():
                 texto = link_tag.text.strip().upper()
                 
                 if any(p in texto for p in TERMOS_BUSCA):
-                    print(f"   - Investigando matéria: {texto[:40]}...")
-                    # Aqui acontece a mágica: ele entra no G1 para buscar o link real
                     edital, inscricao = buscar_links_reais(url_noticia)
                     
                     concursos.append({
@@ -109,7 +111,8 @@ def scraper_g1():
                         "salario_max": 0.00,
                         "escolaridade": "Ver Edital",
                         "link_oficial": edital, 
-                        "link_inscricao": inscricao
+                        "link_inscricao": inscricao,
+                        "cidade": "Maranhão"
                     })
         return concursos
     except: return []
@@ -133,7 +136,8 @@ def scraper_sousandrade():
                     "salario_max": 0.00,
                     "escolaridade": "Ver Edital",
                     "link_oficial": url_final,
-                    "link_inscricao": url_final
+                    "link_inscricao": url_final,
+                    "cidade": "Maranhão"
                 })
         return concursos
     except: return []
@@ -157,7 +161,8 @@ def scraper_pci():
                     "salario_max": 0.00,
                     "escolaridade": "Ver no Site",
                     "link_oficial": link_tag['href'],
-                    "link_inscricao": link_tag['href']
+                    "link_inscricao": link_tag['href'],
+                    "cidade": "Maranhão"
                 })
         return concursos
     except: return []
@@ -182,7 +187,8 @@ def scraper_doema():
                     "salario_max": 0.00,
                     "escolaridade": "Ver DOE",
                     "link_oficial": url_final,
-                    "link_inscricao": url_final
+                    "link_inscricao": url_final,
+                    "cidade": "Maranhão"
                 })
         return concursos
     except: return []
@@ -193,23 +199,10 @@ if __name__ == "__main__":
     print("=== INICIANDO ROBÔ - ENVIANDO PARA O SUPABASE ===\n")
     lista_geral = []
     
-    # Rodando os scrapers
     lista_geral.extend(scraper_g1())
     lista_geral.extend(scraper_sousandrade())
     lista_geral.extend(scraper_pci())
     lista_geral.extend(scraper_doema())
-    
-    # TESTE MANUAL (Opcional, pode remover se quiser)
-    lista_geral.append({
-        "orgao": "TESTE DE CONEXÃO LUCAS",
-        "status": "Aberto",
-        "cargos": "Desenvolvedor Python",
-        "salario_min": 1500.00,
-        "salario_max": 8000.00,
-        "escolaridade": "Superior",
-        "link_oficial": "https://google.com/edital-" + datetime.now().strftime("%H%M"),
-        "link_inscricao": "https://google.com/inscricao-" + datetime.now().strftime("%H%M")
-    })
     
     if lista_geral:
         print(f"\nTotal de editais capturados: {len(lista_geral)}")
