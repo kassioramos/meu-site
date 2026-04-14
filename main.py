@@ -15,36 +15,29 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ROTA RAIZ: Evita erro 404 quando o Render ou o navegador acessa o link principal
+# ROTA RAIZ
 @app.get("/")
 async def root():
     return {"status": "Online", "message": "Concursos Maranhão API"}
 
-# ROTA HEALTH: Usada para monitoramento e para manter o servidor acordado
+# ROTA HEALTH
 @app.get("/health")
 async def health_check():
     return {"status": "healthy"}
 
 def get_db_connection():
-    # Pega a URL do Banco de Dados das variáveis de ambiente do Render
+    # Certifique-se de que a variável DATABASE_URL esteja configurada no Render
     conn = psycopg2.connect(os.getenv("DATABASE_URL"), cursor_factory=RealDictCursor)
     return conn
 
-# ROTA 1: Listar todos os concursos
+# ROTA 1: Listar todos os concursos (VERSÃO CORRIGIDA)
 @app.get("/concursos")
 async def listar_concursos():
+    conn = None
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
         
-# ROTA 1: Listar todos os concursos (CORRIGIDA)
-@app.get("/concursos")
-async def listar_concursos():
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        
-        # SQL usando o nome real da coluna: salario_max
         query = """
             SELECT id, orgao, status, cargos, salario_min, 
             COALESCE(salario_max, 0) as salario_max, 
@@ -57,31 +50,37 @@ async def listar_concursos():
         dados = cursor.fetchall()
         
         cursor.close()
-        conn.close()
-        
         return {"items": dados, "total": len(dados)}
+    
     except Exception as e:
         print(f"Erro no banco: {e}")
         raise HTTPException(status_code=500, detail=f"Erro no banco: {str(e)}")
-        return {"items": dados, "total": len(dados)}
-    except Exception as e:
-        print(f"Erro no banco: {e}")
-        raise HTTPException(status_code=500, detail=f"Erro no banco: {str(e)}")
+    
+    finally:
+        if conn:
+            conn.close()
 
 # ROTA 2: Buscar detalhes de um concurso por ID
 @app.get("/concursos/{concurso_id}")
 async def get_concurso(concurso_id: int):
+    conn = None
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute("SELECT * FROM concursos WHERE id = %s", (concurso_id,))
         concurso = cursor.fetchone()
         cursor.close()
-        conn.close()
         
         if not concurso:
             raise HTTPException(status_code=404, detail="Concurso não encontrado")
         return concurso
+        
+    except HTTPException as he:
+        raise he
     except Exception as e:
         print(f"Erro ao buscar ID: {e}")
         raise HTTPException(status_code=500, detail="Erro interno no servidor")
+    
+    finally:
+        if conn:
+            conn.close()
