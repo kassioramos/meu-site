@@ -33,61 +33,96 @@
             border-bottom: 1px solid var(--border); 
             padding-bottom: 15px; 
         }
-        .detalhes-header h1 { color: var(--primary); margin-bottom: 10px; }
+        .detalhes-header h1 { color: var(--primary); margin-bottom: 10px; font-size: 1.8rem; line-height: 1.2; }
         
+        /* Grid de Info Estilizado como Cards */
         .grid-info {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
             margin-bottom: 30px;
+        }
+        .info-item {
+            background: rgba(var(--primary-rgb), 0.05);
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            text-align: center;
         }
         .info-item label {
             display: block;
-            font-size: 11px;
+            font-size: 10px;
             text-transform: uppercase;
-            font-weight: 700;
+            font-weight: 800;
             color: var(--text-sub);
-            margin-bottom: 4px;
+            margin-bottom: 6px;
+            letter-spacing: 0.5px;
         }
         .info-item span {
-            font-size: 1.1rem;
-            font-weight: 600;
+            font-size: 1rem;
+            font-weight: 700;
             color: var(--text-main);
+            display: block;
         }
+
+        /* Seção Sobre com melhor legibilidade */
         .sobre-secao {
             line-height: 1.8;
             color: var(--text-main);
             background: var(--bg);
-            padding: 20px;
-            border-radius: 8px;
+            padding: 25px;
+            border-radius: 12px;
+            border-left: 4px solid var(--primary);
         }
+        .sobre-secao h3 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            color: var(--primary);
+            font-size: 1.2rem;
+        }
+        .sobre-secao p {
+            margin: 0;
+            white-space: pre-line; /* Mantém quebras de linha do banco */
+        }
+
         .btn-edital {
             display: block;
             width: 100%;
             text-align: center;
             background: var(--primary);
-            color: white;
-            padding: 15px;
+            color: white !important;
+            padding: 16px;
             border-radius: 8px;
             text-decoration: none;
             font-weight: 700;
             margin-top: 15px;
-            transition: transform 0.2s, opacity 0.2s;
+            transition: 0.3s;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
         .btn-edital:hover {
             transform: translateY(-2px);
-            opacity: 0.9;
+            filter: brightness(1.1);
         }
         .btn-inscricao {
-            background: var(--success);
-            margin-top: 15px;
+            background: #10b981; /* Cor de sucesso */
         }
         .btn-disabled {
             background: #94a3b8;
             cursor: not-allowed;
+            box-shadow: none;
         }
         .container-acoes {
             margin-top: 30px;
+        }
+        .status-tag {
+            display: inline-block;
+            background: #10b981;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            margin-bottom: 10px;
         }
     </style>
 </head>
@@ -122,30 +157,28 @@
             if (!response.ok) throw new Error('Falha na resposta');
             const c = await response.json();
 
-            // Melhoria na exibição do salário para evitar R$ 0,00
+            // Lógica de salário idêntica à solicitada
             const salarioNumerico = parseFloat(c.salario_max);
             const salario = salarioNumerico > 0 
                 ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(salarioNumerico)
                 : 'Consultar Edital';
 
-            const data = c.data_prova ? new Date(c.data_prova).toLocaleDateString('pt-BR') : 'A definir';
-            
-            // Validação dos links (Edital e Inscrição)
             const temEdital = c.link_oficial && c.link_oficial.startsWith('http');
             const temInscricao = c.link_inscricao && c.link_inscricao.startsWith('http');
 
             const botoesHTML = `
                 <div class="container-acoes">
                     ${temEdital 
-                        ? `<a href="${c.link_oficial}" target="_blank" class="btn-edital">Acessar Edital Oficial</a>`
+                        ? `<a href="${c.link_oficial}" target="_blank" class="btn-edital">📄 Acessar Edital Oficial</a>`
                         : `<div class="btn-edital btn-disabled">Edital não disponível</div>`}
                     
                     ${temInscricao 
-                        ? `<a href="${c.link_inscricao}" target="_blank" class="btn-edital btn-inscricao">Fazer Inscrição Agora</a>`
+                        ? `<a href="${c.link_inscricao}" target="_blank" class="btn-edital btn-inscricao">📝 Fazer Inscrição Agora</a>`
                         : ''}
                 </div>
             `;
-container.innerHTML = `
+
+            container.innerHTML = `
                 <div class="detalhes-header">
                     <span class="status-tag">${c.status || 'Aberto'}</span>
                     <h1>${c.orgao}</h1>
@@ -153,33 +186,27 @@ container.innerHTML = `
 
                 <div class="grid-info">
                     <div class="info-item">
-                        <label>Cargos</label>
-                        <span>${c.cargos || 'Consultar Edital'}</span>
+                        <label>👥 Vagas / Cargos</label>
+                        <span>${c.cargos || 'Ver Edital'}</span>
                     </div>
                     <div class="info-item">
-                        <label>Escolaridade</label>
+                        <label>🎓 Escolaridade</label>
                         <span>${c.escolaridade || 'Não informada'}</span>
                     </div>
                     <div class="info-item">
-                        <label>Faixa Salarial</label>
-                        <span style="color: var(--success);">
-                            ${c.salario_min > 0 ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(c.salario_min) : '---'} 
-                            até ${salario}
-                        </span>
+                        <label>💰 Salário Máximo</label>
+                        <span style="color: #10b981;">${salario}</span>
                     </div>
                     <div class="info-item">
-                        <label>Localização</label>
+                        <label>📍 Localização</label>
                         <span>${c.cidade || 'Maranhão'}</span>
                     </div>
                 </div>
 
-
-<div class="sobre-secao">
-    <h3>Sobre este concurso</h3>
-    <p>
-        ${c.sobre_concurso ? c.sobre_concurso : `Este certame é destinado ao provimento de vagas para o órgão <strong>${c.orgao}</strong>. Recomendamos a leitura atenta de todos os requisitos de escolaridade e etapas de avaliação descritos no documento oficial.`}
-    </p>
-</div>
+                <div class="sobre-secao">
+                    <h3>Resumo do Certame</h3>
+                    <p>${c.sobre_concurso ? c.sobre_concurso : `Este certame é destinado ao provimento de vagas para o órgão <strong>${c.orgao}</strong>. Recomendamos a leitura atenta do edital para conferir requisitos e prazos.`}</p>
+                </div>
 
                 ${botoesHTML}
             `;
