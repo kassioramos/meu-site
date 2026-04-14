@@ -175,6 +175,11 @@ function renderizar(dados) {
             ? new Date(c.fim_inscricao).toLocaleDateString('pt-BR') 
             : 'Ver edital';
 
+        // Formatação da Data da Prova
+        const dataProva = c.data_prova 
+            ? new Date(c.data_prova).toLocaleDateString('pt-BR') 
+            : 'A definir';
+
         const card = document.createElement('div');
         card.className = 'concurso-card';
         card.innerHTML = `
@@ -193,14 +198,22 @@ function renderizar(dados) {
                     ${c.orgao}
                 </h3>
 
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 15px; background: rgba(255,255,255,0.03); padding: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px 8px; margin-bottom: 15px; background: rgba(255,255,255,0.03); padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
                     <div>
-                        <small style="color: #64748b; font-size: 0.6rem; display: block; text-transform: uppercase; font-weight: 700;">🎓 Nível</small>
+                        <small style="color: #64748b; font-size: 0.55rem; display: block; text-transform: uppercase; font-weight: 700;">🎓 Nível</small>
                         <span style="color: #f1f5f9; font-size: 0.75rem; font-weight: 600;">${c.escolaridade || 'Ver edital'}</span>
                     </div>
                     <div>
-                        <small style="color: #64748b; font-size: 0.6rem; display: block; text-transform: uppercase; font-weight: 700;">📅 Inscrições</small>
-                        <span style="color: #f1f5f9; font-size: 0.75rem; font-weight: 600;">${prazo}</span>
+                        <small style="color: #64748b; font-size: 0.55rem; display: block; text-transform: uppercase; font-weight: 700;">📝 Banca</small>
+                        <span style="color: #f1f5f9; font-size: 0.75rem; font-weight: 600;">${c.banca || 'Própria'}</span>
+                    </div>
+                    <div>
+                        <small style="color: #64748b; font-size: 0.55rem; display: block; text-transform: uppercase; font-weight: 700;">📅 Inscrições</small>
+                        <span style="color: #f1f5f9; font-size: 0.75rem; font-weight: 600;">Até ${prazo}</span>
+                    </div>
+                    <div>
+                        <small style="color: #64748b; font-size: 0.55rem; display: block; text-transform: uppercase; font-weight: 700;">✍️ Prova</small>
+                        <span style="color: #f1f5f9; font-size: 0.75rem; font-weight: 600;">${dataProva}</span>
                     </div>
                 </div>
 
