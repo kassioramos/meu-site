@@ -37,9 +37,10 @@ async def listar_concursos():
         conn = get_db_connection()
         cursor = conn.cursor()
         
-        # SQL ajustado para garantir que a coluna 'cidade' não venha vazia (COALESCE)
+# SQL com ALIAS (as) para garantir que o JavaScript receba 'salario_max'
         query = """
-            SELECT id, orgao, status, cargos, salario_min, salario_max, 
+            SELECT id, orgao, status, cargos, salario_min, 
+            COALESCE(salario_maximo, 0) as salario_max, 
             escolaridade, link_oficial, link_inscricao, 
             COALESCE(cidade, 'Maranhão') as cidade 
             FROM concursos 
