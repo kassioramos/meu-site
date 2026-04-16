@@ -1,3 +1,4 @@
+// ✅ SEO META TAG
 export async function generateMetadata({ params }: any) {
   const res = await fetch(
     `https://meu-site-aodm.onrender.com/concursos/${params.id}`,
@@ -12,11 +13,28 @@ export async function generateMetadata({ params }: any) {
   };
 }
 
-// ✅ FUNÇÃO ÚNICA (corrigido)
+// ✅ FORMATAR CIDADE (AGORA NO LUGAR CERTO)
+function formatarCidade(cidade: string) {
+  return cidade
+    .replace("-", " - ")
+    .replace(/([a-z])([A-Z])/g, "$1 $2");
+}
+
+// ✅ TEXTO SEO
 function gerarTexto(c: any) {
-  return `O concurso ${c.orgao} na cidade de ${c.cidade} oferece salário de até R$ ${c.salario_max}. 
-Essa é uma excelente oportunidade para quem busca estabilidade no Maranhão. 
-Confira requisitos, cargos e detalhes completos neste edital atualizado.`;
+  const salario = c.salario_max > 0 
+    ? `com salários de até R$ ${c.salario_max}` 
+    : `com remuneração conforme edital`;
+
+  return `
+O concurso ${c.orgao} na cidade de ${c.cidade} é uma oportunidade importante para quem busca estabilidade no serviço público no Maranhão.
+
+O edital oferece vagas ${salario}, contemplando diferentes níveis de escolaridade e áreas de atuação.
+
+Os interessados devem acompanhar os prazos de inscrição e todas as exigências descritas no edital oficial.
+
+Este processo seletivo pode ser uma excelente porta de entrada para carreira pública em ${c.cidade}.
+`;
 }
 
 // ✅ BUSCA DO CONCURSO
@@ -41,8 +59,11 @@ export default async function Page({ params }: any) {
     <div style={{ padding: "20px" }}>
       <h1>{c.orgao}</h1>
 
-      <p><strong>Cidade:</strong> {c.cidade}</p>
-      <p><strong>Salário:</strong> R$ {c.salario_max}</p>
+      <p><strong>Cidade:</strong> {formatarCidade(c.cidade)}</p>
+
+      <p><strong>Salário:</strong> 
+        {c.salario_max > 0 ? `R$ ${c.salario_max}` : "A consultar no edital"}
+      </p>
 
       <h2>Sobre o concurso</h2>
       <p>{gerarTexto(c)}</p>
