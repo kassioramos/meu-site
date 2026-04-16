@@ -1,4 +1,4 @@
-// ✅ SEO META TAG
+// 🔥 SEO META TAG
 export async function generateMetadata({ params }: any) {
   const res = await fetch(
     `https://meu-site-aodm.onrender.com/concursos/${params.id}`,
@@ -13,31 +13,32 @@ export async function generateMetadata({ params }: any) {
   };
 }
 
-// ✅ FORMATAR CIDADE (AGORA NO LUGAR CERTO)
+// 🔥 FORMATAR CIDADE
 function formatarCidade(cidade: string) {
   return cidade
     .replace("-", " - ")
     .replace(/([a-z])([A-Z])/g, "$1 $2");
 }
 
-// ✅ TEXTO SEO
+// 🔥 TEXTO MELHORADO
 function gerarTexto(c: any) {
-  const salario = c.salario_max > 0 
-    ? `com salários de até R$ ${c.salario_max}` 
-    : `com remuneração conforme edital`;
+  const salario =
+    c.salario_max > 0
+      ? `com salários de até R$ ${c.salario_max}`
+      : `com remuneração definida em edital`;
 
   return `
-O concurso ${c.orgao} na cidade de ${c.cidade} é uma oportunidade importante para quem busca estabilidade no serviço público no Maranhão.
+O edital do ${c.orgao} traz oportunidades para atuação na região de ${c.cidade}.
 
-O edital oferece vagas ${salario}, contemplando diferentes níveis de escolaridade e áreas de atuação.
+O processo seletivo conta ${salario}, abrangendo diferentes níveis de escolaridade.
 
-Os interessados devem acompanhar os prazos de inscrição e todas as exigências descritas no edital oficial.
+Para participar, é fundamental acompanhar os prazos e requisitos descritos no edital oficial.
 
-Este processo seletivo pode ser uma excelente porta de entrada para carreira pública em ${c.cidade}.
+Essa pode ser uma excelente oportunidade para ingressar no serviço público em ${c.cidade}.
 `;
 }
 
-// ✅ BUSCA DO CONCURSO
+// 🔥 BUSCA CONCURSO
 async function getConcurso(id: string) {
   const res = await fetch(
     `https://meu-site-aodm.onrender.com/concursos/${id}`,
@@ -51,7 +52,7 @@ async function getConcurso(id: string) {
   return res.json();
 }
 
-// ✅ PÁGINA
+// 🔥 PAGE
 export default async function Page({ params }: any) {
   const c = await getConcurso(params.id);
 
@@ -59,10 +60,15 @@ export default async function Page({ params }: any) {
     <div style={{ padding: "20px" }}>
       <h1>{c.orgao}</h1>
 
-      <p><strong>Cidade:</strong> {formatarCidade(c.cidade)}</p>
+      <p>
+        <strong>Cidade:</strong> {formatarCidade(c.cidade)}
+      </p>
 
-      <p><strong>Salário:</strong> 
-        {c.salario_max > 0 ? `R$ ${c.salario_max}` : "A consultar no edital"}
+      <p>
+        <strong>Salário:</strong>{" "}
+        {c.salario_max > 0
+          ? `R$ ${c.salario_max}`
+          : "A consultar no edital"}
       </p>
 
       <h2>Sobre o concurso</h2>
