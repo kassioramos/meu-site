@@ -1,5 +1,9 @@
 export async function generateMetadata({ params }: any) {
-  const res = await fetch(`https://meu-site-aodm.onrender.com/concursos/${params.id}`);
+  const res = await fetch(
+    `https://meu-site-aodm.onrender.com/concursos/${params.id}`,
+    { cache: "no-store" }
+  );
+
   const c = await res.json();
 
   return {
@@ -8,32 +12,28 @@ export async function generateMetadata({ params }: any) {
   };
 }
 
+// ✅ FUNÇÃO ÚNICA (corrigido)
 function gerarTexto(c: any) {
-  return `
-  O concurso ${c.orgao} em ${c.cidade} é uma excelente oportunidade para quem busca estabilidade no Maranhão. 
-  Com salários que podem chegar a R$ ${c.salario_max}, o certame oferece vagas para diferentes níveis de escolaridade.
-
-  Os candidatos devem ficar atentos aos prazos de inscrição e aos requisitos exigidos no edital oficial. 
-  Este processo seletivo é uma ótima chance para ingressar no serviço público.
-
-  Confira abaixo todas as informações detalhadas, incluindo cargos, salários e como se inscrever.
-  `;
+  return `O concurso ${c.orgao} na cidade de ${c.cidade} oferece salário de até R$ ${c.salario_max}. 
+Essa é uma excelente oportunidade para quem busca estabilidade no Maranhão. 
+Confira requisitos, cargos e detalhes completos neste edital atualizado.`;
 }
 
+// ✅ BUSCA DO CONCURSO
 async function getConcurso(id: string) {
-  const res = await fetch(`https://meu-site-aodm.onrender.com/concursos/${id}`, {
-    cache: "no-store"
-  });
+  const res = await fetch(
+    `https://meu-site-aodm.onrender.com/concursos/${id}`,
+    { cache: "no-store" }
+  );
+
+  if (!res.ok) {
+    throw new Error("Erro ao buscar concurso");
+  }
 
   return res.json();
 }
 
-function gerarTexto(c: any) {
-  return `O concurso ${c.orgao} na cidade de ${c.cidade} oferece salário de até R$ ${c.salario_max}. 
-  Essa é uma excelente oportunidade para quem busca estabilidade no Maranhão. 
-  Confira requisitos, cargos e detalhes completos neste edital atualizado.`;
-}
-
+// ✅ PÁGINA
 export default async function Page({ params }: any) {
   const c = await getConcurso(params.id);
 
@@ -47,7 +47,7 @@ export default async function Page({ params }: any) {
       <h2>Sobre o concurso</h2>
       <p>{gerarTexto(c)}</p>
 
-      <a href={c.link_oficial} target="_blank">
+      <a href={c.link_oficial} target="_blank" rel="noopener noreferrer">
         📄 Ver edital oficial
       </a>
     </div>

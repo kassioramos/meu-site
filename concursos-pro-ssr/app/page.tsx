@@ -17,6 +17,8 @@ export default async function Home() {
   return (
     <main style={{ padding: "20px" }}>
       <h1>Concursos Maranhão Pro</h1>
+      <a href="/cidade/sao-luis">São Luís</a>
+<a href="/cargo/professor">Professor</a>
 
       {concursos.map((c: any) => (
         <div key={c.id} style={{ border: "1px solid #ccc", margin: "10px", padding: "10px" }}>
