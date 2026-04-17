@@ -16,32 +16,41 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# --- FUNÇÃO DE SEO DINÂMICO ---
 def gerar_descricao_seo(concurso):
-    # Formata o órgão e cidade para não ficarem em CAIXA ALTA
+    # Formata o órgão e cidade
     orgao = str(concurso['orgao']).title()
-    cidade = str(concurso['cidade']).title()
+    cidade = str(concurso.get('cidade', 'Maranhão')).title()
     
+    # --- NOVA LÓGICA DE BANCA ---
+    # Pegamos o valor da coluna 'banca' (que você editou no Supabase)
+    banca_db = str(concurso.get('banca', '')).strip()
+
+    # Se estiver nulo ou vazio no banco, usamos o termo padrão
+    if not banca_db or banca_db.lower() in ['nulo', 'null', 'none', '']:
+        banca_final = "comissão própria"
+    else:
+        banca_final = f"organização de {banca_db}"
+
     intros = [
-        f"Excelente oportunidade aberta no órgão {orgao}.",
-        f"O edital para {orgao} em {cidade} já está disponível para consulta.",
-        f"Quem busca estabilidade no Maranhão deve conferir a vaga para {orgao}."
+        f"Excelente oportunidade aberta no órgão {orgao} sob {banca_final}.",
+        f"O edital para {orgao} em {cidade} já está disponível, organizado por {banca_final}.",
+        f"Quem busca estabilidade no Maranhão deve conferir a vaga para {orgao} ({banca_final})."
     ]
     
+    # Lógica de salário (mantida a sua)
     detalhes = ""
     salario = concurso.get('salario_max', 0)
-    
     if salario and salario > 5000:
-        detalhes += f" Com remuneração atrativa de R$ {salario:.2f}, este certame é um dos destaques na região."
+        detalhes += f" Com remuneração atrativa de R$ {salario:.2f}, este certame é um dos destaques."
     elif salario and salario > 0:
         detalhes += f" O processo seletivo oferece vencimentos de até R$ {salario:.2f}."
     else:
-        detalhes += " A remuneração detalhada e os benefícios podem ser conferidos diretamente no edital oficial."
+        detalhes += " A remuneração pode ser conferida no edital oficial."
 
     ctas = [
         " Fique atento aos prazos e não perca o período de inscrição.",
-        " Prepare-se com antecedência para garantir sua vaga neste concurso.",
-        " Verifique os requisitos de escolaridade e cargos no documento anexo."
+        " Prepare-se com antecedência para garantir sua vaga.",
+        " Verifique os requisitos no edital."
     ]
 
     return f"{random.choice(intros)}{detalhes}{random.choice(ctas)}"
@@ -70,12 +79,14 @@ async def listar_concursos():
         # SQL atualizado: 
         # 1. DISTINCT ON (orgao) evita repetir o mesmo órgão várias vezes seguidas
         # 2. Ordenamos por orgao e depois ID para o DISTINCT funcionar
+    # SQL atualizado para incluir a coluna 'banca'
         query = """
             SELECT DISTINCT ON (orgao) 
             id, orgao, status, cargos, salario_min, 
             COALESCE(salario_max, 0) as salario_max, 
             escolaridade, link_oficial, link_inscricao, 
-            COALESCE(cidade, 'Maranhão') as cidade 
+            COALESCE(cidade, 'Maranhão') as cidade,
+            banca  -- <--- ADICIONE ESTA LINHA
             FROM concursos 
             ORDER BY orgao, id DESC
         """
