@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
+
     <title>Concursos Maranhão Pro 2026 | Vagas, Editais e Seletivos MA</title>
     <meta name="description" content="Editais abertos no Maranhão: SEBRAE, IFMA, UFMA e Prefeituras. Salários até R$ 8.000. Lista atualizada diariamente com vagas de estágio e concursos públicos.">
     <meta name="keywords" content="concursos maranhão 2026, seletivo ma, vagas de emprego maranhão, edital uema, concurso prefeitura ma">
@@ -39,14 +40,18 @@
         * { font-family: 'Inter', sans-serif; box-sizing: border-box; }
         body { margin: 0; transition: background 0.3s; background-color: #0f172a; color: white; }
         body.light-theme { background-color: #f8fafc; color: #1e293b; }
+        
         #toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 9999; }
         .toast { padding: 12px 20px; margin-top: 10px; border-radius: 8px; color: white; font-weight: 500; box-shadow: 0 4px 12px rgba(0,0,0,0.15); display: flex; align-items: center; gap: 10px; animation: slideIn 0.3s ease-out; }
         @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
         .toast-success { background-color: #10b981; }
         .toast-error { background-color: #ef4444; }
+
+        header { padding: 40px 20px; text-align: center; background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%); }
         #grid-concursos { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; padding: 20px; max-width: 1200px; margin: 0 auto; }
         .concurso-card { width: 100%; transition: transform 0.2s; }
         .concurso-card:hover { transform: translateY(-5px); }
+        
         .chart-container { position: relative; height: 280px; width: 100%; }
         .skeleton { animation: pulse 1.5s infinite ease-in-out; background: rgba(255,255,255,0.05); border-radius: 12px; }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
@@ -54,7 +59,8 @@
 
     <meta name="google-site-verification" content="0Z_754Cw5srRkVIMK3NOaLltkeMBk3HrY17mFIivPGg" />
 </head>
-<body class="dark-theme"> 
+
+<body class="dark-theme">
     <div id="toast-container"></div>
     <button id="darkModeToggle" class="dark-mode-btn" title="Alternar Tema" onclick="alternarTema()">🌙</button>
 
@@ -125,13 +131,13 @@
                 const response = await fetch(`${API_URL}/concursos`);
                 const data = await response.json();
                 todosOsConcursos = data.items || [];
-                
+
                 if (todosOsConcursos.length > 0) {
                     renderizar(todosOsConcursos);
                     renderizarGraficos(todosOsConcursos);
                     calcularEstatisticas(todosOsConcursos);
                     atualizarBadgeFavoritos();
-                    gerarSchemaMarkup(todosOsConcursos); // Chamada da função corrigida
+                    gerarSchemaMarkup(todosOsConcursos);
                 } else {
                     grid.innerHTML = "<p style='color:white; grid-column: 1/-1; text-align:center;'>Nenhum concurso ativo no momento.</p>";
                 }
@@ -140,7 +146,6 @@
             }
         }
 
-        // VERSÃO CORRIGIDA E "BLINDADA" PARA O GOOGLE SEARCH CONSOLE
         function gerarSchemaMarkup(dados) {
             const oldScript = document.getElementById('dynamic-schema');
             if (oldScript) oldScript.remove();
@@ -155,9 +160,9 @@
                     "item": {
                         "@type": "JobPosting",
                         "title": c.orgao,
-                        "description": `Oportunidade de concurso/seletivo para ${c.orgao}. Escolaridade: ${c.escolaridade || 'Não informada'}. Confira o edital completo no Concursos Maranhão Pro.`,
-                        "datePosted": new Date().toISOString().split('T')[0], 
-                        "validThrough": "2026-12-31T23:59:59Z", 
+                        "description": c.descricao_seo || `Oportunidade em ${c.orgao}`,
+                        "datePosted": new Date().toISOString().split('T')[0],
+                        "validThrough": "2026-12-31T23:59:59Z",
                         "employmentType": "FULL_TIME",
                         "hiringOrganization": {
                             "@type": "Organization",
@@ -205,7 +210,7 @@
                 const isFav = favs.includes(c.orgao);
                 const valorSalario = c.salario_max || 0;
                 const fmtSalario = valorSalario > 0 ? `R$ ${Number(valorSalario).toLocaleString('pt-BR')}` : 'Ver edital';
-                
+
                 const card = document.createElement('div');
                 card.className = 'concurso-card';
                 card.innerHTML = `
@@ -214,11 +219,18 @@
                             <span style="background: #2563eb; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.65rem; font-weight: bold;">${c.cidade || 'MA'}</span>
                             <button onclick="toggleFavorito(this, '${c.orgao}')" style="background:none; border:none; cursor:pointer; font-size: 1.2rem; color:white;">${isFav ? '⭐' : '☆'}</button>
                         </div>
-                        <h2 style="color: white; font-size: 0.95rem; margin: 10px 0; line-height: 1.3; flex-grow: 1;">${c.orgao}</h2>
-                        <div style="background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px; font-size: 0.75rem; color: #cbd5e1; margin-bottom: 15px;">
+                        
+                        <h2 style="color: white; font-size: 0.95rem; margin: 10px 0; line-height: 1.3;">${c.orgao}</h2>
+                        
+                        <p style="font-size: 0.75rem; color: #94a3b8; line-height: 1.4; margin-bottom: 15px;">
+                            ${c.descricao_seo || 'Acompanhe as últimas informações sobre este edital em nosso portal.'}
+                        </p>
+
+                        <div style="background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px; font-size: 0.75rem; color: #cbd5e1; margin-bottom: 15px; flex-grow: 1;">
                             <p style="margin: 3px 0;"><strong>Escolaridade:</strong> ${c.escolaridade || 'Diversos'}</p>
                             <p style="margin: 3px 0;"><strong>Banca:</strong> ${c.banca || 'Própria'}</p>
                         </div>
+                        
                         <div style="display: flex; justify-content: space-between; align-items: center;">
                             <div>
                                 <small style="display:block; color:#94a3b8; font-size: 0.6rem;">SALÁRIO ATÉ</small>
@@ -232,12 +244,18 @@
             });
         }
 
-        // ... Restante das suas funções (toggleFavorito, mostrarToast, filtrar, etc) mantidas para não quebrar a lógica ...
         function toggleFavorito(btn, nome) {
             let favs = JSON.parse(localStorage.getItem('favoritos') || '[]');
             const idx = favs.indexOf(nome);
-            if(idx === -1) { favs.push(nome); btn.innerText = '⭐'; mostrarToast("Favoritado!", "success"); }
-            else { favs.splice(idx, 1); btn.innerText = '☆'; mostrarToast("Removido", "error"); }
+            if (idx === -1) {
+                favs.push(nome);
+                btn.innerText = '⭐';
+                mostrarToast("Adicionado aos favoritos!", "success");
+            } else {
+                favs.splice(idx, 1);
+                btn.innerText = '☆';
+                mostrarToast("Removido dos favoritos", "error");
+            }
             localStorage.setItem('favoritos', JSON.stringify(favs));
             atualizarBadgeFavoritos();
         }
@@ -258,11 +276,18 @@
 
         function filtrar(termo) {
             const busca = termo.toLowerCase();
-            renderizar(todosOsConcursos.filter(c => c.orgao.toLowerCase().includes(busca) || (c.cidade && c.cidade.toLowerCase().includes(busca))));
+            const filtrados = todosOsConcursos.filter(c => 
+                c.orgao.toLowerCase().includes(busca) || 
+                (c.cidade && c.cidade.toLowerCase().includes(busca))
+            );
+            renderizar(filtrados);
         }
 
-        function verTudo() { renderizar(todosOsConcursos); }
-        
+        function verTudo() { 
+            document.getElementById('inputBusca').value = '';
+            renderizar(todosOsConcursos); 
+        }
+
         function filtrarFavoritos() {
             const favs = JSON.parse(localStorage.getItem('favoritos') || '[]');
             renderizar(todosOsConcursos.filter(c => favs.includes(c.orgao)));
@@ -270,41 +295,60 @@
 
         function calcularEstatisticas(dados) {
             const sals = dados.map(c => c.salario_max || 0).filter(s => s > 0);
-            const media = sals.length ? sals.reduce((a,b)=>a+b)/sals.length : 0;
+            const media = sals.length ? sals.reduce((a, b) => a + b) / sals.length : 0;
             const maior = sals.length ? Math.max(...sals) : 0;
-            const fmt = val => new Intl.NumberFormat('pt-BR', {style:'currency', currency:'BRL'}).format(val);
+            const fmt = val => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
             document.getElementById('media-salarial').innerText = fmt(media);
             document.getElementById('maior-salario').innerText = fmt(maior);
         }
 
         function renderizarGraficos(dados) {
             const labelColor = '#fff';
-            if(graficoBarras) graficoBarras.destroy();
-            if(graficoPizza) graficoPizza.destroy();
+            if (graficoBarras) graficoBarras.destroy();
+            if (graficoPizza) graficoPizza.destroy();
 
             const cidMap = {};
             dados.forEach(c => { const n = c.cidade || "MA"; cidMap[n] = (cidMap[n] || 0) + 1; });
-            const top5 = Object.entries(cidMap).sort((a,b) => b[1]-a[1]).slice(0,5);
+            const top5 = Object.entries(cidMap).sort((a, b) => b[1] - a[1]).slice(0, 5);
 
             graficoBarras = new Chart(document.getElementById('graficoVagasCidade'), {
                 type: 'bar',
-                data: { labels: top5.map(x => x[0]), datasets: [{ label: 'Editais', data: top5.map(x => x[1]), backgroundColor: '#3b82f6' }] },
-                options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, scales: { x: { ticks: { color: labelColor } }, y: { ticks: { color: labelColor } } }, plugins: { legend: { display: false } } }
+                data: {
+                    labels: top5.map(x => x[0]),
+                    datasets: [{ label: 'Editais', data: top5.map(x => x[1]), backgroundColor: '#3b82f6' }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { ticks: { color: labelColor } },
+                        y: { ticks: { color: labelColor } }
+                    },
+                    plugins: { legend: { display: false } }
+                }
             });
 
-            const areas = { 'Educação':0, 'Saúde':0, 'Segurança':0, 'Outros':0 };
+            const areas = { 'Educação': 0, 'Saúde': 0, 'Segurança': 0, 'Outros': 0 };
             dados.forEach(c => {
                 const txt = (c.orgao + (c.cargos || "")).toLowerCase();
-                if(txt.includes('educ') || txt.includes('prof')) areas['Educação']++;
-                else if(txt.includes('saud') || txt.includes('med')) areas['Saúde']++;
-                else if(txt.includes('polic') || txt.includes('guarda')) areas['Segurança']++;
+                if (txt.includes('educ') || txt.includes('prof')) areas['Educação']++;
+                else if (txt.includes('saud') || txt.includes('med')) areas['Saúde']++;
+                else if (txt.includes('polic') || txt.includes('guarda')) areas['Segurança']++;
                 else areas['Outros']++;
             });
 
             graficoPizza = new Chart(document.getElementById('graficoVagasArea'), {
                 type: 'doughnut',
-                data: { labels: Object.keys(areas), datasets: [{ data: Object.values(areas), backgroundColor: ['#60a5fa', '#34d399', '#f87171', '#94a3b8'] }] },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: labelColor } } } }
+                data: {
+                    labels: Object.keys(areas),
+                    datasets: [{ data: Object.values(areas), backgroundColor: ['#60a5fa', '#34d399', '#f87171', '#94a3b8'] }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'bottom', labels: { color: labelColor } } }
+                }
             });
         }
 
@@ -315,7 +359,7 @@
         }
 
         function manterServidorAcordado() {
-            setInterval(() => fetch(`${API_URL}/health`).catch(() => {}), 10 * 60 * 1000);
+            setInterval(() => fetch(`${API_URL}/health`).catch(() => { }), 10 * 60 * 1000);
         }
 
         function gerarPDF() {
@@ -330,4 +374,5 @@
         document.getElementById('inputBusca').addEventListener('input', e => filtrar(e.target.value));
     </script>
 </body>
+
 </html>
