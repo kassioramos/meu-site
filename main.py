@@ -86,7 +86,7 @@ async def listar_concursos():
             COALESCE(salario_max, 0) as salario_max, 
             escolaridade, link_oficial, link_inscricao, 
             COALESCE(cidade, 'Maranhão') as cidade,
-            banca  -- <--- ADICIONE ESTA LINHA
+            "Banca" 
             FROM concursos 
             ORDER BY orgao, id DESC
         """
