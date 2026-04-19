@@ -34,7 +34,7 @@
     // Formatação de Moeda
     const fmtMoeda = (v) => v ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v) : 'Consultar Edital';
 
-    // Formatação de Datas padrão (Início/Fim Inscrição)
+    // Formatação de Datas padrão
     const fmtData = (d) => {
         if (!d || d === 'null') return 'A definir';
         try {
@@ -42,17 +42,13 @@
         } catch(e) { return 'A definir'; }
     };
 
-    // Função para Data da Prova (Aceita Data ou Texto como "A definir")
+    // Função para Data da Prova
     const exibirDataProva = (valor) => {
         if (!valor || valor.toString().toLowerCase() === 'null') return 'A definir';
-        
-        // Verifica se é uma data no formato YYYY-MM-DD
         const regexData = /^\d{4}-\d{2}-\d{2}/;
         if (regexData.test(valor)) {
             return new Date(valor).toLocaleDateString('pt-BR', {timeZone: 'UTC'});
         }
-        
-        // Se for texto puro (ex: "A definir", "Previsto"), retorna o próprio texto
         return valor;
     };
 
@@ -71,19 +67,24 @@
             if (!response.ok) throw new Error('Falha ao buscar dados');
             const c = await response.json();
 
+            // Mapeamento flexível para aceitar nomes com ou sem acento do Banco de Dados
+            const orgao = c.orgao || c.orgão || 'Não informado';
+            const banca = c.banca || c.Banca || 'A definir';
+            const sMax = c.salario_max || c.salário_máximo || 0;
+
             container.innerHTML = `
                 <div class="detalhes-header">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <span class="status-tag">${c.status || 'Aberto'}</span>
                     </div>
-                    <h1>${c.orgao}</h1>
+                    <h1>${orgao}</h1>
                 </div>
 
                 <div class="grid-info">
                     <div class="info-item"><label>📍 Localização</label><span>${c.cidade || 'Maranhão'}</span></div>
-                    <div class="info-item"><label>🏢 Banca</label><span>${c.banca || c.Banca || 'Própria'}</span></div>
+                    <div class="info-item"><label>🏢 Banca</label><span>${banca}</span></div>
                     <div class="info-item"><label>🎓 Nível</label><span>${c.escolaridade || 'Ver edital'}</span></div>
-                    <div class="info-item"><label>💰 Salário Máx.</label><span style="color:#10b981">${fmtMoeda(c.salario_max)}</span></div>
+                    <div class="info-item"><label>💰 Salário Máx.</label><span style="color:#10b981">${fmtMoeda(sMax)}</span></div>
                     <div class="info-item"><label>📅 Inscrições</label><span>${fmtData(c.inicio_inscricao)} - ${fmtData(c.fim_inscricao)}</span></div>
                     <div class="info-item"><label>📝 Data da Prova</label><span>${exibirDataProva(c.data_prova)}</span></div>
                 </div>
@@ -92,7 +93,7 @@
                     <h3 style="color:var(--primary); margin-top:0;">Resumo das Vagas</h3>
                     <p><strong>Cargos:</strong> ${c.cargos || 'Conforme edital'}</p>
                     <hr style="opacity: 0.1; margin: 15px 0;">
-                    <p>${c.descricao_seo || 'Descrição em processamento...'}</p>
+                    <p>${c.descricao_seo || 'Confira os detalhes oficiais no edital abaixo.'}</p>
                 </div>
 
                 <div class="container-acoes">
@@ -101,7 +102,7 @@
                 </div>
             `;
         } catch (error) {
-            container.innerHTML = "❌ Erro ao carregar detalhes. Verifique sua conexão ou se o concurso ainda existe.";
+            container.innerHTML = "❌ Erro ao carregar detalhes. Verifique a conexão ou a URL do backend.";
             console.error(error);
         }
     }

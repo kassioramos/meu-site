@@ -7,29 +7,7 @@
 
     <title>Concursos Maranhão Pro 2026 | Vagas, Editais e Seletivos MA</title>
     <meta name="description" content="Editais abertos no Maranhão: SEBRAE, IFMA, UFMA e Prefeituras. Salários até R$ 8.000. Lista atualizada diariamente com vagas de estágio e concursos públicos.">
-    <meta name="keywords" content="concursos maranhão 2026, seletivo ma, vagas de emprego maranhão, edital uema, concurso prefeitura ma">
-    <meta name="robots" content="index, follow">
-    <link rel="canonical" href="https://concursosma.pro/">
-
-    <meta property="og:type" content="website">
-    <meta property="og:title" content="Concursos Maranhão Pro - Vagas e Editais 2026">
-    <meta property="og:description" content="Acompanhe todos os concursos e seletivos do Maranhão em um só lugar.">
-    <meta property="og:image" content="https://concursosma.pro/img/banner-social.png">
-
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "WebSite",
-      "name": "Concursos Maranhão Pro",
-      "url": "https://concursosma.pro/",
-      "potentialAction": {
-        "@type": "SearchAction",
-        "target": "https://concursosma.pro/?s={search_term_string}",
-        "query-input": "required name=search_term_string"
-      }
-    }
-    </script>
-
+    
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -66,6 +44,7 @@
         .btn-filter { padding: 8px 15px; border-radius: 20px; border: 1px solid #3b82f6; background: transparent; color: #3b82f6; cursor: pointer; font-weight: 500; font-size: 0.8rem; margin: 2px; }
         .btn-filter:hover { background: #3b82f6; color: white; }
         .btn-pdf { background: #ef4444; color: white; border: none; padding: 8px 15px; border-radius: 20px; cursor: pointer; font-weight: 600; }
+        .badge { background: #3b82f6; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; }
     </style>
 </head>
 
@@ -75,10 +54,10 @@
 
     <header>
         <h1>Concursos Maranhão Pro</h1>
-        <div id="stats-counter" class="stats-badge">Sincronizando editais...</div>
+        <div id="stats-counter" class="stats-badge">Buscando editais...</div>
 
         <div class="search-container" style="max-width: 600px; margin: 20px auto;">
-            <input type="text" id="inputBusca" placeholder="Ex: Professor, São Luís, UFMA..." style="width: 100%; padding: 12px; border-radius: 8px; border: none; margin-bottom: 15px;">
+            <input type="text" id="inputBusca" placeholder="Ex: Professor, São Luís, UFMA..." style="width: 100%; padding: 12px; border-radius: 8px; border: none; margin-bottom: 15px; color: #000;">
             <div class="filter-group">
                 <div class="filter-row" style="margin-bottom: 10px;">
                     <button onclick="filtrar('São Luís')" class="btn-filter">São Luís</button>
@@ -120,14 +99,17 @@
     <main id="grid-concursos"></main>
 
     <script>
-        const API_URL = 'https://meu-site-aodm.onrender.com';
+        // --- 1. AJUSTE DA URL ---
+        // Se estiver rodando local, use http://localhost:8000. 
+        // Se estiver na Vercel, use a URL do seu backend no Render.
+        const API_URL = 'https://meu-site-aodm.onrender.com'; 
+        
         let todosOsConcursos = [];
         let graficoBarras = null;
         let graficoPizza = null;
 
         window.onload = () => {
             inicializar();
-            manterServidorAcordado();
         };
 
         async function inicializar() {
@@ -135,76 +117,68 @@
             grid.innerHTML = Array(6).fill('<div class="skeleton" style="height:300px"></div>').join('');
 
             try {
+                // Tenta buscar da sua API
                 const response = await fetch(`${API_URL}/concursos`);
                 const data = await response.json();
-                todosOsConcursos = data.items || [];
+                
+                // --- 2. AJUSTE DO DATA.ITEMS ---
+                // Se a sua API retorna direto a lista, use 'data'. Se retorna um objeto, use 'data.items'
+                todosOsConcursos = Array.isArray(data) ? data : (data.items || []);
 
                 if (todosOsConcursos.length > 0) {
                     renderizar(todosOsConcursos);
                     renderizarGraficos(todosOsConcursos);
                     calcularEstatisticas(todosOsConcursos);
                     atualizarBadgeFavoritos();
-                    gerarSchemaMarkup(todosOsConcursos);
+                    document.getElementById('stats-counter').innerText = `${todosOsConcursos.length} editais encontrados`;
                 } else {
-                    grid.innerHTML = "<p style='text-align:center; grid-column: 1/-1;'>Nenhum edital encontrado.</p>";
+                    grid.innerHTML = "<p style='text-align:center; grid-column: 1/-1;'>Nenhum edital encontrado no banco.</p>";
                 }
             } catch (error) {
-                grid.innerHTML = "<p style='text-align:center; grid-column: 1/-1;'>Erro ao carregar dados.</p>";
+                console.error("Erro na API:", error);
+                grid.innerHTML = "<p style='text-align:center; grid-column: 1/-1;'>Erro ao conectar com o servidor.</p>";
             }
         }
 
-function renderizar(dados) {
-    const grid = document.getElementById('grid-concursos');
-    grid.innerHTML = "";
-    
-    dados.forEach(c => {
-        const card = document.createElement('div');
-        card.className = 'concurso-card';
-        
-        // Lógica do Cronômetro
-        const agora = new Date();
-        const fim = c.fim_inscricao ? new Date(c.fim_inscricao) : null;
-        let timerHTML = "";
+        function renderizar(dados) {
+            const grid = document.getElementById('grid-concursos');
+            grid.innerHTML = "";
+            
+            dados.forEach(c => {
+                const card = document.createElement('div');
+                card.className = 'concurso-card';
+                
+                // Mapeamento flexível de nomes (com/sem acento)
+                const orgao = c.orgao || c.orgão || "Órgão não informado";
+                const sMin = c.salario_min || c.salário_mínimo || 1412;
+                const sMax = c.salario_max || c.salário_máximo || 0;
 
-        if (fim) {
-            const diff = fim - agora;
-            if (diff > 0) {
-                const dias = Math.floor(diff / (1000 * 60 * 60 * 24));
-                timerHTML = `<span style="color: #60a5fa;">⏳ Faltam ${dias} dias</span>`;
-            } else {
-                timerHTML = `<span style="color: #ef4444;">🚫 Inscrições Encerradas</span>`;
-            }
-        }
+                const fmtMoeda = (v) => v ? v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : '---';
 
-        const fmtMoeda = (v) => v ? v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : '---';
+                card.innerHTML = `
+                    <div style="background: rgba(255,255,255,0.05); padding: 20px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); height: 100%; position: relative;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                            <span class="badge">${c.cidade || 'MA'}</span>
+                            <button onclick="toggleFavorito(this, '${orgao}')" style="background:none; border:none; cursor:pointer; color:#ffca28;">☆</button>
+                        </div>
 
-        card.innerHTML = `
-            <div style="background: rgba(255,255,255,0.05); padding: 20px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); height: 100%; position: relative;">
-                <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-                    <span class="badge">${c.cidade || 'Maranhão'}</span>
-                    <small>${timerHTML}</small>
-                </div>
+                        <h2 style="font-size: 1rem; color: #60a5fa; margin: 10px 0;">${orgao}</h2>
 
-                <h2 style="font-size: 1rem; color: #60a5fa; margin: 10px 0;">${c.orgao}</h2>
+                        <div style="font-size: 0.8rem; display: grid; gap: 8px;">
+                            <div>📍 <strong>Cidade:</strong> ${c.cidade || 'Maranhão'}</div>
+                            <div>🏢 <strong>Banca:</strong> ${c.banca || 'A definir'}</div>
+                            <div>🎓 <strong>Escolaridade:</strong> ${c.escolaridade || 'Ver edital'}</div>
+                            <div>💰 <strong>Salários:</strong> ${fmtMoeda(sMin)} até ${fmtMoeda(sMax)}</div>
+                        </div>
 
-                <div style="font-size: 0.8rem; display: grid; gap: 8px;">
-                    <div>📍 <strong>Cidade:</strong> ${c.cidade}</div>
-                    <div>🏢 <strong>Banca:</strong> ${c.banca || 'A definir'}</div>
-                    <div>🎓 <strong>Escolaridade:</strong> ${c.escolaridade || 'Ver edital'}</div>
-                    <div>💰 <strong>Salários:</strong> ${fmtMoeda(c.salario_min)} até ${fmtMoeda(c.salario_max)}</div>
-                    <div>🎟️ <strong>Inscrição:</strong> ${fmtMoeda(c.valor_inscricao_min)} a ${fmtMoeda(c.valor_inscricao_max)}</div>
-                    <div style="background: rgba(0,0,0,0.2); padding: 8px; border-radius: 6px; margin-top: 5px;">
-                        📅 <strong>Inscrições:</strong> ${new Date(c.inicio_inscricao).toLocaleDateString()} até ${new Date(c.fim_inscricao).toLocaleDateString()}
+                        <a href="detalhes.html?id=${c.id}" class="btn" style="margin-top: 15px; text-decoration: none; display: block; background: #3b82f6; color: white; text-align: center; padding: 10px; border-radius: 6px; font-weight: bold; font-size: 0.8rem;">VER DETALHES</a>
                     </div>
-                </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
 
-                <a href="detalhes.html?id=${c.id}" class="btn" style="margin-top: 15px; text-decoration: none; display: block; background: #3b82f6; color: white; text-align: center; padding: 10px; border-radius: 6px; font-weight: bold; font-size: 0.8rem;">DETALHES COMPLETO</a>
-            </div>
-        `;
-        grid.appendChild(card);
-    });
-}
-
+        // --- 3. CORREÇÃO DOS GRÁFICOS ---
         function renderizarGraficos(dados) {
             const isLight = document.body.classList.contains('light-theme');
             const labelColor = isLight ? '#1e293b' : '#ffffff';
@@ -212,48 +186,39 @@ function renderizar(dados) {
             if (graficoBarras) graficoBarras.destroy();
             if (graficoPizza) graficoPizza.destroy();
 
-            // Lógica Cidades
             const cidMap = {};
             dados.forEach(c => { const n = c.cidade || "MA"; cidMap[n] = (cidMap[n] || 0) + 1; });
             const top5 = Object.entries(cidMap).sort((a, b) => b[1] - a[1]).slice(0, 5);
 
-            graficoBarras = new Chart(document.getElementById('graficoVagasCidade'), {
+            const ctxBar = document.getElementById('graficoVagasCidade').getContext('2d');
+            graficoBarras = new Chart(ctxBar, {
                 type: 'bar',
                 data: {
                     labels: top5.map(x => x[0]),
                     datasets: [{ label: 'Editais', data: top5.map(x => x[1]), backgroundColor: '#3b82f6' }]
                 },
-                options: {
-                    indexAxis: 'y',
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        x: { ticks: { color: labelColor }, grid: { display: false } },
-                        y: { ticks: { color: labelColor }, grid: { display: false } }
-                    },
+                options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, 
+                    scales: { x: { ticks: { color: labelColor } }, y: { ticks: { color: labelColor } } },
                     plugins: { legend: { display: false } }
                 }
             });
 
-            // Lógica Áreas
-            const areas = { 'Educação': 0, 'Saúde': 0, 'Segurança': 0, 'Outros': 0 };
+            const areas = { 'Educação': 0, 'Saúde': 0, 'Outros': 0 };
             dados.forEach(c => {
-                const txt = (c.orgao + (c.cargos || "")).toLowerCase();
+                const txt = ((c.orgao || "") + (c.cargos || "")).toLowerCase();
                 if (txt.includes('educ') || txt.includes('prof')) areas['Educação']++;
                 else if (txt.includes('saud') || txt.includes('med')) areas['Saúde']++;
-                else if (txt.includes('polic') || txt.includes('guarda')) areas['Segurança']++;
                 else areas['Outros']++;
             });
 
-            graficoPizza = new Chart(document.getElementById('graficoVagasArea'), {
+            const ctxPie = document.getElementById('graficoVagasArea').getContext('2d');
+            graficoPizza = new Chart(ctxPie, {
                 type: 'doughnut',
                 data: {
                     labels: Object.keys(areas),
-                    datasets: [{ data: Object.values(areas), backgroundColor: ['#60a5fa', '#34d399', '#f87171', '#94a3b8'], borderWidth: 0 }]
+                    datasets: [{ data: Object.values(areas), backgroundColor: ['#60a5fa', '#34d399', '#94a3b8'], borderWidth: 0 }]
                 },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
+                options: { responsive: true, maintainAspectRatio: false, 
                     plugins: { legend: { position: 'bottom', labels: { color: labelColor } } }
                 }
             });
@@ -269,7 +234,7 @@ function renderizar(dados) {
         function filtrar(termo) {
             const busca = termo.toLowerCase();
             const filtrados = todosOsConcursos.filter(c => 
-                c.orgao.toLowerCase().includes(busca) || 
+                (c.orgao || "").toLowerCase().includes(busca) || 
                 (c.cidade && c.cidade.toLowerCase().includes(busca))
             );
             renderizar(filtrados);
@@ -282,7 +247,7 @@ function renderizar(dados) {
 
         function filtrarFavoritos() {
             const favs = JSON.parse(localStorage.getItem('favoritos') || '[]');
-            renderizar(todosOsConcursos.filter(c => favs.includes(c.orgao)));
+            renderizar(todosOsConcursos.filter(c => favs.includes(c.orgao || c.orgão)));
         }
 
         function toggleFavorito(btn, nome) {
@@ -307,7 +272,7 @@ function renderizar(dados) {
         }
 
         function calcularEstatisticas(dados) {
-            const sals = dados.map(c => Number(c.salario_max) || 0).filter(s => s > 0);
+            const sals = dados.map(c => Number(c.salario_max || c.salário_máximo) || 0).filter(s => s > 0);
             const media = sals.length ? sals.reduce((a, b) => a + b) / sals.length : 0;
             const maior = sals.length ? Math.max(...sals) : 0;
             const fmt = val => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
@@ -328,36 +293,12 @@ function renderizar(dados) {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
             doc.text("Concursos Maranhão Pro - Editais 2026", 10, 10);
-            const rows = todosOsConcursos.map(c => [c.orgao, c.cidade || 'MA', `R$ ${c.salario_max || 0}`]);
+            const rows = todosOsConcursos.map(c => [c.orgao || c.orgão, c.cidade || 'MA', `R$ ${c.salario_max || c.salário_máximo || 0}`]);
             doc.autoTable({ head: [['Órgão', 'Cidade', 'Salário']], body: rows });
             doc.save('concursos-maranhao.pdf');
         }
 
-        function manterServidorAcordado() {
-            setInterval(() => fetch(`${API_URL}/health`).catch(() => {}), 10 * 60 * 1000);
-        }
-
         document.getElementById('inputBusca').addEventListener('input', e => filtrar(e.target.value));
-
-        function gerarSchemaMarkup(dados) {
-            const oldScript = document.getElementById('dynamic-schema');
-            if (oldScript) oldScript.remove();
-            const schema = {
-                "@context": "https://schema.org",
-                "@type": "ItemList",
-                "itemListElement": dados.slice(0, 10).map((c, i) => ({
-                    "@type": "ListItem",
-                    "position": i + 1,
-                    "url": `https://concursosma.pro/detalhes.html?id=${c.id}`,
-                    "name": c.orgao
-                }))
-            };
-            const script = document.createElement('script');
-            script.id = 'dynamic-schema';
-            script.type = 'application/ld+json';
-            script.text = JSON.stringify(schema);
-            document.head.appendChild(script);
-        }
     </script>
 </body>
 </html>
