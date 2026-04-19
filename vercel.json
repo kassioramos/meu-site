@@ -1,3 +1,28 @@
 {
-"cleanUrls": true
+  "version": 2,
+  "cleanUrls": true,
+  "builds": [
+    {
+      "src": "backend/main.py",
+      "use": "@vercel/python"
+    },
+    {
+      "src": "frontend/*.html",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "frontend/style.css",
+      "use": "@vercel/static"
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "backend/main.py"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "frontend/$1"
+    }
+  ]
 }
