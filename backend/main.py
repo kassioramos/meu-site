@@ -29,11 +29,9 @@ def serializar_dados(obj):
 
 # 3. FUNÇÃO DE SEO DINÂMICO
 def gerar_descricao_seo(concurso):
-    # Usando .get() com nomes minúsculos para evitar erros
     orgao = str(concurso.get('orgao', '')).title()
     cidade = str(concurso.get('cidade', 'Maranhão')).title()
     
-    # Busca por 'banca' (minúsculo) conforme está no banco
     banca_db = str(concurso.get('banca', '')).strip()
 
     if not banca_db or banca_db.lower() in ['nulo', 'null', 'none', '']:
@@ -67,6 +65,7 @@ def get_db_connection():
     return psycopg2.connect(os.getenv("DATABASE_URL"), cursor_factory=RealDictCursor)
 
 # 5. ROTAS
+
 @app.get("/")
 async def root():
     return {"status": "Online", "message": "Concursos Maranhão API"}
@@ -76,12 +75,12 @@ async def listar_concursos():
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
-        # CORREÇÃO: Removi as aspas duplas de "Banca" e deixei tudo minúsculo
         query = """
             SELECT 
                 id, orgao, status, cargos, cidade, escolaridade, banca,
                 salario_min, salario_max, valor_inscricao_min, valor_inscricao_max,
-                inicio_inscricao, fim_inscricao, data_prova, link_oficial, link_inscricao
+                inicio_inscricao, fim_inscricao, data_prova, link_oficial, link_inscricao,
+                tabela_vagas
             FROM concursos 
             ORDER BY fim_inscricao ASC NULLS LAST, orgao ASC
         """
@@ -109,12 +108,12 @@ async def get_concurso(concurso_id: int):
         conn = get_db_connection()
         cursor = conn.cursor()
         
-        # CORREÇÃO: banca em minúsculo e sem aspas duplas
         query = """
             SELECT 
                 id, orgao, status, cargos, cidade, escolaridade, banca,
                 salario_min, salario_max, valor_inscricao_min, valor_inscricao_max,
-                inicio_inscricao, fim_inscricao, data_prova, link_oficial, link_inscricao
+                inicio_inscricao, fim_inscricao, data_prova, link_oficial, link_inscricao,
+                tabela_vagas
             FROM concursos WHERE id = %s
         """
         cursor.execute(query, (concurso_id,))
