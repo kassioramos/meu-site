@@ -1,54 +1,26 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
 
-@keyframes pulse {
-    0% { opacity: 0.6; }
-    50% { opacity: 0.3; }
-    100% { opacity: 0.6; }
-}
-.skeleton { pointer-events: none; border: none !important; }
-
-/* --- 1. CONFIGURAÇÃO DE CORES E VARIÁVEIS --- */
+/* --- 1. VARIÁVEIS E TEMAS --- */
 :root {
+    /* Cores Globais */
     --primary: #2563eb;
     --success: #10b981;
-    --text-main: #111827;
-    --text-sub: #4b5563;
-    --bg: #f3f4f6;
     --white: #ffffff;
+    
+    /* Tema Claro (Padrão) */
+    --bg: #f8fafc;
     --card-bg: #ffffff;
-    --border: #e5e7eb;
+    --text-main: #1e293b;
+    --text-sub: #64748b;
+    --border: #e2e8f0;
     --input-bg: #ffffff;
     --stat-border: #2563eb;
 }
 
-:root {
-    /* Cores para o Tema Claro (Dia) */
-    --bg-color: #f8fafc;
-    --card-bg: #ffffff;
-    --text-main: #1e293b;
-    --text-muted: #64748b;
-    --border-color: #e2e8f0;
-}
-
 body.dark-theme {
-    /* Cores para o Tema Escuro (Noite) */
-    --bg-color: #0f172a;
-    --card-bg: rgba(255, 255, 255, 0.05);
-    --text-main: #ffffff;
-    --text-muted: #94a3b8;
-    --border-color: rgba(255, 255, 255, 0.1);
-}
-
-body {
-    background-color: var(--bg-color);
-    color: var(--text-main);
-    transition: background 0.3s, color 0.3s;
-}
-
-body.dark-theme {
+    /* Tema Escuro */
     --bg: #0f172a;
-    --white: #1e293b;
-    --card-bg: #1e293b;
+    --card-bg: #1e293b; /* Ajustado para melhor contraste que o rgba */
     --text-main: #f1f5f9;
     --text-sub: #94a3b8;
     --border: #334155;
@@ -57,17 +29,21 @@ body.dark-theme {
 }
 
 /* --- 2. RESET E ESTILOS GERAIS --- */
-* { margin: 0; padding: 0; box-sizing: border-box; }
+* { 
+    margin: 0; 
+    padding: 0; 
+    box-sizing: border-box; 
+    font-family: 'Inter', sans-serif;
+}
 
 body {
-    font-family: 'Inter', sans-serif;
     background-color: var(--bg);
     color: var(--text-main);
     line-height: 1.5;
     transition: background 0.3s, color 0.3s;
 }
 
-/* --- 3. BOTÃO DARK MODE --- */
+/* --- 3. COMPONENTES FIXOS --- */
 .dark-mode-btn {
     position: fixed;
     top: 20px;
@@ -84,11 +60,12 @@ body {
     align-items: center;
     justify-content: center;
     box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    color: white;
 }
 
 /* --- 4. HEADER E BUSCA --- */
 header {
-    background: var(--white);
+    background: var(--card-bg);
     padding: 30px 20px;
     text-align: center;
     border-bottom: 1px solid var(--border);
@@ -119,6 +96,7 @@ input[type="text"] {
     color: var(--text-main);
     margin-bottom: 20px;
     outline: none;
+    transition: border-color 0.2s;
 }
 
 input[type="text"]:focus { border-color: var(--primary); }
@@ -139,8 +117,14 @@ input[type="text"]:focus { border-color: var(--primary); }
     transition: 0.2s;
 }
 
-.btn-filter:hover { background: var(--primary); color: white; }
+.btn-filter:hover { 
+    background: var(--primary); 
+    color: white; 
+    border-color: var(--primary);
+}
+
 .btn-clear { background: #fee2e2; color: #991b1b; border: none; }
+.btn-clear:hover { background: #fecaca; color: #991b1b; }
 
 /* --- 6. DASHBOARD (ESTATÍSTICAS) --- */
 .stats-container {
@@ -202,23 +186,12 @@ input[type="text"]:focus { border-color: var(--primary); }
     flex-direction: column;
     justify-content: space-between;
     transition: transform 0.2s;
+    border-left: 1px solid var(--border);
+    border-right: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
 }
 
 .concurso-card:hover { transform: translateY(-5px); }
-
-.status-tag {
-    background: #d1fae5;
-    color: #065f46;
-    font-size: 11px;
-    font-weight: 700;
-    padding: 4px 12px;
-    border-radius: 99px;
-    display: inline-block;
-    margin-bottom: 12px;
-}
-
-.info-row { font-size: 14px; color: var(--text-sub); margin-bottom: 6px; }
-.data-prova { color: #d97706; font-weight: 700; font-size: 13px; text-align: center; flex: 1; }
 
 /* --- 8. FOOTER DO CARD E AÇÕES --- */
 .card-footer {
@@ -230,8 +203,6 @@ input[type="text"]:focus { border-color: var(--primary); }
     border-top: 1px solid var(--border);
     gap: 10px;
 }
-
-.card-actions { display: flex; gap: 6px; }
 
 .btn-icon {
     background: var(--bg);
@@ -269,9 +240,21 @@ body.dark-theme .btn-icon.active { background: #451a03; }
     transition: 0.2s;
 }
 
-.btn-detalhes:hover { opacity: 0.85; }
+/* --- 9. ANIMAÇÕES E SKELETON --- */
+@keyframes pulse {
+    0% { opacity: 0.6; }
+    50% { opacity: 0.3; }
+    100% { opacity: 0.6; }
+}
 
-/* --- 9. NOTIFICAÇÃO (TOAST) --- */
+.skeleton { 
+    pointer-events: none; 
+    border: none !important; 
+    background: var(--border);
+    animation: pulse 1.5s infinite ease-in-out;
+}
+
+/* --- 10. NOTIFICAÇÃO (TOAST) --- */
 .toast {
     position: fixed;
     bottom: 20px;
@@ -281,7 +264,6 @@ body.dark-theme .btn-icon.active { background: #451a03; }
     padding: 12px 24px;
     border-radius: 8px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    display: none;
     z-index: 1000;
     animation: slideUp 0.3s ease;
 }
@@ -289,11 +271,4 @@ body.dark-theme .btn-icon.active { background: #451a03; }
 @keyframes slideUp {
     from { transform: translateY(100px); opacity: 0; }
     to { transform: translateY(0); opacity: 1; }
-}
-
-.loading-msg {
-    grid-column: 1 / -1;
-    text-align: center;
-    padding: 40px;
-    color: var(--text-sub);
 }

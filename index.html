@@ -352,11 +352,76 @@
             });
         }
 
-        function alternarTema() {
-            document.body.classList.toggle('light-theme');
-            const isLight = document.body.classList.contains('light-theme');
-            document.getElementById('darkModeToggle').innerText = isLight ? '☀️' : '🌙';
+function alternarTema() {
+    document.body.classList.toggle('light-theme');
+    const isLight = document.body.classList.contains('light-theme');
+    document.getElementById('darkModeToggle').innerText = isLight ? '☀️' : '🌙';
+
+    // Chame a renderização dos gráficos novamente para atualizar as cores das labels
+    if (todosOsConcursos.length > 0) {
+        renderizarGraficos(todosOsConcursos);
+    }
+}
+
+function renderizarGraficos(dados) {
+    // Detecta se o tema claro está ativo para definir a cor da fonte
+    const isLight = document.body.classList.contains('light-theme');
+    const labelColor = isLight ? '#1e293b' : '#ffffff'; // Azul escuro no claro, Branco no escuro
+
+    if (graficoBarras) graficoBarras.destroy();
+    if (graficoPizza) graficoPizza.destroy();
+
+    const cidMap = {};
+    dados.forEach(c => { const n = c.cidade || "MA"; cidMap[n] = (cidMap[n] || 0) + 1; });
+    const top5 = Object.entries(cidMap).sort((a, b) => b[1] - a[1]).slice(0, 5);
+
+    graficoBarras = new Chart(document.getElementById('graficoVagasCidade'), {
+        type: 'bar',
+        data: {
+            labels: top5.map(x => x[0]),
+            datasets: [{ label: 'Editais', data: top5.map(x => x[1]), backgroundColor: '#3b82f6' }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: { ticks: { color: labelColor } },
+                y: { ticks: { color: labelColor } }
+            },
+            plugins: { 
+                legend: { display: false }
+            }
         }
+    });
+
+    const areas = { 'Educação': 0, 'Saúde': 0, 'Segurança': 0, 'Outros': 0 };
+    dados.forEach(c => {
+        const txt = (c.orgao + (c.cargos || "")).toLowerCase();
+        if (txt.includes('educ') || txt.includes('prof')) areas['Educação']++;
+        else if (txt.includes('saud') || txt.includes('med')) areas['Saúde']++;
+        else if (txt.includes('polic') || txt.includes('guarda')) areas['Segurança']++;
+        else areas['Outros']++;
+    });
+
+    graficoPizza = new Chart(document.getElementById('graficoVagasArea'), {
+        type: 'doughnut',
+        data: {
+            labels: Object.keys(areas),
+            datasets: [{ data: Object.values(areas), backgroundColor: ['#60a5fa', '#34d399', '#f87171', '#94a3b8'] }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { 
+                legend: { 
+                    position: 'bottom', 
+                    labels: { color: labelColor } // Aplica a cor dinâmica aqui também
+                } 
+            }
+        }
+    });
+}
 
         function manterServidorAcordado() {
             setInterval(() => fetch(`${API_URL}/health`).catch(() => { }), 10 * 60 * 1000);
