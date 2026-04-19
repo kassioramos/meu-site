@@ -5,7 +5,7 @@ from psycopg2.extras import RealDictCursor
 import os
 import random
 
-# 1. INICIALIZAÇÃO ÚNICA (O nome deve ser 'app' para a Vercel)
+# 1. INICIALIZAÇÃO
 app = FastAPI()
 
 # 2. CONFIGURAÇÃO DE CORS
@@ -17,7 +17,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# --- FUNÇÃO DE SEO DINÂMICO ---
+# 3. FUNÇÃO DE SEO DINÂMICO
 def gerar_descricao_seo(concurso):
     orgao = str(concurso.get('orgao', '')).title()
     cidade = str(concurso.get('cidade', 'Maranhão')).title()
@@ -55,59 +55,56 @@ def gerar_descricao_seo(concurso):
 
     return f"{random.choice(intros)}{detalhes}{random.choice(ctas)}"
 
-# --- CONEXÃO COM O BANCO DE DADOS ---
+# 4. CONEXÃO COM O BANCO DE DADOS
 def get_db_connection():
     # Certifique-se de que a variável DATABASE_URL está configurada na Vercel
-    conn = psycopg2.connect(os.getenv("DATABASE_URL"), cursor_factory=RealDictCursor)
-    return conn
+    return psycopg2.connect(os.getenv("DATABASE_URL"), cursor_factory=RealDictCursor)
 
-# ROTA RAIZ
+# 5. ROTAS
 @app.get("/")
 async def root():
     return {"status": "Online", "message": "Concursos Maranhão API"}
 
-# ROTA HEALTH
 @app.get("/health")
 async def health_check():
     return {"status": "healthy"}
 
-# ROTA 1: Listar todos os concursos
 @app.get("/concursos")
 async def listar_concursos():
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
         
-        # SQL ajustado para pegar as colunas novas que seu robô está extraindo
         query = """
-            SELECT DISTINCT ON (orgao) 
-            id, orgao, status, cargos, salario_min, 
-            COALESCE(salario_max, 0) as salario_max, 
-            escolaridade, link_oficial, link_inscricao, 
-            COALESCE(cidade, 'Maranhão') as cidade,
-            "Banca", data_prova, fim_inscricao
+            SELECT 
+                id, orgao, status, cargos, cidade, escolaridade, "Banca",
+                salario_min, salario_max, 
+                valor_inscricao_min, valor_inscricao_max,
+                inicio_inscricao, fim_inscricao, data_prova,
+                link_oficial, link_inscricao
             FROM concursos 
-            ORDER BY orgao, id DESC
+            ORDER BY fim_inscricao ASC, orgao ASC
         """
         cursor.execute(query)
         dados = cursor.fetchall()
         
         for item in dados:
             item["descricao_seo"] = gerar_descricao_seo(item)
-            item["orgao"] = str(item["orgao"]).title()
+            # Padronização para o frontend encontrar tanto 'Banca' quanto 'banca'
+            item["banca"] = item.get("Banca") 
 
         cursor.close()
         conn.close()
-        return {"items": dados, "total": len(dados)}
+        return {"items": dados}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Erro no banco: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
 
-# ROTA 2: Detalhes específicos
 @app.get("/concursos/{concurso_id}")
 async def get_concurso(concurso_id: int):
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
+        # Usando aspas duplas em "Banca" por ser Case Sensitive no PostgreSQL
         cursor.execute('SELECT *, "Banca" FROM concursos WHERE id = %s', (concurso_id,))
         concurso = cursor.fetchone()
         
@@ -117,9 +114,12 @@ async def get_concurso(concurso_id: int):
             raise HTTPException(status_code=404, detail="Concurso não encontrado")
             
         concurso["descricao_seo"] = gerar_descricao_seo(concurso)
+        concurso["banca"] = concurso.get("Banca")
 
         cursor.close()
         conn.close()
         return concurso
+    except HTTPException as e:
+        raise e
     except Exception as e:
         raise HTTPException(status_code=500, detail="Erro interno no servidor")

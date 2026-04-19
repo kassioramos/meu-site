@@ -7,17 +7,17 @@
       "use": "@vercel/python"
     },
     {
-      "src": "frontend/*.html",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "frontend/style.css",
+      "src": "frontend/**",
       "use": "@vercel/static"
     }
   ],
   "rewrites": [
     {
-      "source": "/api/(.*)",
+      "source": "/concursos",
+      "destination": "backend/main.py"
+    },
+    {
+      "source": "/concursos/(.*)",
       "destination": "backend/main.py"
     },
     {

@@ -178,47 +178,36 @@
                 </div>
             `;
 
-            container.innerHTML = `
-                <div class="detalhes-header">
-                    <span class="status-tag">${c.status || 'Aberto'}</span>
-                    <h1>${c.orgao}</h1>
-                </div>
+container.innerHTML = `
+    <div class="detalhes-header">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span class="status-tag">${c.status || 'Aberto'}</span>
+            <span id="timer-detalhe" style="font-weight: bold; font-size: 0.8rem;"></span>
+        </div>
+        <h1>${c.orgao}</h1>
+    </div>
 
-                <div class="grid-info">
-                    <div class="info-item">
-                        <label>👥 Vagas / Cargos</label>
-                        <span>${c.cargos || 'Ver Edital'}</span>
-                    </div>
-                    <div class="info-item">
-                        <label>🎓 Escolaridade</label>
-                        <span>${c.escolaridade || 'Não informada'}</span>
-                    </div>
-                    <div class="info-item">
-                        <label>💰 Salário Máximo</label>
-                        <span style="color: #10b981;">${salario}</span>
-                    </div>
-                    <div class="info-item">
-                        <label>📍 Localização</label>
-                        <span>${c.cidade || 'Maranhão'}</span>
-                    </div>
-                </div>
+    <div class="grid-info">
+        <div class="info-item"><label>📍 Localização</label><span>${c.cidade}</span></div>
+        <div class="info-item"><label>🏢 Banca</label><span>${c.banca || 'Própria'}</span></div>
+        <div class="info-item"><label>🎓 Nível</label><span>${c.escolaridade}</span></div>
+        <div class="info-item"><label>💰 Salário Máx.</label><span style="color:#10b981">${fmtMoeda(c.salario_max)}</span></div>
+        <div class="info-item"><label>📅 Inscrições</label><span>${new Date(c.inicio_inscricao).toLocaleDateString()} - ${new Date(c.fim_inscricao).toLocaleDateString()}</span></div>
+        <div class="info-item"><label>📝 Taxa</label><span>${fmtMoeda(c.valor_inscricao_min)}</span></div>
+    </div>
 
-                <div class="sobre-secao">
-                    <h3>Resumo do Certame</h3>
-                    <p>${c.sobre_concurso ? c.sobre_concurso : `Este certame é destinado ao provimento de vagas para o órgão <strong>${c.orgao}</strong>. Recomendamos a leitura atenta do edital para conferir requisitos e prazos.`}</p>
-                </div>
+    <div class="sobre-secao">
+        <h3>Resumo das Vagas</h3>
+        <p><strong>Cargos:</strong> ${c.cargos || 'Consultar anexo'}</p>
+        <hr style="opacity: 0.1; margin: 15px 0;">
+        <p>${c.descricao_seo}</p>
+    </div>
 
-                ${botoesHTML}
-            `;
-        } catch (e) {
-            container.innerHTML = `
-                <div class="loading-msg">
-                    ❌ Erro ao carregar os dados.<br>
-                    <small>Verifique a conexão com o servidor.</small>
-                </div>`;
-        }
-    }
-
+    <div class="container-acoes">
+        <a href="${c.link_oficial}" target="_blank" class="btn-edital">📄 Baixar Edital Oficial</a>
+        <a href="${c.link_inscricao}" target="_blank" class="btn-edital btn-inscricao">📝 Ir para Página de Inscrição</a>
+    </div>
+`;
     carregarDetalhes();
 </script>
 </body>

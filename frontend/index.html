@@ -153,39 +153,57 @@
             }
         }
 
-        function renderizar(dados) {
-            const grid = document.getElementById('grid-concursos');
-            document.getElementById('stats-counter').innerText = `${dados.length} editais encontrados`;
-            grid.innerHTML = "";
-            const favs = JSON.parse(localStorage.getItem('favoritos') || '[]');
+function renderizar(dados) {
+    const grid = document.getElementById('grid-concursos');
+    grid.innerHTML = "";
+    
+    dados.forEach(c => {
+        const card = document.createElement('div');
+        card.className = 'concurso-card';
+        
+        // Lógica do Cronômetro
+        const agora = new Date();
+        const fim = c.fim_inscricao ? new Date(c.fim_inscricao) : null;
+        let timerHTML = "";
 
-            dados.forEach(c => {
-                const isFav = favs.includes(c.orgao);
-                const valorSalario = c.salario_max || 0;
-                const fmtSalario = valorSalario > 0 ? `R$ ${Number(valorSalario).toLocaleString('pt-BR')}` : 'Ver edital';
-
-                const card = document.createElement('div');
-                card.className = 'concurso-card';
-                card.innerHTML = `
-                    <div style="background: rgba(255,255,255,0.05); padding: 20px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); height: 100%; display: flex; flex-direction: column;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                            <span style="background: #3b82f6; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.65rem;">${c.cidade || 'MA'}</span>
-                            <button onclick="toggleFavorito(this, '${c.orgao}')" style="background:none; border:none; cursor:pointer; font-size: 1.2rem; color:inherit;">${isFav ? '⭐' : '☆'}</button>
-                        </div>
-                        <h2 style="font-size: 0.95rem; margin: 10px 0;">${c.orgao}</h2>
-                        <p style="font-size: 0.75rem; opacity: 0.7; flex-grow: 1;">${c.descricao_seo || 'Confira os detalhes do edital.'}</p>
-                        <div style="margin-top: 15px; display: flex; justify-content: space-between; align-items: center;">
-                            <div>
-                                <small style="display:block; font-size: 0.6rem; opacity: 0.6;">SALÁRIO ATÉ</small>
-                                <span style="color:#10b981; font-weight:bold;">${fmtSalario}</span>
-                            </div>
-                            <a href="detalhes.html?id=${c.id}" style="background:#3b82f6; color:white; padding:8px 12px; border-radius:6px; text-decoration:none; font-size:0.7rem; font-weight:bold;">DETALHES</a>
-                        </div>
-                    </div>
-                `;
-                grid.appendChild(card);
-            });
+        if (fim) {
+            const diff = fim - agora;
+            if (diff > 0) {
+                const dias = Math.floor(diff / (1000 * 60 * 60 * 24));
+                timerHTML = `<span style="color: #60a5fa;">⏳ Faltam ${dias} dias</span>`;
+            } else {
+                timerHTML = `<span style="color: #ef4444;">🚫 Inscrições Encerradas</span>`;
+            }
         }
+
+        const fmtMoeda = (v) => v ? v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : '---';
+
+        card.innerHTML = `
+            <div style="background: rgba(255,255,255,0.05); padding: 20px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); height: 100%; position: relative;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                    <span class="badge">${c.cidade || 'Maranhão'}</span>
+                    <small>${timerHTML}</small>
+                </div>
+
+                <h2 style="font-size: 1rem; color: #60a5fa; margin: 10px 0;">${c.orgao}</h2>
+
+                <div style="font-size: 0.8rem; display: grid; gap: 8px;">
+                    <div>📍 <strong>Cidade:</strong> ${c.cidade}</div>
+                    <div>🏢 <strong>Banca:</strong> ${c.banca || 'A definir'}</div>
+                    <div>🎓 <strong>Escolaridade:</strong> ${c.escolaridade || 'Ver edital'}</div>
+                    <div>💰 <strong>Salários:</strong> ${fmtMoeda(c.salario_min)} até ${fmtMoeda(c.salario_max)}</div>
+                    <div>🎟️ <strong>Inscrição:</strong> ${fmtMoeda(c.valor_inscricao_min)} a ${fmtMoeda(c.valor_inscricao_max)}</div>
+                    <div style="background: rgba(0,0,0,0.2); padding: 8px; border-radius: 6px; margin-top: 5px;">
+                        📅 <strong>Inscrições:</strong> ${new Date(c.inicio_inscricao).toLocaleDateString()} até ${new Date(c.fim_inscricao).toLocaleDateString()}
+                    </div>
+                </div>
+
+                <a href="detalhes.html?id=${c.id}" class="btn" style="margin-top: 15px; text-decoration: none; display: block; background: #3b82f6; color: white; text-align: center; padding: 10px; border-radius: 6px; font-weight: bold; font-size: 0.8rem;">DETALHES COMPLETO</a>
+            </div>
+        `;
+        grid.appendChild(card);
+    });
+}
 
         function renderizarGraficos(dados) {
             const isLight = document.body.classList.contains('light-theme');
