@@ -29,11 +29,12 @@ def serializar_dados(obj):
 
 # 3. FUNÇÃO DE SEO DINÂMICO
 def gerar_descricao_seo(concurso):
+    # Usando .get() com nomes minúsculos para evitar erros
     orgao = str(concurso.get('orgao', '')).title()
     cidade = str(concurso.get('cidade', 'Maranhão')).title()
     
-    banca_raw = concurso.get('Banca') or concurso.get('banca') or ''
-    banca_db = str(banca_raw).strip()
+    # Busca por 'banca' (minúsculo) conforme está no banco
+    banca_db = str(concurso.get('banca', '')).strip()
 
     if not banca_db or banca_db.lower() in ['nulo', 'null', 'none', '']:
         banca_final = "comissão própria da instituição"
@@ -75,9 +76,10 @@ async def listar_concursos():
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
+        # CORREÇÃO: Removi as aspas duplas de "Banca" e deixei tudo minúsculo
         query = """
             SELECT 
-                id, orgao, status, cargos, cidade, escolaridade, "Banca",
+                id, orgao, status, cargos, cidade, escolaridade, banca,
                 salario_min, salario_max, valor_inscricao_min, valor_inscricao_max,
                 inicio_inscricao, fim_inscricao, data_prova, link_oficial, link_inscricao
             FROM concursos 
@@ -88,7 +90,6 @@ async def listar_concursos():
         
         for item in dados:
             item["descricao_seo"] = gerar_descricao_seo(item)
-            item["banca"] = item.get("Banca")
             item["inicio_inscricao"] = serializar_dados(item["inicio_inscricao"])
             item["fim_inscricao"] = serializar_dados(item["fim_inscricao"])
             item["data_prova"] = str(item["data_prova"]) if item["data_prova"] else "A definir"
@@ -99,6 +100,7 @@ async def listar_concursos():
         conn.close()
         return {"items": dados}
     except Exception as e:
+        print(f"ERRO LISTAR: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/concursos/{concurso_id}")
@@ -107,10 +109,10 @@ async def get_concurso(concurso_id: int):
         conn = get_db_connection()
         cursor = conn.cursor()
         
-        # SQL explícito para não dar conflito com a coluna "Banca"
+        # CORREÇÃO: banca em minúsculo e sem aspas duplas
         query = """
             SELECT 
-                id, orgao, status, cargos, cidade, escolaridade, "Banca",
+                id, orgao, status, cargos, cidade, escolaridade, banca,
                 salario_min, salario_max, valor_inscricao_min, valor_inscricao_max,
                 inicio_inscricao, fim_inscricao, data_prova, link_oficial, link_inscricao
             FROM concursos WHERE id = %s
@@ -123,9 +125,7 @@ async def get_concurso(concurso_id: int):
             conn.close()
             raise HTTPException(status_code=404, detail="Concurso não encontrado")
             
-        # Tratamento dos dados para JSON
         concurso["descricao_seo"] = gerar_descricao_seo(concurso)
-        concurso["banca"] = concurso.get("Banca")
         concurso["inicio_inscricao"] = serializar_dados(concurso.get("inicio_inscricao"))
         concurso["fim_inscricao"] = serializar_dados(concurso.get("fim_inscricao"))
         concurso["data_prova"] = str(concurso.get("data_prova")) if concurso.get("data_prova") else "A definir"
