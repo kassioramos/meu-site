@@ -51,21 +51,14 @@ def gerar_descricao_seo(concurso):
     
     try:
         salario_val = float(salario) if salario else 0
-        if salario_val > 5000:
-            detalhes += f" Com remuneração atrativa de R$ {salario_val:.2f}, este certame é um dos destaques na região."
-        elif salario_val > 0:
+        if salario_val > 0:
             detalhes += f" O processo seletivo oferece vencimentos de até R$ {salario_val:.2f}."
         else:
-            detalhes += " A remuneração detalhada e os benefícios podem ser conferidos diretamente no edital oficial."
+            detalhes += " A remuneração detalhada pode ser conferida no edital oficial."
     except:
         detalhes += " Confira os detalhes salariais no edital completo."
 
-    ctas = [
-        " Fique atento aos prazos e não perca o período de inscrição.",
-        " Prepare-se com antecedência para garantir sua vaga neste concurso.",
-        " Verifique os requisitos de escolaridade e cargos no documento anexo."
-    ]
-
+    ctas = [" Fique atento aos prazos.", " Prepare-se com antecedência.", " Verifique os requisitos no anexo."]
     return f"{random.choice(intros)}{detalhes}{random.choice(ctas)}"
 
 # 4. CONEXÃO COM O BANCO DE DADOS
@@ -82,28 +75,25 @@ async def listar_concursos():
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
-        
         query = """
             SELECT 
                 id, orgao, status, cargos, cidade, escolaridade, "Banca",
-                salario_min, salario_max, 
-                valor_inscricao_min, valor_inscricao_max,
-                inicio_inscricao, fim_inscricao, data_prova,
-                link_oficial, link_inscricao
+                salario_min, salario_max, valor_inscricao_min, valor_inscricao_max,
+                inicio_inscricao, fim_inscricao, data_prova, link_oficial, link_inscricao
             FROM concursos 
             ORDER BY fim_inscricao ASC NULLS LAST, orgao ASC
         """
         cursor.execute(query)
         dados = cursor.fetchall()
         
-        # Processar e converter tipos para strings seguras
         for item in dados:
             item["descricao_seo"] = gerar_descricao_seo(item)
             item["banca"] = item.get("Banca")
-            # Converter datas e decimais para evitar erro de JSON
             item["inicio_inscricao"] = serializar_dados(item["inicio_inscricao"])
             item["fim_inscricao"] = serializar_dados(item["fim_inscricao"])
             item["data_prova"] = str(item["data_prova"]) if item["data_prova"] else "A definir"
+            item["salario_max"] = serializar_dados(item["salario_max"])
+            item["valor_inscricao_min"] = serializar_dados(item["valor_inscricao_min"])
 
         cursor.close()
         conn.close()
@@ -116,7 +106,16 @@ async def get_concurso(concurso_id: int):
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
-        cursor.execute('SELECT * FROM concursos WHERE id = %s', (concurso_id,))
+        
+        # SQL explícito para não dar conflito com a coluna "Banca"
+        query = """
+            SELECT 
+                id, orgao, status, cargos, cidade, escolaridade, "Banca",
+                salario_min, salario_max, valor_inscricao_min, valor_inscricao_max,
+                inicio_inscricao, fim_inscricao, data_prova, link_oficial, link_inscricao
+            FROM concursos WHERE id = %s
+        """
+        cursor.execute(query, (concurso_id,))
         concurso = cursor.fetchone()
         
         if not concurso:
@@ -124,18 +123,18 @@ async def get_concurso(concurso_id: int):
             conn.close()
             raise HTTPException(status_code=404, detail="Concurso não encontrado")
             
+        # Tratamento dos dados para JSON
         concurso["descricao_seo"] = gerar_descricao_seo(concurso)
-        concurso["banca"] = concurso.get("Banca") or concurso.get("banca")
-        
-        # Serialização de segurança
+        concurso["banca"] = concurso.get("Banca")
         concurso["inicio_inscricao"] = serializar_dados(concurso.get("inicio_inscricao"))
         concurso["fim_inscricao"] = serializar_dados(concurso.get("fim_inscricao"))
         concurso["data_prova"] = str(concurso.get("data_prova")) if concurso.get("data_prova") else "A definir"
+        concurso["salario_max"] = serializar_dados(concurso.get("salario_max"))
+        concurso["valor_inscricao_min"] = serializar_dados(concurso.get("valor_inscricao_min"))
 
         cursor.close()
         conn.close()
         return concurso
-    except HTTPException as e:
-        raise e
     except Exception as e:
+        print(f"ERRO NO BACKEND: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
