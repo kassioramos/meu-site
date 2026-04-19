@@ -5,27 +5,132 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Detalhes do Concurso - Pro</title>
     <style>
-        :root { --primary: #3b82f6; --bg: #0f172a; --card-bg: #1e293b; --text-main: #f8fafc; --text-sub: #94a3b8; --border: rgba(255,255,255,0.1); }
-        body { font-family: 'Inter', sans-serif; background-color: var(--bg); color: var(--text-main); margin: 0; }
+        /* --- VARIÁVEIS E BASE --- */
+        :root { 
+            --primary: #3b82f6; 
+            --bg: #0f172a; 
+            --card-bg: #1e293b; 
+            --text-main: #f8fafc; 
+            --text-sub: #94a3b8; 
+            --border: rgba(255,255,255,0.1); 
+        }
+
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: var(--bg); 
+            color: var(--text-main); 
+            margin: 0; 
+            line-height: 1.5;
+        }
+
         .container-detalhes { max-width: 800px; margin: 40px auto; padding: 20px; }
         .btn-voltar { display: inline-block; margin-bottom: 20px; color: var(--primary); text-decoration: none; font-weight: 600; }
-        .detalhes-card { background: var(--card-bg); border-radius: 12px; padding: 30px; border-top: 5px solid var(--primary); }
+        
+        /* --- CARD DE DETALHES --- */
+        .detalhes-card { 
+            background: var(--card-bg); 
+            border-radius: 12px; 
+            padding: 30px; 
+            border-top: 5px solid var(--primary); 
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
         .detalhes-header h1 { color: var(--primary); margin: 10px 0; font-size: 1.8rem; }
-        .grid-info { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 30px; }
-        .info-item { background: rgba(59, 130, 246, 0.05); padding: 15px; border-radius: 10px; border: 1px solid var(--border); text-align: center; }
+        
+        /* --- GRID DE INFORMAÇÕES --- */
+        .grid-info { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); 
+            gap: 15px; 
+            margin-bottom: 30px; 
+        }
+
+        .info-item { 
+            background: rgba(59, 130, 246, 0.05); 
+            padding: 15px; 
+            border-radius: 10px; 
+            border: 1px solid var(--border); 
+            text-align: center; 
+        }
+
         .info-item label { display: block; font-size: 10px; text-transform: uppercase; color: var(--text-sub); margin-bottom: 6px; }
         .info-item span { font-size: 1rem; font-weight: 700; }
-        .sobre-secao { line-height: 1.8; background: rgba(0,0,0,0.2); padding: 25px; border-radius: 12px; border-left: 4px solid var(--primary); }
-        .btn-edital { display: block; width: 100%; text-align: center; background: var(--primary); color: white; padding: 16px; border-radius: 8px; text-decoration: none; font-weight: 700; margin-top: 15px; }
+
+        .sobre-secao { 
+            line-height: 1.8; 
+            background: rgba(0,0,0,0.2); 
+            padding: 25px; 
+            border-radius: 12px; 
+            border-left: 4px solid var(--primary); 
+        }
+
+        /* --- ESTILOS DA TABELA (DADOS DO SUPABASE) --- */
+        .table-container { 
+            width: 100%; 
+            overflow-x: auto; 
+            margin: 15px 0; 
+            border-radius: 8px; 
+            border: 1px solid var(--border);
+            -webkit-overflow-scrolling: touch; /* Scroll suave no iOS */
+        }
+
+        .tabela-vagas { 
+            width: 100%; 
+            border-collapse: collapse; 
+            min-width: 500px; /* Garante que o scroll apareça no celular */
+        }
+
+        .tabela-vagas th { 
+            background: rgba(59, 130, 246, 0.15); 
+            color: var(--primary); 
+            text-align: left; 
+            padding: 12px; 
+            border-bottom: 1px solid var(--border); 
+            font-size: 0.85rem;
+        }
+
+        .tabela-vagas td { 
+            padding: 12px; 
+            border-bottom: 1px solid var(--border); 
+            font-size: 0.9rem; 
+            color: var(--text-main);
+        }
+
+        .tabela-vagas tr:hover { background: rgba(255,255,255,0.02); }
+
+        /* --- BOTÕES DE AÇÃO --- */
+        .btn-edital { 
+            display: block; 
+            width: 100%; 
+            text-align: center; 
+            background: var(--primary); 
+            color: white; 
+            padding: 16px; 
+            border-radius: 8px; 
+            text-decoration: none; 
+            font-weight: 700; 
+            margin-top: 15px; 
+            transition: opacity 0.2s;
+        }
+
         .btn-inscricao { background: #10b981; }
+        .btn-edital:hover { opacity: 0.9; }
         .status-tag { background: #10b981; color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; }
 
-        /* --- ESTILOS DA TABELA DE VAGAS --- */
-        .table-container { width: 100%; overflow-x: auto; margin: 15px 0; border-radius: 8px; }
-        .tabela-vagas { width: 100%; border-collapse: collapse; min-width: 400px; }
-        .tabela-vagas th { background: rgba(59, 130, 246, 0.1); color: var(--primary); text-align: left; padding: 10px; border-bottom: 1px solid var(--border); }
-        .tabela-vagas td { padding: 10px; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
-        .tabela-vagas tr:last-child td { border-bottom: none; }
+        /* --- RESPONSIVIDADE (MOBILE) --- */
+        @media (max-width: 600px) {
+            .container-detalhes { padding: 10px; margin: 20px auto; }
+            .detalhes-card { padding: 20px 15px; }
+            .detalhes-header h1 { font-size: 1.4rem; }
+            
+            .tabela-vagas th, .tabela-vagas td {
+                padding: 10px 6px;
+                font-size: 0.8rem;
+            }
+
+            .info-item { padding: 10px; }
+            .info-item span { font-size: 0.9rem; }
+        }
     </style>
 </head>
 <body>
@@ -71,32 +176,37 @@
             if (!response.ok) throw new Error('Falha ao buscar dados');
             const c = await response.json();
 
-            // Pega a tabela do banco de dados (coluna que você criou)
-            const htmlTabela = c.tabela_vagas || `<p><strong>Cargos:</strong> ${c.cargos || 'Conforme edital'}</p>`;
+            // Lógica para a Tabela Dinâmica do Supabase
+            // Se existir HTML na coluna tabela_vagas, ele usa. Se não, usa o campo de cargos simples.
+            const conteudoVagas = c.tabela_vagas 
+                ? `<div class="table-container">${c.tabela_vagas}</div>` 
+                : `<p><strong>Cargos:</strong> ${c.cargos || 'Conforme edital'}</p>`;
+
+            const orgao = c.orgao || c.orgão || 'Não informado';
+            const banca = c.banca || c.Banca || 'A definir';
+            const sMax = c.salario_max || c.salário_máximo || 0;
 
             container.innerHTML = `
                 <div class="detalhes-header">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <span class="status-tag">${c.status || 'Aberto'}</span>
                     </div>
-                    <h1>${c.orgao || 'Não informado'}</h1>
+                    <h1>${orgao}</h1>
                 </div>
 
                 <div class="grid-info">
                     <div class="info-item"><label>📍 Localização</label><span>${c.cidade || 'Maranhão'}</span></div>
-                    <div class="info-item"><label>🏢 Banca</label><span>${c.banca || 'A definir'}</span></div>
+                    <div class="info-item"><label>🏢 Banca</label><span>${banca}</span></div>
                     <div class="info-item"><label>🎓 Nível</label><span>${c.escolaridade || 'Ver edital'}</span></div>
-                    <div class="info-item"><label>💰 Salário Máx.</label><span style="color:#10b981">${fmtMoeda(c.salario_max)}</span></div>
+                    <div class="info-item"><label>💰 Salário Máx.</label><span style="color:#10b981">${fmtMoeda(sMax)}</span></div>
                     <div class="info-item"><label>📅 Inscrições</label><span>${fmtData(c.inicio_inscricao)} - ${fmtData(c.fim_inscricao)}</span></div>
                     <div class="info-item"><label>📝 Data da Prova</label><span>${exibirDataProva(c.data_prova)}</span></div>
                 </div>
 
                 <div class="sobre-secao">
                     <h3 style="color:var(--primary); margin-top:0;">Distribuição de Vagas</h3>
-                    <div class="table-container">
-                        ${htmlTabela}
-                    </div>
-                    <hr style="opacity: 0.1; margin: 15px 0;">
+                    ${conteudoVagas}
+                    <hr style="opacity: 0.1; margin: 20px 0;">
                     <p>${c.descricao_seo || 'Confira os detalhes oficiais no edital abaixo.'}</p>
                 </div>
 
@@ -106,7 +216,7 @@
                 </div>
             `;
         } catch (error) {
-            container.innerHTML = "❌ Erro ao carregar detalhes.";
+            container.innerHTML = "❌ Erro ao carregar detalhes. Verifique sua conexão.";
             console.error(error);
         }
     }
