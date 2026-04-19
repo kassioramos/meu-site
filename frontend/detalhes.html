@@ -4,143 +4,57 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Detalhes do Concurso - Pro</title>
-    <link rel="stylesheet" href="style.css">
     <style>
-        .container-detalhes {
-            max-width: 800px;
-            margin: 40px auto;
-            padding: 20px;
-        }
-        .btn-voltar {
-            display: inline-block;
-            margin-bottom: 20px;
-            color: var(--primary);
-            text-decoration: none;
-            font-weight: 600;
-            transition: 0.2s;
-        }
-        .btn-voltar:hover { opacity: 0.7; }
-
-        .detalhes-card {
-            background: var(--card-bg);
-            border-radius: 12px;
-            padding: 30px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            border-top: 5px solid var(--primary);
-        }
-        .detalhes-header { 
-            margin-bottom: 25px; 
-            border-bottom: 1px solid var(--border); 
-            padding-bottom: 15px; 
-        }
-        .detalhes-header h1 { color: var(--primary); margin-bottom: 10px; font-size: 1.8rem; line-height: 1.2; }
-        
-        /* Grid de Info Estilizado como Cards */
-        .grid-info {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 15px;
-            margin-bottom: 30px;
-        }
-        .info-item {
-            background: rgba(var(--primary-rgb), 0.05);
-            padding: 15px;
-            border-radius: 10px;
-            border: 1px solid var(--border);
-            text-align: center;
-        }
-        .info-item label {
-            display: block;
-            font-size: 10px;
-            text-transform: uppercase;
-            font-weight: 800;
-            color: var(--text-sub);
-            margin-bottom: 6px;
-            letter-spacing: 0.5px;
-        }
-        .info-item span {
-            font-size: 1rem;
-            font-weight: 700;
-            color: var(--text-main);
-            display: block;
-        }
-
-        /* Seção Sobre com melhor legibilidade */
-        .sobre-secao {
-            line-height: 1.8;
-            color: var(--text-main);
-            background: var(--bg);
-            padding: 25px;
-            border-radius: 12px;
-            border-left: 4px solid var(--primary);
-        }
-        .sobre-secao h3 {
-            margin-top: 0;
-            margin-bottom: 15px;
-            color: var(--primary);
-            font-size: 1.2rem;
-        }
-        .sobre-secao p {
-            margin: 0;
-            white-space: pre-line; /* Mantém quebras de linha do banco */
-        }
-
-        .btn-edital {
-            display: block;
-            width: 100%;
-            text-align: center;
-            background: var(--primary);
-            color: white !important;
-            padding: 16px;
-            border-radius: 8px;
-            text-decoration: none;
-            font-weight: 700;
-            margin-top: 15px;
-            transition: 0.3s;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        }
-        .btn-edital:hover {
-            transform: translateY(-2px);
-            filter: brightness(1.1);
-        }
-        .btn-inscricao {
-            background: #10b981; /* Cor de sucesso */
-        }
-        .btn-disabled {
-            background: #94a3b8;
-            cursor: not-allowed;
-            box-shadow: none;
-        }
-        .container-acoes {
-            margin-top: 30px;
-        }
-        .status-tag {
-            display: inline-block;
-            background: #10b981;
-            color: white;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 700;
-            margin-bottom: 10px;
-        }
+        :root { --primary: #3b82f6; --bg: #0f172a; --card-bg: #1e293b; --text-main: #f8fafc; --text-sub: #94a3b8; --border: rgba(255,255,255,0.1); }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg); color: var(--text-main); margin: 0; }
+        .container-detalhes { max-width: 800px; margin: 40px auto; padding: 20px; }
+        .btn-voltar { display: inline-block; margin-bottom: 20px; color: var(--primary); text-decoration: none; font-weight: 600; }
+        .detalhes-card { background: var(--card-bg); border-radius: 12px; padding: 30px; border-top: 5px solid var(--primary); }
+        .detalhes-header h1 { color: var(--primary); margin: 10px 0; font-size: 1.8rem; }
+        .grid-info { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 30px; }
+        .info-item { background: rgba(59, 130, 246, 0.05); padding: 15px; border-radius: 10px; border: 1px solid var(--border); text-align: center; }
+        .info-item label { display: block; font-size: 10px; text-transform: uppercase; color: var(--text-sub); margin-bottom: 6px; }
+        .info-item span { font-size: 1rem; font-weight: 700; }
+        .sobre-secao { line-height: 1.8; background: rgba(0,0,0,0.2); padding: 25px; border-radius: 12px; border-left: 4px solid var(--primary); }
+        .btn-edital { display: block; width: 100%; text-align: center; background: var(--primary); color: white; padding: 16px; border-radius: 8px; text-decoration: none; font-weight: 700; margin-top: 15px; }
+        .btn-inscricao { background: #10b981; }
+        .status-tag { background: #10b981; color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; }
     </style>
 </head>
-<body class="detalhes-body">
+<body>
 
 <div class="container-detalhes">
     <a href="index.html" class="btn-voltar">← Voltar para a lista</a>
-
     <div id="conteudo-detalhes" class="detalhes-card">
         <div class="loading-msg">Carregando informações detalhadas...</div>
     </div>
 </div>
 
 <script>
-    // Sincronizar Tema
-    if (localStorage.getItem('tema') === 'dark') {
-        document.body.classList.add('dark-theme');
-    }
+    // Formatação de Moeda
+    const fmtMoeda = (v) => v ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v) : 'Consultar Edital';
+
+    // Formatação de Datas padrão (Início/Fim Inscrição)
+    const fmtData = (d) => {
+        if (!d || d === 'null') return 'A definir';
+        try {
+            return new Date(d).toLocaleDateString('pt-BR', {timeZone: 'UTC'});
+        } catch(e) { return 'A definir'; }
+    };
+
+    // Função para Data da Prova (Aceita Data ou Texto como "A definir")
+    const exibirDataProva = (valor) => {
+        if (!valor || valor.toString().toLowerCase() === 'null') return 'A definir';
+        
+        // Verifica se é uma data no formato YYYY-MM-DD
+        const regexData = /^\d{4}-\d{2}-\d{2}/;
+        if (regexData.test(valor)) {
+            return new Date(valor).toLocaleDateString('pt-BR', {timeZone: 'UTC'});
+        }
+        
+        // Se for texto puro (ex: "A definir", "Previsto"), retorna o próprio texto
+        return valor;
+    };
 
     async function carregarDetalhes() {
         const params = new URLSearchParams(window.location.search);
@@ -148,67 +62,51 @@
         const container = document.getElementById('conteudo-detalhes');
 
         if (!id) {
-            container.innerHTML = "<div class='loading-msg'>❌ Erro: Concurso não identificado.</div>";
+            container.innerHTML = "❌ Erro: Concurso não identificado.";
             return;
         }
 
         try {
-            const response = await fetch(`https://meu-site-aodm.onrender.com/concursos/${id}`);
-            if (!response.ok) throw new Error('Falha na resposta');
+            const response = await fetch(`/concursos/${id}`);
+            if (!response.ok) throw new Error('Falha ao buscar dados');
             const c = await response.json();
 
-            // Lógica de salário idêntica à solicitada
-            const salarioNumerico = parseFloat(c.salario_max);
-            const salario = salarioNumerico > 0 
-                ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(salarioNumerico)
-                : 'Consultar Edital';
+            container.innerHTML = `
+                <div class="detalhes-header">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span class="status-tag">${c.status || 'Aberto'}</span>
+                    </div>
+                    <h1>${c.orgao}</h1>
+                </div>
 
-            const temEdital = c.link_oficial && c.link_oficial.startsWith('http');
-            const temInscricao = c.link_inscricao && c.link_inscricao.startsWith('http');
+                <div class="grid-info">
+                    <div class="info-item"><label>📍 Localização</label><span>${c.cidade || 'Maranhão'}</span></div>
+                    <div class="info-item"><label>🏢 Banca</label><span>${c.banca || c.Banca || 'Própria'}</span></div>
+                    <div class="info-item"><label>🎓 Nível</label><span>${c.escolaridade || 'Ver edital'}</span></div>
+                    <div class="info-item"><label>💰 Salário Máx.</label><span style="color:#10b981">${fmtMoeda(c.salario_max)}</span></div>
+                    <div class="info-item"><label>📅 Inscrições</label><span>${fmtData(c.inicio_inscricao)} - ${fmtData(c.fim_inscricao)}</span></div>
+                    <div class="info-item"><label>📝 Data da Prova</label><span>${exibirDataProva(c.data_prova)}</span></div>
+                </div>
 
-            const botoesHTML = `
+                <div class="sobre-secao">
+                    <h3 style="color:var(--primary); margin-top:0;">Resumo das Vagas</h3>
+                    <p><strong>Cargos:</strong> ${c.cargos || 'Conforme edital'}</p>
+                    <hr style="opacity: 0.1; margin: 15px 0;">
+                    <p>${c.descricao_seo || 'Descrição em processamento...'}</p>
+                </div>
+
                 <div class="container-acoes">
-                    ${temEdital 
-                        ? `<a href="${c.link_oficial}" target="_blank" class="btn-edital">📄 Acessar Edital Oficial</a>`
-                        : `<div class="btn-edital btn-disabled">Edital não disponível</div>`}
-                    
-                    ${temInscricao 
-                        ? `<a href="${c.link_inscricao}" target="_blank" class="btn-edital btn-inscricao">📝 Fazer Inscrição Agora</a>`
-                        : ''}
+                    ${c.link_oficial ? `<a href="${c.link_oficial}" target="_blank" class="btn-edital">📄 Baixar Edital Oficial</a>` : ''}
+                    ${c.link_inscricao ? `<a href="${c.link_inscricao}" target="_blank" class="btn-edital btn-inscricao">📝 Ir para Página de Inscrição</a>` : ''}
                 </div>
             `;
+        } catch (error) {
+            container.innerHTML = "❌ Erro ao carregar detalhes. Verifique sua conexão ou se o concurso ainda existe.";
+            console.error(error);
+        }
+    }
 
-container.innerHTML = `
-    <div class="detalhes-header">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            <span class="status-tag">${c.status || 'Aberto'}</span>
-            <span id="timer-detalhe" style="font-weight: bold; font-size: 0.8rem;"></span>
-        </div>
-        <h1>${c.orgao}</h1>
-    </div>
-
-    <div class="grid-info">
-        <div class="info-item"><label>📍 Localização</label><span>${c.cidade}</span></div>
-        <div class="info-item"><label>🏢 Banca</label><span>${c.banca || 'Própria'}</span></div>
-        <div class="info-item"><label>🎓 Nível</label><span>${c.escolaridade}</span></div>
-        <div class="info-item"><label>💰 Salário Máx.</label><span style="color:#10b981">${fmtMoeda(c.salario_max)}</span></div>
-        <div class="info-item"><label>📅 Inscrições</label><span>${new Date(c.inicio_inscricao).toLocaleDateString()} - ${new Date(c.fim_inscricao).toLocaleDateString()}</span></div>
-        <div class="info-item"><label>📝 Taxa</label><span>${fmtMoeda(c.valor_inscricao_min)}</span></div>
-    </div>
-
-    <div class="sobre-secao">
-        <h3>Resumo das Vagas</h3>
-        <p><strong>Cargos:</strong> ${c.cargos || 'Consultar anexo'}</p>
-        <hr style="opacity: 0.1; margin: 15px 0;">
-        <p>${c.descricao_seo}</p>
-    </div>
-
-    <div class="container-acoes">
-        <a href="${c.link_oficial}" target="_blank" class="btn-edital">📄 Baixar Edital Oficial</a>
-        <a href="${c.link_inscricao}" target="_blank" class="btn-edital btn-inscricao">📝 Ir para Página de Inscrição</a>
-    </div>
-`;
-    carregarDetalhes();
+    window.onload = carregarDetalhes;
 </script>
 </body>
 </html>
