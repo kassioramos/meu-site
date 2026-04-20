@@ -71,15 +71,17 @@ def get_questoes(banca: str):
         conn = get_db_connection()
         cursor = conn.cursor()
         
-        # 1. Usamos TRIM para remover espaços sobrando
-        # 2. Usamos ILIKE para ignorar maiúsculas/minúsculas (Case-Insensitive)
-        # 3. Usamos % para permitir buscas parciais se necessário
-        query = "SELECT * FROM questoes WHERE TRIM(banca) ILIKE TRIM(%s)"
+        # O segredo: ILIKE com % permite achar a banca mesmo com nomes parciais
+        # O TRIM limpa espaços invisíveis que o banco de dados possa ter
+        query = "SELECT * FROM questoes WHERE TRIM(banca) ILIKE %s"
         
-        cursor.execute(query, (banca,))
+        # Isso faz com que buscar "JK" encontre "Instituto JK"
+        parametro_busca = f"%{banca.strip()}%"
+        
+        cursor.execute(query, (parametro_busca,))
         dados = cursor.fetchall()
         
-        # Serializar campos especiais (caso existam datas ou decimais nas questões)
+        # Serialização para JSON (Datas e Decimais)
         for q in dados:
             for chave, valor in q.items():
                 if isinstance(valor, (date, datetime, Decimal)):
@@ -90,9 +92,8 @@ def get_questoes(banca: str):
         
         return dados 
     except Exception as e:
-        print(f"ERRO QUESTOES: {str(e)}")
+        print(f"ERRO API QUESTOES: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
-
 @app.get("/")
 async def root():
     return {"status": "Online", "message": "Concursos Maranhão API"}

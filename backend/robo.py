@@ -18,6 +18,35 @@ from selenium.webdriver.support import expected_conditions as EC
 # --- CONFIG SUPABASE ---
 DATABASE_URL = "postgresql://postgres.mczmhvuxujvhrudqmpvg:ANTONIOCASSIO2010Mariano@aws-1-us-east-1.pooler.supabase.com:5432/postgres"
 
+# Adicione esta função no topo do seu arquivo para padronizar as bancas
+def normalizar_nome(texto):
+    if not texto: return "A definir"
+    return " ".join(texto.split()).strip()
+
+def scraper_jk():
+    print("🔎 Verificando Instituto JK Maranhão...")
+    url = "https://institutojkma.org/"
+    concursos = []
+    try:
+        res = requests.get(url, timeout=15)
+        soup = BeautifulSoup(res.text, 'html.parser')
+        for link_tag in soup.find_all('a', href=True):
+            texto = link_tag.text.strip().upper()
+            if "CONCURSO" in link_tag['href'].lower() and len(texto) > 5:
+                concursos.append({
+                    "orgao": normalizar_nome(texto.replace('\n', ' ')),
+                    "cidade": "Maranhão", 
+                    "status": "Aberto",
+                    "cargos": "Consultar Edital", 
+                    "escolaridade": "Ver Edital",
+                    "banca": "Instituto JK", # Nome padrão para bater com as questões
+                    "link_oficial": link_tag['href'].strip(),
+                    "link_inscricao": link_tag['href'].strip()
+                })
+    except Exception as e:
+        print(f"Erro no Scraper JK: {e}")
+    return concursos
+
 # --- AUXILIARES ---
 def formatar_data_para_sql(data_str):
     if not data_str: return None
