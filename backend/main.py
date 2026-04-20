@@ -65,22 +65,30 @@ def get_db_connection():
     return psycopg2.connect(os.getenv("DATABASE_URL"), cursor_factory=RealDictCursor)
 
 # 5. ROTAS
-# No seu arquivo backend/main.py
 @app.get("/api/questoes")
 def get_questoes(banca: str):
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
         
-        # Faz a busca usando SQL puro, que é o que seu código já usa
-        query = "SELECT * FROM questoes WHERE banca = %s"
+        # 1. Usamos TRIM para remover espaços sobrando
+        # 2. Usamos ILIKE para ignorar maiúsculas/minúsculas (Case-Insensitive)
+        # 3. Usamos % para permitir buscas parciais se necessário
+        query = "SELECT * FROM questoes WHERE TRIM(banca) ILIKE TRIM(%s)"
+        
         cursor.execute(query, (banca,))
         dados = cursor.fetchall()
+        
+        # Serializar campos especiais (caso existam datas ou decimais nas questões)
+        for q in dados:
+            for chave, valor in q.items():
+                if isinstance(valor, (date, datetime, Decimal)):
+                    q[chave] = serializar_dados(valor)
         
         cursor.close()
         conn.close()
         
-        return dados # Retorna a lista de questões
+        return dados 
     except Exception as e:
         print(f"ERRO QUESTOES: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
