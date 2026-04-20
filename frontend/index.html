@@ -99,9 +99,6 @@
     <main id="grid-concursos"></main>
 
     <script>
-        // --- 1. AJUSTE DA URL ---
-        // Se estiver rodando local, use http://localhost:8000. 
-        // Se estiver na Vercel, use a URL do seu backend no Render.
         const API_URL = 'https://meu-site-aodm.onrender.com'; 
         
         let todosOsConcursos = [];
@@ -117,12 +114,9 @@
             grid.innerHTML = Array(6).fill('<div class="skeleton" style="height:300px"></div>').join('');
 
             try {
-                // Tenta buscar da sua API
                 const response = await fetch(`${API_URL}/concursos`);
                 const data = await response.json();
                 
-                // --- 2. AJUSTE DO DATA.ITEMS ---
-                // Se a sua API retorna direto a lista, use 'data'. Se retorna um objeto, use 'data.items'
                 todosOsConcursos = Array.isArray(data) ? data : (data.items || []);
 
                 if (todosOsConcursos.length > 0) {
@@ -148,37 +142,45 @@
                 const card = document.createElement('div');
                 card.className = 'concurso-card';
                 
-                // Mapeamento flexível de nomes (com/sem acento)
                 const orgao = c.orgao || c.orgão || "Órgão não informado";
+                const banca = c.banca || c.Banca || "A definir";
                 const sMin = c.salario_min || c.salário_mínimo || 1412;
                 const sMax = c.salario_max || c.salário_máximo || 0;
 
                 const fmtMoeda = (v) => v ? v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : '---';
 
                 card.innerHTML = `
-                    <div style="background: rgba(255,255,255,0.05); padding: 20px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); height: 100%; position: relative;">
+                    <div style="background: rgba(255,255,255,0.05); padding: 20px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); height: 100%; position: relative; display: flex; flex-direction: column;">
                         <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
                             <span class="badge">${c.cidade || 'MA'}</span>
-                            <button onclick="toggleFavorito(this, '${orgao}')" style="background:none; border:none; cursor:pointer; color:#ffca28;">☆</button>
+                            <button onclick="toggleFavorito(this, '${orgao}')" style="background:none; border:none; cursor:pointer; color:#ffca28; font-size: 1.2rem;">☆</button>
                         </div>
 
-                        <h2 style="font-size: 1rem; color: #60a5fa; margin: 10px 0;">${orgao}</h2>
+                        <h2 style="font-size: 1rem; color: #60a5fa; margin: 10px 0; min-height: 2.4rem;">${orgao}</h2>
 
-                        <div style="font-size: 0.8rem; display: grid; gap: 8px;">
+                        <div style="font-size: 0.8rem; display: grid; gap: 8px; flex-grow: 1;">
                             <div>📍 <strong>Cidade:</strong> ${c.cidade || 'Maranhão'}</div>
-                            <div>🏢 <strong>Banca:</strong> ${c.banca || 'A definir'}</div>
+                            <div>🏢 <strong>Banca:</strong> ${banca}</div>
                             <div>🎓 <strong>Escolaridade:</strong> ${c.escolaridade || 'Ver edital'}</div>
                             <div>💰 <strong>Salários:</strong> ${fmtMoeda(sMin)} até ${fmtMoeda(sMax)}</div>
                         </div>
 
-                        <a href="detalhes.html?id=${c.id}" class="btn" style="margin-top: 15px; text-decoration: none; display: block; background: #3b82f6; color: white; text-align: center; padding: 10px; border-radius: 6px; font-weight: bold; font-size: 0.8rem;">VER DETALHES</a>
+                        <div style="display: flex; gap: 8px; margin-top: 15px;">
+                            <a href="detalhes.html?id=${c.id}" 
+                               style="flex: 1; text-decoration: none; background: #3b82f6; color: white; text-align: center; padding: 10px 2px; border-radius: 6px; font-weight: bold; font-size: 0.7rem; display: flex; align-items: center; justify-content: center;">
+                               DETALHES
+                            </a>
+                            <a href="questoes.html?banca=${encodeURIComponent(banca)}" 
+                               style="flex: 1; text-decoration: none; background: #8b5cf6; color: white; text-align: center; padding: 10px 2px; border-radius: 6px; font-weight: bold; font-size: 0.7rem; display: flex; align-items: center; justify-content: center;">
+                               QUESTÕES
+                            </a>
+                        </div>
                     </div>
                 `;
                 grid.appendChild(card);
             });
         }
 
-        // --- 3. CORREÇÃO DOS GRÁFICOS ---
         function renderizarGraficos(dados) {
             const isLight = document.body.classList.contains('light-theme');
             const labelColor = isLight ? '#1e293b' : '#ffffff';
