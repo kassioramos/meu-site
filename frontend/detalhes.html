@@ -211,6 +211,11 @@
                 </div>
 
                 <div class="container-acoes">
+
+                    /* Botão de Questões (Novo) */
+                <a href="questoes.html?banca=${banca}" class="btn-edital" style="background: #8b5cf6; margin-top: 15px;">
+                📝 Responder Questões da ${banca}
+                </a>
                     ${c.link_oficial ? `<a href="${c.link_oficial}" target="_blank" class="btn-edital">📄 Baixar Edital Oficial</a>` : ''}
                     ${c.link_inscricao ? `<a href="${c.link_inscricao}" target="_blank" class="btn-edital btn-inscricao">📝 Ir para Página de Inscrição</a>` : ''}
                 </div>

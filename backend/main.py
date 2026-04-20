@@ -65,6 +65,15 @@ def get_db_connection():
     return psycopg2.connect(os.getenv("DATABASE_URL"), cursor_factory=RealDictCursor)
 
 # 5. ROTAS
+# No seu arquivo backend/main.py
+
+@app.get("/api/questoes")
+def get_questoes(banca: str):
+    # Faz a busca na tabela 'questoes' do Supabase filtrando pela banca
+    response = supabase.table("questoes").select("*").eq("banca", banca).execute()
+    
+    # Retorna os dados encontrados
+    return response.data
 
 @app.get("/")
 async def root():
