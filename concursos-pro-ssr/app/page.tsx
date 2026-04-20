@@ -1,94 +1,104 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { supabase } from '../lib/supabaseClient'; 
+import CardQuestao from '../components/CardQuestao';
 import Link from "next/link";
 
-// 🔥 BUSCA DADOS
-async function getConcursos() {
-  const res = await fetch("https://meu-site-aodm.onrender.com/concursos", {
-    cache: "no-store",
-  });
+export default function Home() {
+  const [concursos, setConcursos] = useState([]);
+  const [questoes, setQuestoes] = useState([]);
+  const [carregando, setCarregando] = useState(true);
 
-  const data = await res.json();
-  return data.items;
-}
+  useEffect(() => {
+    async function carregarDados() {
+      try {
+        console.log("Iniciando busca de dados...");
 
-// 🔥 FORMATA CIDADE
-function formatarCidade(cidade: string) {
-  return cidade
-    .replace("-", " - ")
-    .replace(/([a-z])([A-Z])/g, "$1 $2");
-}
+        // 1. Busca Questões (Supabase) - Primeiro porque é mais rápido
+        const { data: dataQuestoes, error: erroSupabase } = await supabase
+          .from('questoes')
+          .select('*')
+          .limit(5);
 
-function gerarTexto(c: any) {
-  const salario =
-    c.salario_max > 0
-      ? `com salários de até R$ ${c.salario_max}`
-      : `com remuneração definida em edital`;
+        if (erroSupabase) {
+          console.error("Erro no Supabase:", erroSupabase.message);
+        } else {
+          console.log("Questões carregadas com sucesso!");
+          setQuestoes(dataQuestoes || []);
+        }
 
-  return `
-O edital do ${c.orgao} apresenta oportunidades para atuação em ${c.cidade}.
+        // 2. Busca Concursos (API Render) - Em um bloco separado para não travar
+        try {
+          const res = await fetch("https://meu-site-aodm.onrender.com/concursos", {
+             signal: AbortSignal.timeout(5000) // Cancela se demorar mais de 5 segundos
+          });
+          const dataConcursos = await res.json();
+          setConcursos(dataConcursos.items || []);
+        } catch (apiErr) {
+          console.error("A API do Render está demorando ou fora do ar.");
+        }
 
-O processo seletivo conta ${salario}, com vagas para diferentes níveis de escolaridade.
+      } catch (err) {
+        console.error("Erro geral na página:", err);
+      } finally {
+        setCarregando(false);
+      }
+    }
 
-Os interessados devem acompanhar os prazos e requisitos descritos no edital oficial.
+    carregarDados();
+  }, []); // Mantém o array vazio para evitar loop infinito
 
-Essa é uma boa oportunidade para quem deseja ingressar no serviço público.
-`;
-}
-
-// 🔥 HOME
-export default async function Home() {
-  const concursos = await getConcursos();
+  if (carregando) {
+    return (
+      <div style={{ padding: "40px", textAlign: "center", fontFamily: "sans-serif" }}>
+        <p>Carregando simulados e editais...</p>
+        <p style={{ fontSize: "12px", color: "#666" }}>Se demorar, a API do Render pode estar acordando.</p>
+      </div>
+    );
+  }
 
   return (
-    <main style={{ padding: "20px" }}>
-      <h1>Concursos Maranhão Pro</h1>
-      <p>
-Encontre os concursos públicos abertos no Maranhão com informações atualizadas diariamente.
-Consulte vagas, salários, editais e oportunidades em diversas cidades do estado.
-</p>
-
-
-      <h2>Oportunidades de concursos no Maranhão</h2>
-<p>
-Os concursos públicos no Maranhão oferecem oportunidades em diversas áreas,
-como educação, saúde, segurança e administração.
-Fique atento às atualizações diárias para não perder prazos e vagas disponíveis.
-</p>
-
-      {/* 🔥 LINKS SEO */}
-      <div style={{ marginBottom: "20px" }}>
-        <Link href="/cidade/sao-luis">São Luís</Link> |{" "}
-        <Link href="/cargo/professor">Professor</Link>
-      </div>
-
-      {concursos.map((c: any) => (
-        <div
-          key={c.id}
-          style={{
-            border: "1px solid #ccc",
-            margin: "10px 0",
-            padding: "10px",
-          }}
-        >
-          <h2>
-  <Link href={`/concurso/${c.id}`}>
-    Concurso {c.orgao} em {formatarCidade(c.cidade)}
-  </Link>
+    <main style={{ padding: "20px", maxWidth: "800px", margin: "0 auto", fontFamily: "sans-serif" }}>
+      <h1 style={{ textAlign: "center", marginBottom: "30px" }}>Concursos Maranhão Pro</h1>
+      
+      {/* SEÇÃO DE QUESTÕES */}
+      <section style={{ margin: "40px 0" }}>
+        <h2 style={{ color: "#3b82f6", borderBottom: "2px solid #3b82f6", paddingBottom: "10px" }}>
+          📝 Simulado Rápido
         </h2>
+        <p style={{ marginBottom: "20px" }}>Teste seus conhecimentos agora:</p>
+        
+        {questoes.length > 0 ? (
+          questoes.map((q: any) => (
+            <CardQuestao key={q.id} questao={q} />
+          ))
+        ) : (
+          <div style={{ padding: "20px", background: "#f0f0f0", borderRadius: "8px" }}>
+            <p>Nenhuma questão disponível no momento. Verifique a conexão com o Supabase.</p>
+          </div>
+        )}
+      </section>
 
-          <p>
-            <strong>Cidade:</strong> {formatarCidade(c.cidade)}
-          </p>
+      <hr style={{ margin: "40px 0", opacity: "0.2" }} />
 
-          <p>
-            <strong>Salário:</strong>{" "}
-            {c.salario_max > 0
-              ? `R$ ${c.salario_max}`
-              : "A consultar no edital"}
-          </p>
-
-          <p>{gerarTexto(c)}</p>
-        </div>
-      ))}
+      {/* LISTA DE CONCURSOS */}
+      <section>
+        <h2 style={{ marginTop: "40px" }}>Editais Abertos</h2>
+        {concursos.length > 0 ? (
+          concursos.map((c: any) => (
+            <div key={c.id} style={{ border: "1px solid #ddd", padding: "15px", margin: "15px 0", borderRadius: "8px", boxShadow: "0 2px 4px rgba(0,0,0,0.05)" }}>
+              <h3 style={{ margin: "0 0 10px 0" }}>{c.orgao}</h3>
+              <p style={{ fontSize: "14px", color: "#666" }}>Cidade: {c.cidade}</p>
+              <Link href={`/concurso/${c.id}`} style={{ color: "#3b82f6", fontWeight: "bold", textDecoration: "none" }}>
+                Ver detalhes do edital →
+              </Link>
+            </div>
+          ))
+        ) : (
+          <p>Buscando editais atualizados...</p>
+        )}
+      </section>
     </main>
   );
 }
