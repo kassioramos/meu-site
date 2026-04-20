@@ -64,20 +64,19 @@
             border-left: 4px solid var(--primary); 
         }
 
-        /* --- ESTILOS DA TABELA (DADOS DO SUPABASE) --- */
+        /* --- ESTILOS DA TABELA --- */
         .table-container { 
             width: 100%; 
             overflow-x: auto; 
             margin: 15px 0; 
             border-radius: 8px; 
             border: 1px solid var(--border);
-            -webkit-overflow-scrolling: touch; /* Scroll suave no iOS */
         }
 
         .tabela-vagas { 
             width: 100%; 
             border-collapse: collapse; 
-            min-width: 500px; /* Garante que o scroll apareça no celular */
+            min-width: 500px; 
         }
 
         .tabela-vagas th { 
@@ -86,17 +85,13 @@
             text-align: left; 
             padding: 12px; 
             border-bottom: 1px solid var(--border); 
-            font-size: 0.85rem;
         }
 
         .tabela-vagas td { 
             padding: 12px; 
             border-bottom: 1px solid var(--border); 
-            font-size: 0.9rem; 
             color: var(--text-main);
         }
-
-        .tabela-vagas tr:hover { background: rgba(255,255,255,0.02); }
 
         /* --- BOTÕES DE AÇÃO --- */
         .btn-edital { 
@@ -114,22 +109,13 @@
         }
 
         .btn-inscricao { background: #10b981; }
+        .btn-questoes { background: #8b5cf6; } /* Cor Roxa */
         .btn-edital:hover { opacity: 0.9; }
         .status-tag { background: #10b981; color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; }
 
-        /* --- RESPONSIVIDADE (MOBILE) --- */
         @media (max-width: 600px) {
             .container-detalhes { padding: 10px; margin: 20px auto; }
             .detalhes-card { padding: 20px 15px; }
-            .detalhes-header h1 { font-size: 1.4rem; }
-            
-            .tabela-vagas th, .tabela-vagas td {
-                padding: 10px 6px;
-                font-size: 0.8rem;
-            }
-
-            .info-item { padding: 10px; }
-            .info-item span { font-size: 0.9rem; }
         }
     </style>
 </head>
@@ -172,19 +158,18 @@
         }
 
         try {
+            // URL DA SUA API NO RENDER OU LOCAL
             const response = await fetch(`/concursos/${id}`);
             if (!response.ok) throw new Error('Falha ao buscar dados');
             const c = await response.json();
 
-            // Lógica para a Tabela Dinâmica do Supabase
-            // Se existir HTML na coluna tabela_vagas, ele usa. Se não, usa o campo de cargos simples.
+            const orgao = c.orgao || 'Não informado';
+            const banca = c.banca || 'A definir';
+            const sMax = c.salario_max || 0;
+
             const conteudoVagas = c.tabela_vagas 
                 ? `<div class="table-container">${c.tabela_vagas}</div>` 
                 : `<p><strong>Cargos:</strong> ${c.cargos || 'Conforme edital'}</p>`;
-
-            const orgao = c.orgao || c.orgão || 'Não informado';
-            const banca = c.banca || c.Banca || 'A definir';
-            const sMax = c.salario_max || c.salário_máximo || 0;
 
             container.innerHTML = `
                 <div class="detalhes-header">
@@ -211,11 +196,10 @@
                 </div>
 
                 <div class="container-acoes">
+                    <a href="questoes.html?banca=${encodeURIComponent(banca)}" class="btn-edital btn-questoes">
+                        ✍️ Responder Questões da ${banca}
+                    </a>
 
-                    /* Botão de Questões (Novo) */
-                <a href="questoes.html?banca=${banca}" class="btn-edital" style="background: #8b5cf6; margin-top: 15px;">
-                📝 Responder Questões da ${banca}
-                </a>
                     ${c.link_oficial ? `<a href="${c.link_oficial}" target="_blank" class="btn-edital">📄 Baixar Edital Oficial</a>` : ''}
                     ${c.link_inscricao ? `<a href="${c.link_inscricao}" target="_blank" class="btn-edital btn-inscricao">📝 Ir para Página de Inscrição</a>` : ''}
                 </div>

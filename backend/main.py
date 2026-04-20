@@ -66,14 +66,24 @@ def get_db_connection():
 
 # 5. ROTAS
 # No seu arquivo backend/main.py
-
 @app.get("/api/questoes")
 def get_questoes(banca: str):
-    # Faz a busca na tabela 'questoes' do Supabase filtrando pela banca
-    response = supabase.table("questoes").select("*").eq("banca", banca).execute()
-    
-    # Retorna os dados encontrados
-    return response.data
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Faz a busca usando SQL puro, que é o que seu código já usa
+        query = "SELECT * FROM questoes WHERE banca = %s"
+        cursor.execute(query, (banca,))
+        dados = cursor.fetchall()
+        
+        cursor.close()
+        conn.close()
+        
+        return dados # Retorna a lista de questões
+    except Exception as e:
+        print(f"ERRO QUESTOES: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/")
 async def root():
