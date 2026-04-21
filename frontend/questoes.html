@@ -1,38 +1,50 @@
-<script>
-async function carregarQuestoes() {
-    const params = new URLSearchParams(window.location.search);
-    const banca = params.get('banca');
+...
+    </div>
 
-    document.getElementById('titulo-banca').innerText = `Questões da banca: ${banca}`;
+    <!-- 🔥 SCRIPT CORRIGIDO -->
+    <script>
+    async function carregarQuestoes() {
+        const params = new URLSearchParams(window.location.search);
+        const banca = params.get('banca');
 
-    try {
-        const response = await fetch(
-            `https://meu-site-aodm.onrender.com/questoes?banca=${encodeURIComponent(banca)}`
-        );
-
-        const questoes = await response.json();
-
-        console.log("QUESTOES:", questoes);
-
+        const titulo = document.getElementById('titulo-banca');
         const container = document.getElementById('lista-questoes');
 
-        if (!Array.isArray(questoes) || questoes.length === 0) {
-            container.innerHTML = "Nenhuma questão encontrada.";
-            return;
+        titulo.innerText = `Questões da banca: ${banca}`;
+
+        try {
+            const response = await fetch(
+                `https://meu-site-aodm.onrender.com/questoes?banca=${encodeURIComponent(banca)}`
+            );
+
+            const data = await response.json();
+
+            console.log("RESPOSTA API:", data);
+
+            if (!Array.isArray(data)) {
+                container.innerHTML = "Erro: resposta inválida da API.";
+                return;
+            }
+
+            if (data.length === 0) {
+                container.innerHTML = "Nenhuma questão encontrada.";
+                return;
+            }
+
+            container.innerHTML = data.map(q => `
+                <div class="questao-card">
+                    <p class="enunciado">${q.enunciado}</p>
+                    <div class="alternativa">📚 ${q.disciplina}</div>
+                </div>
+            `).join('');
+
+        } catch (error) {
+            console.error("ERRO:", error);
+            container.innerHTML = "Erro ao carregar questões.";
         }
-
-        container.innerHTML = questoes.map(q => `
-            <div class="questao-card">
-                <p class="enunciado">${q.enunciado}</p>
-                <div class="alternativa">📚 ${q.disciplina}</div>
-            </div>
-        `).join('');
-
-    } catch (error) {
-        console.error(error);
-        document.getElementById('lista-questoes').innerHTML = "Erro ao carregar questões.";
     }
-}
 
-window.onload = carregarQuestoes;
-</script>
+    window.onload = carregarQuestoes;
+    </script>
+</body>
+</html>
