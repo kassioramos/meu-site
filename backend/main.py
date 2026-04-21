@@ -9,7 +9,7 @@ import uuid
 
 app = FastAPI()
 
-# 🔓 Libera acesso (CORS)
+# 🔓 Configuração de CORS para permitir que a Vercel acesse o Render
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -18,7 +18,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# 🔄 Serializador (pra JSON)
+# 🔄 Serializador para tipos que o JSON padrão não aceita
 def serializar(obj):
     if isinstance(obj, (date, datetime)):
         return obj.isoformat()
@@ -28,19 +28,16 @@ def serializar(obj):
         return str(obj)
     return obj
 
-# 🔌 Conexão com banco
+# 🔌 Conexão com o banco (DATABASE_URL deve estar no painel do Render)
 def get_db_connection():
-    return psycopg2.connect(
-        os.environ.get("DATABASE_URL"),
-        cursor_factory=RealDictCursor
-    )
+    db_url = os.environ.get("DATABASE_URL")
+    return psycopg2.connect(db_url, cursor_factory=RealDictCursor)
 
-# 🏠 Rota inicial
 @app.get("/")
 def home():
-    return {"status": "online", "msg": "API funcionando 🚀"}
+    return {"status": "online", "msg": "API Concursos Maranhão Pro funcionando! 🚀"}
 
-# 📚 LISTAR QUESTÕES (CORRIGIDO)
+# 📚 Rota de Questões com Busca Segura
 @app.get("/questoes")
 def listar_questoes(banca: str = Query(None)):
     conn = None
@@ -48,28 +45,22 @@ def listar_questoes(banca: str = Query(None)):
         conn = get_db_connection()
         cursor = conn.cursor()
 
-        sql_base = """
-            SELECT id, banca, enunciado, disciplina
-            FROM questoes
-        """
+        # Selecionando as colunas necessárias (certifique-se que 'opcoes' existe no seu banco)
+        sql_base = "SELECT id, banca, enunciado, disciplina, opcoes, alternativa_correta FROM questoes"
 
         if banca:
             banca_limpa = banca.strip()
-            print(f"--- DEBUG: Buscando por: '{banca_limpa}' ---")
-
-            # 🔥 CORREÇÃO AQUI (busca robusta)
-            query = f"""
-                {sql_base}
-                WHERE REPLACE(LOWER(banca), ' ', '') ILIKE REPLACE(LOWER(%s), ' ', '')
-            """
-
+            print(f"--- DEBUG: Buscando banca: '{banca_limpa}' ---")
+            
+            # ILIKE é o segredo: ele ignora maiúsculas/minúsculas automaticamente no Postgres
+            query = f"{sql_base} WHERE banca ILIKE %s"
             cursor.execute(query, (f"%{banca_limpa}%",))
         else:
             cursor.execute(f"{sql_base} LIMIT 20")
 
         dados = cursor.fetchall()
-        print(f"--- DEBUG: Encontradas {len(dados)} questões ---")
-
+        
+        # Converte os dados para um formato que o Python consegue enviar via API
         for item in dados:
             for k, v in item.items():
                 item[k] = serializar(v)
@@ -77,14 +68,13 @@ def listar_questoes(banca: str = Query(None)):
         return dados
 
     except Exception as e:
-        print(f"--- ERRO BACKEND: {str(e)} ---")
+        print(f"--- ERRO NO SERVIDOR: {str(e)} ---")
         return {"error": str(e)}
-
     finally:
         if conn:
             conn.close()
 
-# 📄 LISTAR CONCURSOS
+# 📄 Rota de Concursos
 @app.get("/concursos")
 def listar_concursos():
     conn = None
@@ -93,46 +83,12 @@ def listar_concursos():
         cursor = conn.cursor()
         cursor.execute('SELECT * FROM concursos ORDER BY id DESC')
         dados = cursor.fetchall()
-
         for item in dados:
             for k, v in item.items():
                 item[k] = serializar(v)
-
         return {"items": dados}
-
     except Exception as e:
         return {"error": str(e)}
-
-    finally:
-        if conn:
-            conn.close()
-
-# 🔎 DETALHE DO CONCURSO
-@app.get("/concursos/{concurso_id}")
-def detalhe_concurso(concurso_id: int):
-    conn = None
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
-
-        cursor.execute(
-            'SELECT * FROM concursos WHERE id = %s',
-            (concurso_id,)
-        )
-
-        concurso = cursor.fetchone()
-
-        if not concurso:
-            raise HTTPException(status_code=404, detail="Não encontrado")
-
-        for k, v in concurso.items():
-            concurso[k] = serializar(v)
-
-        return concurso
-
-    except Exception as e:
-        return {"error": str(e)}
-
     finally:
         if conn:
             conn.close()
