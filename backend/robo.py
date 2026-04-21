@@ -31,15 +31,20 @@ def scraper_jk():
         res = requests.get(url, timeout=15)
         soup = BeautifulSoup(res.text, 'html.parser')
         for link_tag in soup.find_all('a', href=True):
-            texto = link_tag.text.strip().upper()
-            if "CONCURSO" in link_tag['href'].lower() and len(texto) > 5:
+            # Capturamos o texto original do link
+            texto_original = link_tag.text.strip().upper()
+            
+            # Verificamos se o link parece ser de um concurso/seletivo
+            # Filtramos links muito curtos ou irrelevantes
+            if "CONCURSO" in link_tag['href'].lower() and len(texto_original) > 5:
                 concursos.append({
-                    "orgao": normalizar_nome(texto.replace('\n', ' ')),
+                    "orgao": normalizar_nome(texto_original.replace('\n', ' ')),
                     "cidade": "Maranhão", 
                     "status": "Aberto",
                     "cargos": "Consultar Edital", 
                     "escolaridade": "Ver Edital",
-                    "banca": "Instituto JK", # Nome padrão para bater com as questões
+                    # FIXO: Forçamos o nome que existe na tabela 'questoes'
+                    "banca": "Instituto JK", 
                     "link_oficial": link_tag['href'].strip(),
                     "link_inscricao": link_tag['href'].strip()
                 })
