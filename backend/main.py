@@ -10,8 +10,7 @@ from decimal import Decimal
 # 1. INICIALIZAÇÃO
 app = FastAPI(title="Concursos Maranhão API")
 
-# 2. CONFIGURAÇÃO DE CORS
-# Permite que o seu frontend na Vercel acesse este backend no Render
+# 2. CONFIGURAÇÃO DE CORS - Essencial para a Vercel funcionar
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -20,7 +19,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# FUNÇÃO AUXILIAR PARA TRATAR TIPOS DE DADOS DO POSTGRES
+# FUNÇÃO AUXILIAR PARA SERIALIZAÇÃO JSON
 def serializar_dados(obj):
     if isinstance(obj, (date, datetime)):
         return obj.isoformat()
@@ -34,18 +33,17 @@ def gerar_descricao_seo(concurso):
     banca = str(concurso.get('banca', 'Comissão Própria')).strip()
     return f"Edital aberto para {orgao} organizado por {banca}. Confira vagas e salários."
 
-# 4. CONEXÃO COM O BANCO DE DADOS
+# 4. CONEXÃO COM O BANCO
 def get_db_connection():
-    # Certifique-se que a variável DATABASE_URL está no 'Environment' do Render
     return psycopg2.connect(os.getenv("DATABASE_URL"), cursor_factory=RealDictCursor)
 
-# 5. ROTAS DA API
+# 5. ROTAS
 
 @app.get("/")
 async def root():
     return {"status": "Online", "message": "API Concursos Maranhão Pro"}
 
-# ROTA DE QUESTÕES (CORREÇÃO CRÍTICA)
+# ROTA DE QUESTÕES CORRIGIDA (O Query(None) é obrigatório aqui)
 @app.get("/questoes")
 def get_questoes(banca: str = Query(None)):
     conn = None
@@ -53,7 +51,7 @@ def get_questoes(banca: str = Query(None)):
         conn = get_db_connection()
         cursor = conn.cursor()
         
-        # O uso de ILIKE resolve problemas de maiúsculas/minúsculas e espaços
+        # Filtra por banca ignorando maiúsculas/minúsculas
         if banca and banca.lower() != "null":
             query = "SELECT * FROM questoes WHERE banca ILIKE %s ORDER BY random() LIMIT 10"
             cursor.execute(query, (f"%{banca.strip()}%",))
@@ -62,7 +60,7 @@ def get_questoes(banca: str = Query(None)):
             
         dados = cursor.fetchall()
         
-        # Limpa os dados para evitar erro de serialização JSON
+        # Sanitização dos dados
         for q in dados:
             for chave, valor in q.items():
                 if isinstance(valor, (date, datetime, Decimal)):
@@ -71,8 +69,8 @@ def get_questoes(banca: str = Query(None)):
         cursor.close()
         return dados 
     except Exception as e:
-        print(f"Erro na API de questões: {e}")
-        return [] # Retorna vazio para não quebrar o frontend
+        print(f"Erro em /questoes: {e}")
+        return []
     finally:
         if conn: conn.close()
 
@@ -94,8 +92,7 @@ async def listar_concursos():
         cursor.close()
         return {"items": dados}
     except Exception as e:
-        print(f"Erro em /concursos: {e}")
-        raise HTTPException(status_code=500, detail="Erro ao buscar concursos")
+        raise HTTPException(status_code=500, detail=str(e))
     finally:
         if conn: conn.close()
 
@@ -110,7 +107,7 @@ async def get_concurso(concurso_id: int):
         concurso = cursor.fetchone()
         
         if not concurso:
-            raise HTTPException(status_code=404, detail="Concurso não encontrado")
+            raise HTTPException(status_code=404, detail="Não encontrado")
             
         for campo in concurso:
             if isinstance(concurso[campo], (date, datetime, Decimal)):
@@ -119,7 +116,6 @@ async def get_concurso(concurso_id: int):
         cursor.close()
         return concurso
     except Exception as e:
-        print(f"Erro em /concursos/id: {e}")
-        raise HTTPException(status_code=500, detail="Erro interno")
+        raise HTTPException(status_code=500, detail=str(e))
     finally:
         if conn: conn.close()
