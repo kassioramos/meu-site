@@ -1,52 +1,38 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Questões - Concursos Pro</title>
-    <style>
-        :root { --primary: #8b5cf6; --bg: #0f172a; --card-bg: #1e293b; --text-main: #f8fafc; }
-        body { font-family: 'Inter', sans-serif; background-color: var(--bg); color: var(--text-main); padding: 20px; }
-        .container { max-width: 800px; margin: 0 auto; }
-        .questao-card { background: var(--card-bg); padding: 20px; border-radius: 10px; margin-bottom: 20px; border-left: 4px solid var(--primary); }
-        .enunciado { font-weight: 500; margin-bottom: 15px; }
-        .alternativa { display: block; background: rgba(255,255,255,0.05); padding: 10px; margin: 5px 0; border-radius: 5px; cursor: pointer; border: 1px solid transparent; }
-        .alternativa:hover { border-color: var(--primary); }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <a href="javascript:history.back()" style="color: var(--primary); text-decoration: none;">← Voltar</a>
-        <h1 id="titulo-banca">Questões</h1>
-        <div id="lista-questoes">Carregando questões...</div>
-    </div>
+<script>
+async function carregarQuestoes() {
+    const params = new URLSearchParams(window.location.search);
+    const banca = params.get('banca');
 
-    <script>
-        async function carregarQuestoes() {
-            const params = new URLSearchParams(window.location.search);
-            const banca = params.get('banca');
-            document.getElementById('titulo-banca').innerText = `Questões da banca: ${banca}`;
+    document.getElementById('titulo-banca').innerText = `Questões da banca: ${banca}`;
 
-            try {
-                // Aqui você faz o fetch para a sua rota de questões filtrando pela banca
-                const response = await fetch(`/api/questoes?banca=${banca}`); 
-                const questoes = await response.json();
+    try {
+        const response = await fetch(
+            `https://meu-site-aodm.onrender.com/questoes?banca=${encodeURIComponent(banca)}`
+        );
 
-                const container = document.getElementById('lista-questoes');
-                container.innerHTML = questoes.map(q => `
-                    <div class="questao-card">
-                        <p class="enunciado">${q.enunciado}</p>
-                        <div class="alternativa">A) ${q.alternativa_a}</div>
-                        <div class="alternativa">B) ${q.alternativa_b}</div>
-                        <div class="alternativa">C) ${q.alternativa_c}</div>
-                        <div class="alternativa">D) ${q.alternativa_d}</div>
-                    </div>
-                `).join('');
-            } catch (error) {
-                document.getElementById('lista-questoes').innerHTML = "Nenhuma questão encontrada para esta banca.";
-            }
+        const questoes = await response.json();
+
+        console.log("QUESTOES:", questoes);
+
+        const container = document.getElementById('lista-questoes');
+
+        if (!Array.isArray(questoes) || questoes.length === 0) {
+            container.innerHTML = "Nenhuma questão encontrada.";
+            return;
         }
-        window.onload = carregarQuestoes;
-    </script>
-</body>
-</html>
+
+        container.innerHTML = questoes.map(q => `
+            <div class="questao-card">
+                <p class="enunciado">${q.enunciado}</p>
+                <div class="alternativa">📚 ${q.disciplina}</div>
+            </div>
+        `).join('');
+
+    } catch (error) {
+        console.error(error);
+        document.getElementById('lista-questoes').innerHTML = "Erro ao carregar questões.";
+    }
+}
+
+window.onload = carregarQuestoes;
+</script>
