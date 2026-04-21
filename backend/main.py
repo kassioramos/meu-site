@@ -8,7 +8,7 @@ from decimal import Decimal
 
 app = FastAPI()
 
-# Configuração de CORS para a Vercel
+# Permite que a Vercel acesse os dados do Render
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -16,7 +16,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Auxiliar para transformar dados do banco em texto/número puro
+# Converte formatos do banco (como datas) para texto puro
 def serializar(obj):
     if isinstance(obj, (date, datetime)):
         return obj.isoformat()
@@ -29,21 +29,23 @@ def get_db_connection():
 
 @app.get("/")
 def home():
-    return {"status": "online", "projeto": "Concursos Maranhão Pro"}
+    return {"status": "online", "tabelas_ativas": ["concursos", "questoes"]}
 
-# ROTA DE QUESTÕES (MANTIDA)
+# --- AQUI ESTÁ O QUE FALTAVA PARA A TABELA QUESTOES ---
 @app.get("/questoes")
 def listar_questoes(banca: str = Query(None)):
     conn = None
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
+        
+        # Busca na tabela 'questoes' (conforme seu print do Supabase)
         if banca:
-            cursor.execute("SELECT * FROM questoes WHERE banca ILIKE %s LIMIT 10", (f"%{banca}%",))
+            cursor.execute("SELECT * FROM questoes WHERE banca ILIKE %s LIMIT 10", (f"%{banca.strip()}%",))
         else:
             cursor.execute("SELECT * FROM questoes LIMIT 10")
+            
         dados = cursor.fetchall()
-        # Tratamento de dados especiais
         for item in dados:
             for k, v in item.items():
                 item[k] = serializar(v)
@@ -53,7 +55,7 @@ def listar_questoes(banca: str = Query(None)):
     finally:
         if conn: conn.close()
 
-# ROTA DE CONCURSOS (RECUPERADA PARA O DASHBOARD)
+# --- ROTA PARA A TABELA CONCURSOS (QUE JÁ FUNCIONAVA) ---
 @app.get("/concursos")
 def listar_concursos():
     conn = None
@@ -66,25 +68,6 @@ def listar_concursos():
             for k, v in item.items():
                 item[k] = serializar(v)
         return {"items": dados}
-    except Exception as e:
-        return {"error": str(e)}
-    finally:
-        if conn: conn.close()
-
-# ROTA DE DETALHE
-@app.get("/concursos/{concurso_id}")
-def detalhe_concurso(concurso_id: int):
-    conn = None
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute("SELECT * FROM concursos WHERE id = %s", (concurso_id,))
-        concurso = cursor.fetchone()
-        if not concurso:
-            raise HTTPException(status_code=404, detail="Não encontrado")
-        for k, v in concurso.items():
-            concurso[k] = serializar(v)
-        return concurso
     except Exception as e:
         return {"error": str(e)}
     finally:
