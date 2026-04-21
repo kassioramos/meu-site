@@ -9,7 +9,7 @@ import uuid
 
 app = FastAPI()
 
-# --- Configuração de CORS (Essencial para Vercel -> Render) ---
+# --- CONFIGURAÇÃO DE CORS ---
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -18,6 +18,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Converte formatos do banco para JSON (Datas, Decimais e UUIDs)
 def serializar(obj):
     if isinstance(obj, (date, datetime)):
         return obj.isoformat()
@@ -28,13 +29,16 @@ def serializar(obj):
     return obj
 
 def get_db_connection():
-    return psycopg2.connect(os.environ.get("DATABASE_URL"), cursor_factory=RealDictCursor)
+    db_url = os.environ.get("DATABASE_URL")
+    if not db_url:
+        print("ERRO CRÍTICO: DATABASE_URL não configurada no Render!")
+    return psycopg2.connect(db_url, cursor_factory=RealDictCursor)
 
 @app.get("/")
 def home():
     return {"status": "online", "msg": "API Concursos Maranhão Pro"}
 
-# --- 1. ROTA DE QUESTÕES (A que está dando erro) ---
+# --- 1. ROTA DE QUESTÕES (SIMULADO) ---
 @app.get("/questoes")
 def listar_questoes(banca: str = Query(None)):
     conn = None
@@ -42,64 +46,73 @@ def listar_questoes(banca: str = Query(None)):
         conn = get_db_connection()
         cursor = conn.cursor()
         
-        # Selecionamos id, banca, enunciado, disciplina, opcoes e alternativa_correta
-        sql_base = 'SELECT id, banca, enunciado, disciplina, opcoes, alternativa_correta FROM questoes'
+        # SQL usando 'id' (UUID conforme sua imagem bacb87)
+        sql = 'SELECT id, banca, enunciado, disciplina, opcoes, alternativa_correta FROM questoes'
         
         if banca:
-            # O segredo: TRIM remove espaços invisíveis e ILIKE ignora MAIÚSCULAS/minúsculas
-            # Buscamos por partes do nome para garantir que 'Instituto JK' funcione
-            termo_busca = f"%{banca.strip()}%"
-            cursor.execute(f"{sql_base} WHERE banca ILIKE %s LIMIT 50", (termo_busca,))
+            banca_limpa = banca.strip()
+            print(f"Buscando banca: '{banca_limpa}'") 
+            cursor.execute(f"{sql} WHERE banca ILIKE %s LIMIT 50", (f"%{banca_limpa}%",))
         else:
-            cursor.execute(f"{sql_base} LIMIT 50")
+            cursor.execute(f"{sql} LIMIT 50")
             
         dados = cursor.fetchall()
-        
-        # Converte formatos especiais para JSON
+        print(f"Questões encontradas: {len(dados)}") 
+
         for item in dados:
             for k, v in item.items():
                 item[k] = serializar(v)
         
         return dados
     except Exception as e:
-        print(f"ERRO NO BACKEND: {e}")
+        print(f"ERRO NO SQL QUESTOES: {str(e)}")
         return {"error": str(e)}
     finally:
         if conn: conn.close()
 
-# --- 2. ROTA DE CONCURSOS ---
+# --- 2. ROTA DE CONCURSOS (DASHBOARD) ---
 @app.get("/concursos")
 def listar_concursos():
     conn = None
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
+        # Ordena pelos concursos mais recentes (ID maior primeiro)
         cursor.execute('SELECT * FROM concursos ORDER BY id DESC')
         dados = cursor.fetchall()
+        
         for item in dados:
             for k, v in item.items():
                 item[k] = serializar(v)
+        
+        # O Next.js espera a chave "items" para fazer o .map()
         return {"items": dados}
     except Exception as e:
+        print(f"ERRO NO SQL CONCURSOS: {str(e)}")
         return {"error": str(e)}
     finally:
         if conn: conn.close()
 
-# --- 3. ROTA DE DETALHES ---
+# --- 3. ROTA DE DETALHES (PÁGINA INDIVIDUAL) ---
 @app.get("/concursos/{concurso_id}")
 def detalhe_concurso(concurso_id: int):
     conn = None
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
+        # Busca concurso específico pelo ID (int4 conforme b9dec6)
         cursor.execute('SELECT * FROM concursos WHERE id = %s', (concurso_id,))
         concurso = cursor.fetchone()
+        
         if not concurso:
-            raise HTTPException(status_code=404, detail="Não encontrado")
+            raise HTTPException(status_code=404, detail="Concurso não encontrado")
+            
         for k, v in concurso.items():
             concurso[k] = serializar(v)
+            
         return concurso
     except Exception as e:
+        print(f"ERRO NO SQL DETALHES: {str(e)}")
         return {"error": str(e)}
     finally:
         if conn: conn.close()
