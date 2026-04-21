@@ -9,7 +9,7 @@ import uuid
 
 app = FastAPI()
 
-# --- Configuração de CORS ---
+# --- Configuração de CORS (Essencial para Vercel -> Render) ---
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -18,7 +18,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Converte formatos do banco para JSON (Datas, Decimais e UUIDs)
 def serializar(obj):
     if isinstance(obj, (date, datetime)):
         return obj.isoformat()
@@ -33,9 +32,9 @@ def get_db_connection():
 
 @app.get("/")
 def home():
-    return {"status": "online", "projeto": "Concursos Maranhão Pro"}
+    return {"status": "online", "msg": "API Concursos Maranhão Pro"}
 
-# --- 1. ROTA DE QUESTÕES ---
+# --- 1. ROTA DE QUESTÕES (A que está dando erro) ---
 @app.get("/questoes")
 def listar_questoes(banca: str = Query(None)):
     conn = None
@@ -43,23 +42,27 @@ def listar_questoes(banca: str = Query(None)):
         conn = get_db_connection()
         cursor = conn.cursor()
         
-        # SQL usando 'id' conforme sua última imagem (bacb87)
+        # Selecionamos id, banca, enunciado, disciplina, opcoes e alternativa_correta
         sql_base = 'SELECT id, banca, enunciado, disciplina, opcoes, alternativa_correta FROM questoes'
         
         if banca:
-            cursor.execute(f'{sql_base} WHERE banca ILIKE %s LIMIT 20', (f"%{banca.strip()}%",))
+            # O segredo: TRIM remove espaços invisíveis e ILIKE ignora MAIÚSCULAS/minúsculas
+            # Buscamos por partes do nome para garantir que 'Instituto JK' funcione
+            termo_busca = f"%{banca.strip()}%"
+            cursor.execute(f"{sql_base} WHERE banca ILIKE %s LIMIT 50", (termo_busca,))
         else:
-            cursor.execute(f'{sql_base} LIMIT 20')
+            cursor.execute(f"{sql_base} LIMIT 50")
             
         dados = cursor.fetchall()
         
+        # Converte formatos especiais para JSON
         for item in dados:
             for k, v in item.items():
                 item[k] = serializar(v)
         
         return dados
     except Exception as e:
-        print(f"Erro em /questoes: {e}")
+        print(f"ERRO NO BACKEND: {e}")
         return {"error": str(e)}
     finally:
         if conn: conn.close()
@@ -71,17 +74,13 @@ def listar_concursos():
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
-        # Ordenando pelos mais recentes
         cursor.execute('SELECT * FROM concursos ORDER BY id DESC')
         dados = cursor.fetchall()
-        
         for item in dados:
             for k, v in item.items():
                 item[k] = serializar(v)
-        
         return {"items": dados}
     except Exception as e:
-        print(f"Erro em /concursos: {e}")
         return {"error": str(e)}
     finally:
         if conn: conn.close()
@@ -95,16 +94,12 @@ def detalhe_concurso(concurso_id: int):
         cursor = conn.cursor()
         cursor.execute('SELECT * FROM concursos WHERE id = %s', (concurso_id,))
         concurso = cursor.fetchone()
-        
         if not concurso:
-            raise HTTPException(status_code=404, detail="Concurso não encontrado")
-            
+            raise HTTPException(status_code=404, detail="Não encontrado")
         for k, v in concurso.items():
             concurso[k] = serializar(v)
-            
         return concurso
     except Exception as e:
-        print(f"Erro em /detalhe: {e}")
         return {"error": str(e)}
     finally:
         if conn: conn.close()
