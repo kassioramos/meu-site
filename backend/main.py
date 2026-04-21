@@ -10,7 +10,7 @@ from decimal import Decimal
 # 1. INICIALIZAÇÃO
 app = FastAPI(title="Concursos Maranhão API")
 
-# 2. CONFIGURAÇÃO DE CORS - Essencial para a Vercel funcionar
+# 2. CONFIGURAÇÃO DE CORS - Essencial para a Vercel conseguir ler os dados
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -19,7 +19,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# FUNÇÃO AUXILIAR PARA SERIALIZAÇÃO JSON
+# FUNÇÃO AUXILIAR PARA TRATAR DADOS DO BANCO (DATAS E DECIMAIS)
 def serializar_dados(obj):
     if isinstance(obj, (date, datetime)):
         return obj.isoformat()
@@ -33,17 +33,18 @@ def gerar_descricao_seo(concurso):
     banca = str(concurso.get('banca', 'Comissão Própria')).strip()
     return f"Edital aberto para {orgao} organizado por {banca}. Confira vagas e salários."
 
-# 4. CONEXÃO COM O BANCO
+# 4. CONEXÃO COM O BANCO DE DADOS
 def get_db_connection():
+    # Puxa a URL do banco das variáveis de ambiente do Render
     return psycopg2.connect(os.getenv("DATABASE_URL"), cursor_factory=RealDictCursor)
 
-# 5. ROTAS
+# 5. ROTAS DA API
 
 @app.get("/")
 async def root():
-    return {"status": "Online", "message": "API Concursos Maranhão Pro"}
+    return {"status": "Online", "projeto": "Concursos Maranhão Pro"}
 
-# ROTA DE QUESTÕES CORRIGIDA (O Query(None) é obrigatório aqui)
+# ROTA DE QUESTÕES CORRIGIDA
 @app.get("/questoes")
 def get_questoes(banca: str = Query(None)):
     conn = None
@@ -51,7 +52,7 @@ def get_questoes(banca: str = Query(None)):
         conn = get_db_connection()
         cursor = conn.cursor()
         
-        # Filtra por banca ignorando maiúsculas/minúsculas
+        # O uso de ILIKE garante que 'instituto jk' encontre 'Instituto JK'
         if banca and banca.lower() != "null":
             query = "SELECT * FROM questoes WHERE banca ILIKE %s ORDER BY random() LIMIT 10"
             cursor.execute(query, (f"%{banca.strip()}%",))
@@ -60,7 +61,7 @@ def get_questoes(banca: str = Query(None)):
             
         dados = cursor.fetchall()
         
-        # Sanitização dos dados
+        # Sanitização para não quebrar o JSON no navegador
         for q in dados:
             for chave, valor in q.items():
                 if isinstance(valor, (date, datetime, Decimal)):
@@ -69,8 +70,8 @@ def get_questoes(banca: str = Query(None)):
         cursor.close()
         return dados 
     except Exception as e:
-        print(f"Erro em /questoes: {e}")
-        return []
+        print(f"Erro na rota /questoes: {e}")
+        return [] # Retorna lista vazia em vez de erro para o site não travar
     finally:
         if conn: conn.close()
 
@@ -92,7 +93,8 @@ async def listar_concursos():
         cursor.close()
         return {"items": dados}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        print(f"Erro em /concursos: {e}")
+        raise HTTPException(status_code=500, detail="Erro ao carregar lista")
     finally:
         if conn: conn.close()
 
@@ -107,7 +109,7 @@ async def get_concurso(concurso_id: int):
         concurso = cursor.fetchone()
         
         if not concurso:
-            raise HTTPException(status_code=404, detail="Não encontrado")
+            raise HTTPException(status_code=404, detail="Concurso não encontrado")
             
         for campo in concurso:
             if isinstance(concurso[campo], (date, datetime, Decimal)):
@@ -116,6 +118,7 @@ async def get_concurso(concurso_id: int):
         cursor.close()
         return concurso
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        print(f"Erro em /concursos/id: {e}")
+        raise HTTPException(status_code=500, detail="Erro interno")
     finally:
         if conn: conn.close()
