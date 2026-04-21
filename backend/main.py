@@ -27,12 +27,11 @@ def serializar(obj):
     return obj
 
 def get_db_connection():
-    db_url = os.environ.get("DATABASE_URL")
-    return psycopg2.connect(db_url, cursor_factory=RealDictCursor)
+    return psycopg2.connect(os.environ.get("DATABASE_URL"), cursor_factory=RealDictCursor)
 
 @app.get("/")
 def home():
-    return {"status": "online"}
+    return {"status": "online", "msg": "API Concursos Maranhão Pro corrigida"}
 
 @app.get("/questoes")
 def listar_questoes(banca: str = Query(None)):
@@ -41,17 +40,23 @@ def listar_questoes(banca: str = Query(None)):
         conn = get_db_connection()
         cursor = conn.cursor()
         
-        # SQL ajustado para os nomes exatos das suas colunas na imagem bacb87
-        sql = 'SELECT id, banca, enunciado, disciplina, opcoes, alternativa_correta FROM questoes'
+        # SQL usando os nomes exatos da sua imagem bacb87
+        sql_base = 'SELECT id, banca, enunciado, disciplina, opcoes, alternativa_correta FROM questoes'
         
         if banca:
-            # O TRIM remove espaços extras e o ILIKE ignora maiúsculas/minúsculas
-            termo = f"%{banca.strip()}%"
-            cursor.execute(f"{sql} WHERE banca ILIKE %s", (termo,))
+            # Substitui %20 por espaço real e limpa as pontas
+            banca_decoded = banca.replace("%20", " ").strip()
+            print(f"--- DEBUG: Buscando por: '{banca_decoded}' ---")
+            
+            # Usamos o operador @> ou ILIKE com coringas nas duas pontas
+            query = f"{sql_base} WHERE REPLACE(banca, ' ', '') ILIKE %s"
+            termo_limpo = f"%{banca_decoded.replace(' ', '')}%"
+            cursor.execute(query, (termo_limpo,))
         else:
-            cursor.execute(f"{sql} LIMIT 20")
+            cursor.execute(f"{sql_base} LIMIT 20")
             
         dados = cursor.fetchall()
+        print(f"--- DEBUG: Encontradas {len(dados)} questões ---")
 
         for item in dados:
             for k, v in item.items():
@@ -59,6 +64,7 @@ def listar_questoes(banca: str = Query(None)):
         
         return dados
     except Exception as e:
+        print(f"--- ERRO BACKEND: {str(e)} ---")
         return {"error": str(e)}
     finally:
         if conn: conn.close()
@@ -69,7 +75,6 @@ def listar_concursos():
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
-        # Ordena pelo ID conforme imagem ba6ccd
         cursor.execute('SELECT * FROM concursos ORDER BY id DESC')
         dados = cursor.fetchall()
         for item in dados:
