@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 import psycopg2
 from psycopg2.extras import RealDictCursor
@@ -8,7 +8,7 @@ from datetime import date, datetime
 from decimal import Decimal
 
 # 1. INICIALIZAÇÃO
-app = FastAPI()
+app = FastAPI(title="Concursos Maranhão API", version="1.0.0")
 
 # 2. CONFIGURAÇÃO DE CORS
 app.add_middleware(
@@ -19,7 +19,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# FUNÇÃO AUXILIAR PARA CONVERTER TIPOS ESPECIAIS PARA JSON
+# FUNÇÃO AUXILIAR PARA SERIALIZAÇÃO JSON
 def serializar_dados(obj):
     if isinstance(obj, (date, datetime)):
         return obj.isoformat()
@@ -27,79 +27,80 @@ def serializar_dados(obj):
         return float(obj)
     return str(obj) if obj is not None else None
 
-# 3. FUNÇÃO DE SEO DINÂMICO
+# 3. LÓGICA DE SEO DINÂMICO
 def gerar_descricao_seo(concurso):
-    orgao = str(concurso.get('orgao', '')).title()
+    orgao = str(concurso.get('orgao', 'Órgão não informado')).title()
     cidade = str(concurso.get('cidade', 'Maranhão')).title()
-    
     banca_db = str(concurso.get('banca', '')).strip()
 
     if not banca_db or banca_db.lower() in ['nulo', 'null', 'none', '']:
-        banca_final = "comissão própria da instituição"
+        banca_final = "comissão própria"
     else:
-        banca_final = f"organização de {banca_db}"
+        banca_final = f"banca {banca_db}"
 
     intros = [
-        f"Excelente oportunidade aberta no órgão {orgao} sob {banca_final}.",
-        f"O edital para {orgao} em {cidade} já está disponível para consulta, organizado por {banca_final}.",
-        f"Quem busca estabilidade no Maranhão deve conferir a vaga para {orgao} ({banca_final})."
+        f"Edital aberto para {orgao} em {cidade} organizado pela {banca_final}.",
+        f"Oportunidade de concurso público no Maranhão: {orgao} ({banca_final}).",
+        f"Confira as vagas e prazos para o certame da {orgao} sob {banca_final}."
     ]
     
-    detalhes = ""
     salario = concurso.get('salario_max', 0)
-    
     try:
         salario_val = float(salario) if salario else 0
-        if salario_val > 0:
-            detalhes += f" O processo seletivo oferece vencimentos de até R$ {salario_val:.2f}."
-        else:
-            detalhes += " A remuneração detalhada pode ser conferida no edital oficial."
+        detalhe_salario = f" Salários chegam a R$ {salario_val:.2f}." if salario_val > 0 else ""
     except:
-        detalhes += " Confira os detalhes salariais no edital completo."
+        detalhe_salario = ""
 
-    ctas = [" Fique atento aos prazos.", " Prepare-se com antecedência.", " Verifique os requisitos no anexo."]
-    return f"{random.choice(intros)}{detalhes}{random.choice(ctas)}"
+    ctas = [" Veja o edital.", " Inscrições abertas.", " Prepare sua apostila."]
+    return f"{random.choice(intros)}{detalhe_salario}{random.choice(ctas)}"
 
 # 4. CONEXÃO COM O BANCO DE DADOS
 def get_db_connection():
-    return psycopg2.connect(os.getenv("DATABASE_URL"), cursor_factory=RealDictCursor)
+    try:
+        return psycopg2.connect(os.getenv("DATABASE_URL"), cursor_factory=RealDictCursor)
+    except Exception as e:
+        print(f"ERRO DE CONEXÃO COM O BANCO: {e}")
+        raise HTTPException(status_code=500, detail="Erro interno ao conectar ao banco de dados")
 
-# 5. ROTAS
-@app.get("/api/questoes")
-def get_questoes(banca: str):
+# 5. ROTAS DA API
+
+@app.get("/")
+async def root():
+    return {"status": "Online", "servidor": "Render", "projeto": "Concursos Maranhão Pro"}
+
+# ROTA DE QUESTÕES (USADA NO SIMULADO DO FRONTEND)
+@app.get("/questoes")
+def get_questoes(banca: str = Query(None)):
+    conn = None
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
         
-        # O segredo: ILIKE com % permite achar a banca mesmo com nomes parciais
-        # O TRIM limpa espaços invisíveis que o banco de dados possa ter
-        query = "SELECT * FROM questoes WHERE TRIM(banca) ILIKE %s"
-        
-        # Isso faz com que buscar "JK" encontre "Instituto JK"
-        parametro_busca = f"%{banca.strip()}%"
-        
-        cursor.execute(query, (parametro_busca,))
+        if banca:
+            query = "SELECT * FROM questoes WHERE banca ILIKE %s ORDER BY random() LIMIT 10"
+            cursor.execute(query, (f"%{banca.strip()}%",))
+        else:
+            cursor.execute("SELECT * FROM questoes ORDER BY random() LIMIT 10")
+            
         dados = cursor.fetchall()
         
-        # Serialização para JSON (Datas e Decimais)
         for q in dados:
             for chave, valor in q.items():
                 if isinstance(valor, (date, datetime, Decimal)):
                     q[chave] = serializar_dados(valor)
         
         cursor.close()
-        conn.close()
-        
         return dados 
     except Exception as e:
-        print(f"ERRO API QUESTOES: {str(e)}")
+        print(f"ERRO /QUESTOES: {e}")
         raise HTTPException(status_code=500, detail=str(e))
-@app.get("/")
-async def root():
-    return {"status": "Online", "message": "Concursos Maranhão API"}
+    finally:
+        if conn: conn.close()
 
+# ROTA DE LISTAGEM DE CONCURSOS
 @app.get("/concursos")
 async def listar_concursos():
+    conn = None
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
@@ -117,51 +118,50 @@ async def listar_concursos():
         
         for item in dados:
             item["descricao_seo"] = gerar_descricao_seo(item)
-            item["inicio_inscricao"] = serializar_dados(item["inicio_inscricao"])
-            item["fim_inscricao"] = serializar_dados(item["fim_inscricao"])
+            # Sanitização completa de campos especiais
+            for campo in ["inicio_inscricao", "fim_inscricao", "salario_max", "valor_inscricao_min"]:
+                item[campo] = serializar_dados(item.get(campo))
             item["data_prova"] = str(item["data_prova"]) if item["data_prova"] else "A definir"
-            item["salario_max"] = serializar_dados(item["salario_max"])
-            item["valor_inscricao_min"] = serializar_dados(item["valor_inscricao_min"])
 
         cursor.close()
-        conn.close()
         return {"items": dados}
     except Exception as e:
-        print(f"ERRO LISTAR: {str(e)}")
+        print(f"ERRO /CONCURSOS: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        if conn: conn.close()
 
+# ROTA DE DETALHE DE UM CONCURSO ESPECÍFICO
 @app.get("/concursos/{concurso_id}")
 async def get_concurso(concurso_id: int):
+    conn = None
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
-        
-        query = """
-            SELECT 
-                id, orgao, status, cargos, cidade, escolaridade, banca,
-                salario_min, salario_max, valor_inscricao_min, valor_inscricao_max,
-                inicio_inscricao, fim_inscricao, data_prova, link_oficial, link_inscricao,
-                tabela_vagas
-            FROM concursos WHERE id = %s
-        """
-        cursor.execute(query, (concurso_id,))
+        cursor.execute("SELECT * FROM concursos WHERE id = %s", (concurso_id,))
         concurso = cursor.fetchone()
         
         if not concurso:
-            cursor.close()
-            conn.close()
             raise HTTPException(status_code=404, detail="Concurso não encontrado")
             
         concurso["descricao_seo"] = gerar_descricao_seo(concurso)
-        concurso["inicio_inscricao"] = serializar_dados(concurso.get("inicio_inscricao"))
-        concurso["fim_inscricao"] = serializar_dados(concurso.get("fim_inscricao"))
-        concurso["data_prova"] = str(concurso.get("data_prova")) if concurso.get("data_prova") else "A definir"
-        concurso["salario_max"] = serializar_dados(concurso.get("salario_max"))
-        concurso["valor_inscricao_min"] = serializar_dados(concurso.get("valor_inscricao_min"))
+        # Serialização de todos os campos possíveis
+        for campo in concurso:
+            if isinstance(concurso[campo], (date, datetime, Decimal)):
+                concurso[campo] = serializar_dados(concurso[campo])
+        
+        if not concurso.get("data_prova"):
+            concurso["data_prova"] = "A definir"
 
         cursor.close()
-        conn.close()
         return concurso
     except Exception as e:
-        print(f"ERRO NO BACKEND: {str(e)}")
+        print(f"ERRO /CONCURSOS/ID: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        if conn: conn.close()
+
+# ROTA ADICIONAL PARA STATUS DE SAÚDE DA API (ÚTIL PARA O RENDER)
+@app.get("/health")
+def health_check():
+    return {"status": "ok", "timestamp": datetime.now().isoformat()}
