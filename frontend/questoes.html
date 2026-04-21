@@ -7,7 +7,7 @@
     body { font-family: sans-serif; background: #0f172a; color: white; padding: 20px; }
     .questao-card { background: #1e293b; padding: 20px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #334155; }
     .enunciado { font-size: 1.1em; margin-bottom: 15px; line-height: 1.6; }
-    .disciplina { color: #38bdf8; font-size: 0.8em; margin-bottom: 10px; font-weight: bold; }
+    .disciplina { color: #38bdf8; font-size: 0.9em; margin-bottom: 10px; font-weight: bold; }
     
     .alternativas-lista { list-style: none; padding: 0; }
     
@@ -25,18 +25,29 @@
         font-size: 1em;
     }
 
-    .alternativa-btn:hover { background: #475569; border-color: #38bdf8; }
+    .alternativa-btn:hover:not(:disabled) { background: #475569; border-color: #38bdf8; }
 
     /* Cores de Feedback */
     .correta { background: #065f46 !important; border-color: #10b981 !important; }
     .errada { background: #7f1d1d !important; border-color: #ef4444 !important; }
 
+    /* NOVA CAIXA DE COMENTÁRIO */
     .feedback { 
         margin-top: 15px; 
-        padding: 10px; 
-        border-radius: 5px; 
+        padding: 15px; 
+        border-radius: 8px; 
         display: none; 
-        font-weight: bold;
+        background: #1e293b;
+        border: 1px solid #38bdf8;
+        line-height: 1.5;
+    }
+    .comentario-texto {
+        margin-top: 10px;
+        color: #cbd5e1;
+        font-weight: normal;
+        font-size: 0.95em;
+        border-top: 1px solid #334155;
+        padding-top: 10px;
     }
 </style>
 </head>
@@ -66,7 +77,6 @@
 
             container.innerHTML = data.map((q, index) => {
                 const opcoes = q.opcoes || {};
-                // Criamos os botões das alternativas
                 const botoes = Object.keys(opcoes).map(letra => `
                     <button class="alternativa-btn" 
                             onclick="verificarResposta(this, '${letra}', '${q.alternativa_correta}', 'feedback-${index}')">
@@ -79,7 +89,14 @@
                     <div class="disciplina">📚 ${q.disciplina || 'Geral'}</div>
                     <p class="enunciado">${q.enunciado}</p>
                     <div class="alternativas-lista">${botoes}</div>
-                    <div id="feedback-${index}" class="feedback"></div>
+                    
+                    <div id="feedback-${index}" class="feedback">
+                        <div id="status-${index}"></div>
+                        <div class="comentario-texto">
+                            <strong>Comentário do Professor:</strong><br>
+                            ${q.comentario_professor || "Sem comentário disponível para esta questão."}
+                        </div>
+                    </div>
                 </div>`;
             }).join('');
 
@@ -90,26 +107,25 @@
 
     function verificarResposta(botao, letraEscolhida, letraCorreta, feedbackId) {
         const feedbackDiv = document.getElementById(feedbackId);
-        const card = botao.parentElement;
+        const index = feedbackId.split('-')[1];
+        const statusDiv = document.getElementById(`status-${index}`);
+        
+        const card = botao.parentElement.parentElement; // Sobe para o card
         const todosBotoes = card.querySelectorAll('.alternativa-btn');
 
-        // Desativa todos os botões após o clique para não clicar de novo
         todosBotoes.forEach(btn => btn.disabled = true);
+
+        feedbackDiv.style.display = "block";
 
         if (letraEscolhida.toLowerCase() === letraCorreta.toLowerCase()) {
             botao.classList.add('correta');
-            feedbackDiv.style.display = "block";
-            feedbackDiv.style.color = "#10b981";
-            feedbackDiv.innerHTML = "✅ Resposta Correta!";
+            statusDiv.innerHTML = "<span style='color: #10b981'>✅ Resposta Correta!</span>";
         } else {
             botao.classList.add('errada');
-            feedbackDiv.style.display = "block";
-            feedbackDiv.style.color = "#ef4444";
-            feedbackDiv.innerHTML = `❌ Resposta Errada. A correta é a letra ${letraCorreta.toUpperCase()}.`;
+            statusDiv.innerHTML = `<span style='color: #ef4444'>❌ Resposta Errada. A correta é a letra ${letraCorreta.toUpperCase()}.</span>`;
             
-            // Destaca a correta para o usuário aprender
             todosBotoes.forEach(btn => {
-                if (btn.innerText.startsWith(letraCorreta.toUpperCase())) {
+                if (btn.innerText.trim().startsWith(letraCorreta.toUpperCase() + ")")) {
                     btn.classList.add('correta');
                 }
             });
