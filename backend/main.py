@@ -46,7 +46,7 @@ def listar_questoes(banca: str = Query(None)):
         cursor = conn.cursor()
 
         # Selecionando as colunas necessárias (certifique-se que 'opcoes' existe no seu banco)
-        sql_base = "SELECT id, banca, enunciado, disciplina, opcoes, alternativa_correta FROM questoes"
+        sql_base = "SELECT id, banca, enunciado, disciplina, opcoes, alternativa_correta, comentario_professor FROM questoes"
 
         if banca:
             banca_limpa = banca.strip()
