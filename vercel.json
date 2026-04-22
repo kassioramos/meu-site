@@ -6,8 +6,8 @@
     { "src": "frontend/**", "use": "@vercel/static" }
   ],
   "rewrites": [
+    { "source": "/blog", "destination": "frontend/blog.html" },
     { "source": "/concursos/(.*)", "destination": "backend/main.py" },
-    { "source": "/blog", "destination": "/frontend/blog.html" },
-    { "source": "/(.*)", "destination": "/frontend/$1" }
+    { "source": "/(.*)", "destination": "frontend/$1" }
   ]
 }
