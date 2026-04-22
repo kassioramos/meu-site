@@ -2,14 +2,8 @@
   "version": 2,
   "cleanUrls": true,
   "builds": [
-    { 
-      "src": "backend/main.py", 
-      "use": "@vercel/python" 
-    },
-    { 
-      "src": "frontend/**", 
-      "use": "@vercel/static" 
-    }
+    { "src": "backend/main.py", "use": "@vercel/python" },
+    { "src": "frontend/**", "use": "@vercel/static" }
   ],
   "rewrites": [
     { "source": "/concursos/(.*)", "destination": "backend/main.py" },
