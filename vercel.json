@@ -7,7 +7,7 @@
   ],
   "routes": [
     { "src": "/concursos/(.*)", "dest": "backend/main.py" },
-    { "src": "/blog", "dest": "frontend/blog.html" },
-    { "src": "/(.*)", "dest": "frontend/$1" }
+    { "src": "/blog", "dest": "/frontend/blog.html" },
+    { "src": "/(.*)", "dest": "/frontend/$1" }
   ]
 }
