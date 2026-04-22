@@ -5,10 +5,9 @@
     { "src": "backend/main.py", "use": "@vercel/python" },
     { "src": "frontend/**", "use": "@vercel/static" }
   ],
-  "rewrites": [
-    { "source": "/concursos/(.*)", "destination": "backend/main.py" },
-    { "source": "/concursos", "destination": "backend/main.py" },
-    { "source": "/blog", "destination": "/frontend/blog.html" },
-    { "source": "/(.*)", "destination": "/frontend/$1" }
+  "routes": [
+    { "src": "/concursos/(.*)", "dest": "backend/main.py" },
+    { "src": "/blog", "dest": "/frontend/blog.html" },
+    { "src": "/(.*)", "dest": "/frontend/$1" }
   ]
 }
