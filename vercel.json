@@ -7,6 +7,7 @@
   ],
   "rewrites": [
     { "source": "/concursos/(.*)", "destination": "backend/main.py" },
+    { "source": "/concursos", "destination": "backend/main.py" },
     { "source": "/blog", "destination": "/frontend/blog.html" },
     { "source": "/(.*)", "destination": "/frontend/$1" }
   ]
