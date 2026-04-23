@@ -1,13 +1,10 @@
 {
   "version": 2,
   "cleanUrls": true,
-  "builds": [
-    { "src": "backend/main.py", "use": "@vercel/python" },
-    { "src": "frontend/**", "use": "@vercel/static" }
-  ],
   "rewrites": [
-    { "source": "/blog", "destination": "/frontend/blog.html" },
-    { "source": "/concursos/(.*)", "destination": "/backend/main.py" },
-    { "source": "/(.*)", "destination": "/frontend/$1" }
+    { "source": "/blog", "destination": "/blog.html" },
+    { "source": "/concursos", "destination": "https://meu-site-aodm.onrender.com/concursos" },
+    { "source": "/artigos", "destination": "https://meu-site-aodm.onrender.com/artigos" },
+    { "source": "/(.*)", "destination": "/$1" }
   ]
 }
