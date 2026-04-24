@@ -167,7 +167,7 @@
             const categoriaClasse = post.categoria ? post.categoria.toLowerCase() + "-tag" : "";
             
             return `
-                <a href="/post/${artigo.slug}"> class="blog-card">
+                <a href="post.html?slug=${post.slug}" class="blog-card">
                     <img src="${post.capa_url || 'https://via.placeholder.com/400x200'}" class="card-img" alt="${post.titulo}">
                     <div class="card-content">
                         <span class="category ${categoriaClasse}">${post.categoria || 'Geral'}</span>
