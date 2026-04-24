@@ -153,7 +153,7 @@ def obter_concurso_por_id(concurso_id: int):
 @app.get("/sitemap.xml")
 async def sitemap():
     conn = None
-    BASE_URL = "https://meu-site-git-main-projetosocial.vercel.app"
+    BASE_URL = "https://meu-site-projetosocial.vercel.app"
     
     try:
         conn = get_db_connection()
