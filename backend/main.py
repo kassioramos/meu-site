@@ -6,6 +6,7 @@ import os
 from datetime import date, datetime
 from decimal import Decimal
 import uuid
+from fastapi import Response
 
 app = FastAPI()
 
@@ -143,5 +144,49 @@ def obter_concurso_por_id(concurso_id: int):
         return concurso
     except Exception as e:
         return {"error": str(e)}
+    finally:
+        if conn: conn.close()
+        
+        # ==========================================
+# 🗺️ BLOCO: SEO (SITEMAP)
+# ==========================================
+@app.get("/sitemap.xml")
+async def sitemap():
+    conn = None
+    BASE_URL = "https://meu-site-git-main-projetosocial.vercel.app"
+    
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # 1. Busca IDs de concursos
+        cursor.execute("SELECT id FROM concursos")
+        concursos = cursor.fetchall()
+        
+        # 2. Busca Slugs de artigos
+        cursor.execute("SELECT slug FROM artigos")
+        artigos = cursor.fetchall()
+
+        # Início do XML
+        xml = '<?xml version="1.0" encoding="UTF-8"?>'
+        xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
+        
+        # URL da Home
+        xml += f'<url><loc>{BASE_URL}/</loc><priority>1.0</priority></url>'
+        
+        # URLs dinâmicas de Concursos
+        for c in concursos:
+            xml += f'<url><loc>{BASE_URL}/detalhes/{c["id"]}</loc><priority>0.8</priority></url>'
+            
+        # URLs dinâmicas de Artigos
+        for a in artigos:
+            xml += f'<url><loc>{BASE_URL}/post/{a["slug"]}</loc><priority>0.7</priority></url>'
+            
+        xml += '</urlset>'
+        
+        return Response(content=xml, media_type="application/xml")
+        
+    except Exception as e:
+        return Response(content=f"<error>{str(e)}</error>", media_type="application/xml")
     finally:
         if conn: conn.close()
