@@ -3,7 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Detalhes do Concurso - Pro</title>
+    <title>Concurso Pro - Maranhão</title>
+<meta name="description" id="meta-desc" content="Informações completas, edital e inscrições para este concurso no Maranhão.">
+<meta property="og:title" id="og-title" content="Concurso Pro MA">
+<meta property="og:description" id="og-desc" content="Confira salários, vagas e prazos.">
+<meta property="og:image" id="og-img" content="">
     <style>
         /* --- VARIÁVEIS E BASE --- */
         :root { 
@@ -147,7 +151,7 @@
         return valor;
     };
 
-    async function carregarDetalhes() {
+async function carregarDetalhes() {
         const params = new URLSearchParams(window.location.search);
         const id = params.get('id');
         const container = document.getElementById('conteudo-detalhes');
@@ -158,11 +162,22 @@
         }
 
         try {
-            // URL DA SUA API NO RENDER OU LOCAL
-            // Coloque o endereço real da sua API no Render
+            // Busca os dados do concurso
             const response = await fetch(`https://meu-site-aodm.onrender.com/concursos/${id}`);
             if (!response.ok) throw new Error('Falha ao buscar dados');
+            
             const c = await response.json();
+
+            // --- MÁGICA DO SEO DINÂMICO ---
+            const nomeConcurso = c.orgao || "Concurso";
+            const tituloSEO = `${nomeConcurso} - Concursos MA Pro`;
+            document.title = tituloSEO;
+
+            // Atualiza as meta tags dinamicamente
+            document.querySelector('meta[name="description"]').setAttribute("content", `Edital para ${nomeConcurso}. Salário de até ${fmtMoeda(c.salario_max)}. Confira prazos e vagas.`);
+            document.getElementById('og-title').setAttribute("content", tituloSEO);
+            document.getElementById('og-desc').setAttribute("content", `Vagas para ${c.escolaridade}. Inscrições até ${fmtData(c.fim_inscricao)}.`);
+            // ------------------------------
 
             const orgao = c.orgao || 'Não informado';
             const banca = c.banca || 'A definir';
@@ -172,6 +187,7 @@
                 ? `<div class="table-container">${c.tabela_vagas}</div>` 
                 : `<p><strong>Cargos:</strong> ${c.cargos || 'Conforme edital'}</p>`;
 
+            // Injeta o HTML no container
             container.innerHTML = `
                 <div class="detalhes-header">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
