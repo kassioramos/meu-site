@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Query, HTTPException
+from fastapi import FastAPI, Query, HTTPException, Response
 from fastapi.middleware.cors import CORSMiddleware
 import psycopg2
 from psycopg2.extras import RealDictCursor
@@ -6,7 +6,6 @@ import os
 from datetime import date, datetime
 from decimal import Decimal
 import uuid
-from fastapi import Response
 
 app = FastAPI()
 
@@ -37,6 +36,10 @@ def get_db_connection():
 @app.get("/")
 def home():
     return {"status": "online", "msg": "API Concursos Maranhão Pro funcionando! 🚀"}
+
+@app.get("/health")
+async def health_check():
+    return {"status": "ok", "message": "Backend acordado!"}
 
 # ==========================================
 # 📚 BLOCO: QUESTÕES
