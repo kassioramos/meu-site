@@ -2,6 +2,11 @@
   "version": 2,
   "cleanUrls": true,
   "rewrites": [
-    { "source": "/blog", "destination": "/blog.html" }
+    { "source": "/blog", "destination": "/blog.html" },
+    { "source": "/simulados", "destination": "/simulados.html" },
+    { "source": "/post", "destination": "/post.html" },
+    { "source": "/concursos", "destination": "https://meu-site-aodm.onrender.com/concursos" },
+    { "source": "/artigos", "destination": "https://meu-site-aodm.onrender.com/artigos" },
+    { "source": "/(.*)", "destination": "/$1" }
   ]
 }

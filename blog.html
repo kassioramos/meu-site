@@ -75,11 +75,48 @@
         .card-content p { color: var(--text-sub); font-size: 0.9rem; line-height: 1.6; }
 
         .btn-voltar { color: var(--primary); text-decoration: none; font-weight: bold; margin-bottom: 20px; display: inline-block; }
+
+        /* ... seus estilos anteriores (root, body, container) ... */
+
+    /* COLE AQUI O NOVO ESTILO DO MENU */
+    .nav-menu {
+        display: flex;
+        gap: 15px;
+        margin-bottom: 30px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .nav-link {
+        text-decoration: none;
+        color: var(--text-sub);
+        font-weight: 600;
+        font-size: 0.9rem;
+        padding: 8px 16px;
+        border-radius: 8px;
+        transition: 0.3s;
+    }
+
+    .nav-link:hover {
+        background: var(--card-bg);
+        color: var(--text-main);
+    }
+
+    .nav-link.active {
+        background: rgba(59, 130, 246, 0.1);
+        color: var(--primary);
+    }
+
     </style>
 </head>
 <body>
 
 <div class="container">
+    <div class="nav-menu">
+    <a href="index.html" class="nav-link">🏠 Início</a>
+    <a href="simulados.html" class="nav-link">📝 Simulados</a>
+    <a href="blog.html" class="nav-link active">📰 Blog</a>
+</div>
     <div style="position: absolute; top: 0; right: 0;">
         <a href="/post" class="btn-post">+ Novo Post</a>
     </div>
