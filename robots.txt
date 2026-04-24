@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+Disallow: /admin  # Caso você venha a ter uma área restrita
+Sitemap: https://meu-site-five-delta.vercel.app/sitemap.xml
