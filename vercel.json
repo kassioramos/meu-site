@@ -8,6 +8,10 @@
     { "source": "/post", "destination": "/post.html" },
     { "source": "/concursos", "destination": "https://meu-site-aodm.onrender.com/concursos" },
     { "source": "/artigos", "destination": "https://meu-site-aodm.onrender.com/artigos" },
+    { 
+      "source": "/sitemap.xml", 
+      "destination": "https://meu-site-aodm.onrender.com/sitemap.xml" 
+    },
     { "source": "/(.*)", "destination": "/$1" }
   ]
 }
