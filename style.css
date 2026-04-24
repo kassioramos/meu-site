@@ -272,3 +272,33 @@ body.dark-theme .btn-icon.active { background: #451a03; }
     from { transform: translateY(100px); opacity: 0; }
     to { transform: translateY(0); opacity: 1; }
 }
+
+.filtros-blog {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
+}
+
+.btn-categoria {
+    background: #1e293b;
+    color: #cbd5e1;
+    border: 1px solid #334155;
+    padding: 10px 20px;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: 0.3s;
+    font-weight: 500;
+}
+
+.btn-categoria:hover {
+    border-color: #3b82f6;
+    color: white;
+}
+
+.btn-categoria.active {
+    background: #3b82f6;
+    color: white;
+    border-color: #3b82f6;
+}
