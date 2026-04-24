@@ -4,6 +4,7 @@
   "rewrites": [
     { "source": "/blog", "destination": "/blog.html" },
     { "source": "/simulados", "destination": "/simulados.html" },
+    { "source": "/dicas-desenvolvimento", "destination": "/dicas-desenvolvimento.html" },
     { "source": "/post", "destination": "/post.html" },
     { "source": "/concursos", "destination": "https://meu-site-aodm.onrender.com/concursos" },
     { "source": "/artigos", "destination": "https://meu-site-aodm.onrender.com/artigos" },

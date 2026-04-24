@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dicas & Desenvolvimento - Concursos Maranhão</title>
+    <style>
+        :root {
+            --primary: #3b82f6;
+            --bg: #0f172a;
+            --card-bg: #1e293b;
+            --text-main: #f8fafc;
+            --text-sub: #94a3b8;
+            --border: rgba(255,255,255,0.1);
+            --accent: #10b981; /* Verde para Dicas/Desenvolvimento */
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container { max-width: 1000px; margin: 0 auto; position: relative; }
+
+        /* Navbar */
+        .nav-menu {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .nav-link {
+            text-decoration: none;
+            color: var(--text-sub);
+            font-weight: 600;
+            font-size: 0.9rem;
+            padding: 8px 16px;
+            border-radius: 8px;
+            transition: 0.3s;
+        }
+
+        .nav-link:hover { background: var(--card-bg); color: var(--text-main); }
+        .nav-link.active { background: rgba(59, 130, 246, 0.1); color: var(--primary); }
+
+        header { text-align: center; margin: 40px 0; }
+        header h1 { color: var(--accent); font-size: 2.5rem; margin-bottom: 10px; }
+        header p { color: var(--text-sub); max-width: 600px; margin: 0 auto; }
+
+        /* Filtros */
+        .filtros-container {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+        }
+
+        .btn-filtro {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            padding: 10px 22px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: 0.3s;
+        }
+
+        .btn-filtro.active {
+            background: var(--accent);
+            border-color: var(--accent);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+
+        /* Grid */
+        .artigos-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+        }
+
+        .artigo-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            overflow: hidden;
+            transition: 0.3s;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .artigo-card:hover { transform: translateY(-5px); border-color: var(--accent); }
+
+        .capa { width: 100%; height: 180px; object-fit: cover; background: #000; }
+        .conteudo { padding: 20px; }
+        .tag { 
+            font-size: 0.7rem; 
+            font-weight: 800; 
+            text-transform: uppercase; 
+            color: var(--accent); 
+            display: block;
+            margin-bottom: 10px;
+        }
+        .conteudo h2 { font-size: 1.25rem; margin: 0 0 10px 0; }
+        .conteudo p { color: var(--text-sub); font-size: 0.9rem; line-height: 1.5; }
+
+        .btn-post {
+            position: absolute; top: 0; right: 0;
+            background: var(--accent); color: white; padding: 10px 20px; 
+            border-radius: 8px; text-decoration: none; font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <a href="/post" class="btn-post">+ Novo Artigo</a>
+
+    <nav class="nav-menu">
+        <a href="index.html" class="nav-link">🏠 Início</a>
+        <a href="simulados.html" class="nav-link">📝 Simulados</a>
+        <a href="blog.html" class="nav-link">📰 Notícias</a>
+        <a href="dicas-desenvolvimento.html" class="nav-link active">💡 Dicas & Dev</a>
+    </nav>
+
+    <header>
+        <h1>Dicas & Desenvolvimento</h1>
+        <p>Evolua seus estudos com técnicas comprovadas e mergulhe no mundo da tecnologia.</p>
+    </header>
+
+    <div class="filtros-container">
+        <button class="btn-filtro active" onclick="filtrar('todos')">📚 Ver Tudo</button>
+        <button class="btn-filtro" onclick="filtrar('dicas')">🧠 Dicas de Estudo</button>
+        <button class="btn-filtro" onclick="filtrar('dev')">💻 Artigos de Dev</button>
+    </div>
+
+    <div id="lista-artigos" class="artigos-grid">
+        <p>Carregando conhecimento...</p>
+    </div>
+</div>
+
+<script>
+    let todosArtigos = [];
+
+    async function carregarArtigos() {
+        const grid = document.getElementById('lista-artigos');
+        try {
+            // Reutilizando sua API do Render
+            const response = await fetch('https://meu-site-aodm.onrender.com/artigos');
+            const dados = await response.json();
+            
+            // Filtramos aqui para mostrar apenas o que NÃO é notícia de concurso
+            todosArtigos = dados.filter(a => 
+                a.categoria.toLowerCase() === 'dicas' || 
+                a.categoria.toLowerCase() === 'dev'
+            );
+
+            exibirArtigos(todosArtigos);
+        } catch (error) {
+            grid.innerHTML = "<p>Erro ao conectar com a biblioteca.</p>";
+        }
+    }
+
+    function exibirArtigos(lista) {
+        const grid = document.getElementById('lista-artigos');
+        if (lista.length === 0) {
+            grid.innerHTML = "<p>Ainda estamos preparando este conteúdo.</p>";
+            return;
+        }
+
+        grid.innerHTML = lista.map(artigo => `
+            <a href="post.html?slug=${artigo.slug}" class="artigo-card">
+                <img src="${artigo.capa_url || 'https://via.placeholder.com/400x200'}" class="capa" alt="${artigo.titulo}">
+                <div class="conteudo">
+                    <span class="tag">${artigo.categoria}</span>
+                    <h2>${artigo.titulo}</h2>
+                    <p>${artigo.resumo}</p>
+                </div>
+            </a>
+        `).join('');
+    }
+
+    function filtrar(cat) {
+        // Estilo dos botões
+        document.querySelectorAll('.btn-filtro').forEach(b => b.classList.remove('active'));
+        event.target.classList.add('active');
+
+        if (cat === 'todos') {
+            exibirArtigos(todosArtigos);
+        } else {
+            const filtrados = todosArtigos.filter(a => a.categoria.toLowerCase() === cat);
+            exibirArtigos(filtrados);
+        }
+    }
+
+    window.onload = carregarArtigos;
+</script>
+
+</body>
+</html>
