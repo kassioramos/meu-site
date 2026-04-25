@@ -150,19 +150,20 @@
     async function carregarArtigos() {
         const grid = document.getElementById('lista-artigos');
         try {
-            // Reutilizando sua API do Render
             const response = await fetch('https://meu-site-aodm.onrender.com/artigos');
             const dados = await response.json();
-            
-            // Filtramos aqui para mostrar apenas o que NÃO é notícia de concurso
+
+            // 🔥 CORREÇÃO AQUI: 
+            // Filtramos para pegar TUDO que for 'dica' ou 'dev' uma única vez
             todosArtigos = dados.filter(a => 
-                a.categoria.toLowerCase() === 'dicas' || 
-                a.categoria.toLowerCase() === 'dev'
+                a.categoria.toLowerCase().includes('dica') || 
+                a.categoria.toLowerCase().includes('dev')
             );
 
             exibirArtigos(todosArtigos);
         } catch (error) {
             grid.innerHTML = "<p>Erro ao conectar com a biblioteca.</p>";
+            console.error(error);
         }
     }
 
@@ -188,12 +189,13 @@
     function filtrar(cat) {
         // Estilo dos botões
         document.querySelectorAll('.btn-filtro').forEach(b => b.classList.remove('active'));
-        event.target.classList.add('active');
+        if (event) event.target.classList.add('active');
 
         if (cat === 'todos') {
             exibirArtigos(todosArtigos);
         } else {
-            const filtrados = todosArtigos.filter(a => a.categoria.toLowerCase() === cat);
+            // Filtra o que já está no cache de dicas/dev
+            const filtrados = todosArtigos.filter(a => a.categoria.toLowerCase().includes(cat));
             exibirArtigos(filtrados);
         }
     }
