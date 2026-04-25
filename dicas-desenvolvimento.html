@@ -15,24 +15,27 @@
             --accent: #10b981; /* Verde para Dicas/Desenvolvimento */
         }
 
-        .btn-voltar {
-    text-decoration: none; /* Remove o sublinhado */
-    color: #3b82f6;        /* Mantém ou define a cor desejada */
-}
-
-    .btn-voltar:hover {
-    text-decoration: underline; /* Opcional: a linha só aparece quando passa o mouse */
-}
+        /* RESET GLOBAL PARA EVITAR BARRA LATERAL */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
             font-family: 'Inter', sans-serif;
             background-color: var(--bg);
             color: var(--text-main);
-            margin: 0;
             padding: 20px;
+            overflow-x: hidden;
         }
 
-        
+        .container { max-width: 1000px; margin: 0 auto; position: relative; }
+
+        .btn-voltar {
+            text-decoration: none;
+            color: #3b82f6;
+            display: inline-block;
+            margin-bottom: 20px;
+        }
+
+        .btn-voltar:hover { text-decoration: underline; }
 
         /* Navbar */
         .nav-menu {
@@ -41,6 +44,7 @@
             margin-bottom: 30px;
             padding-bottom: 10px;
             border-bottom: 1px solid var(--border);
+            align-items: center;
         }
 
         .nav-link {
@@ -101,12 +105,15 @@
             transition: 0.3s;
             text-decoration: none;
             color: inherit;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
         }
 
         .artigo-card:hover { transform: translateY(-5px); border-color: var(--accent); }
 
         .capa { width: 100%; height: 180px; object-fit: cover; background: #000; }
-        .conteudo { padding: 20px; }
+        .conteudo { padding: 20px; flex-grow: 1; }
         .tag { 
             font-size: 0.7rem; 
             font-weight: 800; 
@@ -120,33 +127,31 @@
 
         .btn-post {
             position: absolute; 
-            top: 20px;    /* Afasta do topo */
-            right: 20px;  /* Afasta da lateral direita */
+            top: 0; 
+            right: 0; 
             background: #10b981; 
             color: white; 
             padding: 10px 20px; 
             border-radius: 8px; 
             text-decoration: none; 
             font-weight: bold;
-            transition: 0.3s; /* Opcional: deixa o hover suave */
-}
-
-
+            transition: 0.3s;
+            z-index: 10;
+        }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <a href="admin.html" class="btn-post">+ Novo Artigo</a>
+    <a href="admin.html" class="btn-post" id="btnAdmin">+ Novo Artigo</a>
 
     <nav class="nav-menu">
         <a href="index.html" class="nav-link">🏠 Início</a>
         <a href="simulados.html" class="nav-link">📝 Simulados</a>
         <a href="blog.html" class="nav-link">📰 Notícias</a>
-    
+        <a href="#" class="nav-link active">💡 Dicas</a>
     </nav>
         
-
     <a href="#" class="btn-voltar" onclick="window.history.back(); return false;">← Voltar</a>
 
     <header>
@@ -161,7 +166,7 @@
     </div>
 
     <div id="lista-artigos" class="artigos-grid">
-        <p>Carregando conhecimento...</p>
+        <p style="grid-column: 1/-1; text-align: center;">Carregando conhecimento...</p>
     </div>
 </div>
 
@@ -171,19 +176,20 @@
     async function carregarArtigos() {
         const grid = document.getElementById('lista-artigos');
         try {
-            const response = await fetch('https://meu-site-aodm.onrender.com/artigos');
-            const dados = await response.json();
+            // USANDO O SUPABASE AGORA
+            const { data, error } = await supabase
+                .from('artigos')
+                .select('*')
+                .in('categoria', ['dicas', 'dev']) // Filtro profissional pelas categorias do banco
+                .order('created_at', { ascending: false });
 
-            // 🔥 CORREÇÃO AQUI: 
-            // Filtramos para pegar TUDO que for 'dica' ou 'dev' uma única vez
-            todosArtigos = dados.filter(a => 
-                a.categoria.toLowerCase().includes('dica') || 
-                a.categoria.toLowerCase().includes('dev')
-            );
+            if (error) throw error;
 
+            todosArtigos = data;
             exibirArtigos(todosArtigos);
+            
         } catch (error) {
-            grid.innerHTML = "<p>Erro ao conectar com a biblioteca.</p>";
+            grid.innerHTML = "<p style='grid-column: 1/-1; text-align: center;'>Erro ao conectar com a biblioteca de artigos.</p>";
             console.error(error);
         }
     }
@@ -191,13 +197,16 @@
     function exibirArtigos(lista) {
         const grid = document.getElementById('lista-artigos');
         if (lista.length === 0) {
-            grid.innerHTML = "<p>Ainda estamos preparando este conteúdo.</p>";
+            grid.innerHTML = "<p style='grid-column: 1/-1; text-align: center;'>Ainda estamos preparando este conteúdo.</p>";
             return;
         }
 
         grid.innerHTML = lista.map(artigo => `
             <a href="post.html?slug=${artigo.slug}" class="artigo-card">
-                <img src="${artigo.capa_url || 'https://via.placeholder.com/400x200'}" class="capa" alt="${artigo.titulo}">
+                <img src="${artigo.capa_url || 'https://via.placeholder.com/400x200'}" 
+                     class="capa" 
+                     alt="${artigo.titulo}"
+                     onerror="this.src='https://via.placeholder.com/400x200'">
                 <div class="conteudo">
                     <span class="tag">${artigo.categoria}</span>
                     <h2>${artigo.titulo}</h2>
@@ -208,20 +217,28 @@
     }
 
     function filtrar(cat) {
-        // Estilo dos botões
+        // Atualiza estilo dos botões
         document.querySelectorAll('.btn-filtro').forEach(b => b.classList.remove('active'));
         if (event) event.target.classList.add('active');
 
         if (cat === 'todos') {
             exibirArtigos(todosArtigos);
         } else {
-            // Filtra o que já está no cache de dicas/dev
-            const filtrados = todosArtigos.filter(a => a.categoria.toLowerCase().includes(cat));
+            // Filtra o que já está no cache local (muito mais rápido)
+            const filtrados = todosArtigos.filter(a => a.categoria.toLowerCase() === cat);
             exibirArtigos(filtrados);
         }
     }
 
-    window.onload = carregarArtigos;
+    // Inicialização e controle de acesso
+    document.addEventListener("DOMContentLoaded", () => {
+        const isAdmin = localStorage.getItem('token_admin'); 
+        if (isAdmin !== 'sou_o_dono_do_site') {
+            document.getElementById('btnAdmin')?.remove();
+        }
+        
+        carregarArtigos();
+    });
 </script>
 
 </body>
