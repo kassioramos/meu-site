@@ -2,131 +2,126 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Painel Admin - Concursos MA Pro</title>
+    <title>Painel Admin - Postar Artigo</title>
     <style>
-        body { background: #0f172a; color: white; font-family: sans-serif; padding: 20px; }
-        .container { max-width: 800px; margin: auto; }
-        
-        /* Ajustei para incluir o select no estilo */
-        form { display: flex; flex-direction: column; gap: 15px; background: #1e293b; padding: 20px; border-radius: 10px; margin-bottom: 40px; }
-        input, textarea, select { padding: 10px; border-radius: 5px; border: 1px solid #334155; background: #0f172a; color: white; width: 100%; box-sizing: border-box; }
-        
-        button { padding: 15px; background: #3b82f6; color: white; border: none; cursor: pointer; font-weight: bold; border-radius: 5px; transition: 0.3s; }
-        button:hover { background: #2563eb; }
-        
-        .lista-posts { border-top: 1px solid #334155; padding-top: 20px; }
-        .item-post { display: flex; justify-content: space-between; align-items: center; background: #1e293b; padding: 10px; margin-bottom: 10px; border-radius: 5px; }
-        
-        .btn-delete { background: #ef4444; padding: 5px 10px; font-size: 0.8rem; width: auto; }
-        .btn-delete:hover { background: #dc2626; }
-
-        nav { display: flex; justify-content: space-between; align-items: center; background: #1e293b; padding: 10px 20px; margin-bottom: 30px; border-radius: 8px; }
+        :root { --bg: #0f172a; --card: #1e293b; --primary: #10b981; --text: #f8fafc; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); padding: 40px; }
+        .admin-container { max-width: 800px; margin: 0 auto; background: var(--card); padding: 30px; border-radius: 12px; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-weight: bold; color: #94a3b8; }
+        input, select, textarea { 
+            width: 100%; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); 
+            background: #0f172a; color: white; font-size: 1rem;
+        }
+        textarea { height: 200px; resize: vertical; }
+        .btn-salvar { 
+            background: var(--primary); color: white; border: none; padding: 15px 30px; 
+            border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; transition: 0.3s;
+        }
+        .btn-salvar:hover { background: #059669; transform: translateY(-2px); }
+        .mensagem { margin-top: 20px; padding: 15px; border-radius: 8px; display: none; }
     </style>
 </head>
 <body>
 
-    <nav>
-        <span style="font-weight: bold; color: #3b82f6;">Painel Administrativo</span>
-        <div>
-            <a href="blog.html" style="color: white; text-decoration: none; margin-right: 20px; font-size: 0.9rem;">← Ver Blog</a>
-            <a href="index.html" style="color: #94a3b8; text-decoration: none; font-size: 0.9rem;">Sair</a>
-        </div>
-    </nav>
+<div class="admin-container">
+    <h1>🚀 Novo Post</h1>
+    <p>Preencha os campos abaixo para publicar no site.</p>
+    <hr style="opacity: 0.1; margin: 20px 0;">
 
-    <div class="container">
-        <h1>📝 Criar Novo Artigo</h1>
-        <form id="postForm">
-            <input type="text" id="titulo" placeholder="Título do Artigo" required>
-            <input type="text" id="slug" placeholder="slug-do-artigo" required>
-            <input type="text" id="resumo" placeholder="Resumo curto" required>
-            <input type="text" id="capa_url" placeholder="URL da Imagem" required>
-            
+    <form id="formPost">
+        <div class="form-group">
+            <label>Título do Artigo</label>
+            <input type="text" id="titulo" placeholder="Ex: Guia Completo UEMA 2026" required>
+        </div>
+
+        <div class="form-group">
+            <label>Slug (URL amigável - sem espaços)</label>
+            <input type="text" id="slug" placeholder="ex: guia-completo-uema-2026" required>
+        </div>
+
+        <div class="form-group">
+            <label>Categoria</label>
             <select id="categoria" required>
-                <option value="">Selecione uma Categoria</option>
-                <optgroup label="Notícias (Vão para o Blog)">
-                    <option value="Concursos">Concursos</option>
-                    <option value="ENEM">ENEM</option>
-                    <option value="UEMA">UEMA</option>
-                </optgroup>
-                <optgroup label="Dicas & Dev (Vão para Dicas)">
-                    <option value="Dicas de Estudo">Dicas de Estudo</option>
-                    <option value="Artigos de Dev">Artigos de Dev</option>
-                </optgroup>
+                <option value="concursos">🏛️ Concursos</option>
+                <option value="enem">🎓 ENEM</option>
+                <option value="uema">🏹 UEMA</option>
+                <option value="dev">💻 Desenvolvimento</option>
+                <option value="dicas">🧠 Dicas de Estudo</option>
             </select>
-
-            <textarea id="conteudo" rows="8" placeholder="Conteúdo do post..." required></textarea>
-            <button type="submit">Publicar no Site</button>
-        </form>
-
-        <div class="lista-posts">
-            <h2>Gerenciar Posts Existentes</h2>
-            <div id="listaContainer">Carregando posts...</div>
         </div>
-    </div>
 
-    <script>
-        const API_URL = 'https://meu-site-aodm.onrender.com/artigos';
+        <div class="form-group">
+            <label>URL da Imagem de Capa</label>
+            <input type="url" id="capa_url" placeholder="https://linkdaimagem.com/foto.jpg">
+        </div>
 
-        async function carregarPostsParaDeletar() {
-            const container = document.getElementById('listaContainer');
-            try {
-                const res = await fetch(API_URL);
-                const posts = await res.json();
-                
-                container.innerHTML = posts.map(p => `
-                    <div class="item-post">
-                        <span>${p.titulo} <small style="color: #94a3b8">(${p.categoria})</small></span>
-                        <button class="btn-delete" onclick="deletarPost('${p.slug}')">Excluir</button>
-                    </div>
-                `).join('');
-            } catch (e) {
-                container.innerHTML = "Erro ao carregar posts.";
-            }
-        }
+        <div class="form-group">
+            <label>Resumo (Aparece no card)</label>
+            <input type="text" id="resumo" placeholder="Uma breve descrição do que trata o post..." required>
+        </div>
 
-        async function deletarPost(slug) {
-            if(confirm(`Deseja mesmo apagar o post "${slug}"?`)) {
-                const res = await fetch(`${API_URL}/${slug}`, { method: 'DELETE' });
-                if(res.ok) {
-                    alert("Post deletado!");
-                    carregarPostsParaDeletar(); 
-                } else {
-                    alert("Erro ao deletar.");
-                }
-            }
-        }
+        <div class="form-group">
+            <label>Conteúdo (Texto Completo)</label>
+            <textarea id="conteudo" placeholder="Escreva aqui o seu artigo..." required></textarea>
+        </div>
 
-        document.getElementById('postForm').onsubmit = async (e) => {
-            e.preventDefault();
-            const dados = {
-                titulo: document.getElementById('titulo').value,
-                slug: document.getElementById('slug').value,
-                resumo: document.getElementById('resumo').value,
-                capa_url: document.getElementById('capa_url').value,
-                categoria: document.getElementById('categoria').value,
-                conteudo: document.getElementById('conteudo').value
-            };
+        <button type="submit" class="btn-salvar">Publicar Artigo Agora</button>
+        <div id="statusMsg" class="mensagem"></div>
+    </form>
+</div>
 
-            try {
-                const res = await fetch(API_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(dados)
-                });
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+    // 1. Conexão com o Banco (Substitua pelos seus dados)
+    const supabaseUrl = 'SUA_URL_AQUI';
+    const supabaseKey = 'SUA_KEY_ANON_AQUI';
+    const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
-                if(res.ok) { 
-                    alert('Postado com sucesso!'); 
-                    document.getElementById('postForm').reset(); // Limpa o formulário
-                    carregarPostsParaDeletar(); // Atualiza a lista abaixo
-                } else { 
-                    alert('Erro ao postar.'); 
-                }
-            } catch (err) {
-                alert('Erro de conexão com o servidor.');
-            }
+    const form = document.getElementById('formPost');
+    const msg = document.getElementById('statusMsg');
+
+    // 2. Lógica de Envio
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        msg.style.display = 'block';
+        msg.style.background = '#3b82f6';
+        msg.innerText = "Publicando...";
+
+        const novoPost = {
+            titulo: document.getElementById('titulo').value,
+            slug: document.getElementById('slug').value,
+            categoria: document.getElementById('categoria').value,
+            capa_url: document.getElementById('capa_url').value,
+            resumo: document.getElementById('resumo').value,
+            conteudo: document.getElementById('conteudo').value,
+            autor: "Kassio Ramos" // Seu nome fixo como autor
         };
 
-        carregarPostsParaDeletar();
-    </script>
+        // 3. Inserindo no Supabase
+        const { data, error } = await _supabase
+            .from('artigos')
+            .insert([novoPost]);
+
+        if (error) {
+            msg.style.background = '#ef4444';
+            msg.innerText = "Erro ao publicar: " + error.message;
+            console.error(error);
+        } else {
+            msg.style.background = '#10b981';
+            msg.innerText = "🚀 Post publicado com sucesso!";
+            form.reset(); // Limpa o formulário
+        }
+    });
+
+    // 4. Gerador Automático de Slug (Opcional - Ajuda muito!)
+    document.getElementById('titulo').addEventListener('input', function() {
+        const slug = this.value.toLowerCase()
+            .replace(/[^\w ]+/g, '')
+            .replace(/ +/g, '-');
+        document.getElementById('slug').value = slug;
+    });
+</script>
+
 </body>
 </html>
