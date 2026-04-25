@@ -2,27 +2,73 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Novo Post - Admin</title>
+    <title>Painel Admin - Concursos MA Pro</title>
     <style>
-        body { background: #0f172a; color: white; font-family: sans-serif; padding: 50px; }
-        form { max-width: 600px; margin: auto; display: flex; flex-direction: column; gap: 15px; }
-        input, textarea { padding: 10px; border-radius: 5px; border: 1px solid #334155; background: #1e293b; color: white; }
-        button { padding: 15px; background: #3b82f6; color: white; border: none; cursor: pointer; font-weight: bold; }
+        body { background: #0f172a; color: white; font-family: sans-serif; padding: 20px; }
+        .container { max-width: 800px; margin: auto; }
+        form { display: flex; flex-direction: column; gap: 15px; background: #1e293b; padding: 20px; border-radius: 10px; margin-bottom: 40px; }
+        input, textarea { padding: 10px; border-radius: 5px; border: 1px solid #334155; background: #0f172a; color: white; }
+        button { padding: 15px; background: #3b82f6; color: white; border: none; cursor: pointer; font-weight: bold; border-radius: 5px; }
+        
+        .lista-posts { border-top: 1px solid #334155; padding-top: 20px; }
+        .item-post { display: flex; justify-content: space-between; align-items: center; background: #1e293b; padding: 10px; margin-bottom: 10px; border-radius: 5px; }
+        .btn-delete { background: #ef4444; padding: 5px 10px; font-size: 0.8rem; }
     </style>
 </head>
 <body>
-    <h1>📝 Criar Novo Artigo</h1>
-    <form id="postForm">
-        <input type="text" id="titulo" placeholder="Título do Artigo" required>
-        <input type="text" id="slug" placeholder="slug-do-artigo (ex: novo-concurso-ma)" required>
-        <input type="text" id="resumo" placeholder="Resumo curto" required>
-        <input type="text" id="capa_url" placeholder="URL da Imagem da Capa" required>
-        <input type="text" id="categoria" placeholder="Categoria (ex: Concursos)" required>
-        <textarea id="conteudo" rows="10" placeholder="Conteúdo do post..." required></textarea>
-        <button type="submit">Publicar no Site</button>
-    </form>
+    <div class="container">
+        <h1>📝 Criar Novo Artigo</h1>
+        <form id="postForm">
+            <input type="text" id="titulo" placeholder="Título do Artigo" required>
+            <input type="text" id="slug" placeholder="slug-do-artigo" required>
+            <input type="text" id="resumo" placeholder="Resumo curto" required>
+            <input type="text" id="capa_url" placeholder="URL da Imagem" required>
+            <input type="text" id="categoria" placeholder="Categoria (ex: Concursos)" required>
+            <textarea id="conteudo" rows="8" placeholder="Conteúdo do post..." required></textarea>
+            <button type="submit">Publicar no Site</button>
+        </form>
+
+        <div class="lista-posts">
+            <h2>Gerenciar Posts Existentes</h2>
+            <div id="listaContainer">Carregando posts...</div>
+        </div>
+    </div>
 
     <script>
+        const API_URL = 'https://meu-site-aodm.onrender.com/artigos';
+
+        // 1. FUNÇÃO PARA CARREGAR E MOSTRAR OS POSTS NA TELA
+        async function carregarPostsParaDeletar() {
+            const container = document.getElementById('listaContainer');
+            try {
+                const res = await fetch(API_URL);
+                const posts = await res.json();
+                
+                container.innerHTML = posts.map(p => `
+                    <div class="item-post">
+                        <span>${p.titulo}</span>
+                        <button class="btn-delete" onclick="deletarPost('${p.slug}')">Excluir</button>
+                    </div>
+                `).join('');
+            } catch (e) {
+                container.innerHTML = "Erro ao carregar posts.";
+            }
+        }
+
+        // 2. FUNÇÃO PARA DELETAR
+        async function deletarPost(slug) {
+            if(confirm(`Deseja mesmo apagar o post "${slug}"?`)) {
+                const res = await fetch(`${API_URL}/${slug}`, { method: 'DELETE' });
+                if(res.ok) {
+                    alert("Post deletado!");
+                    carregarPostsParaDeletar(); // Atualiza a lista
+                } else {
+                    alert("Erro ao deletar. Verifique se a rota DELETE existe no seu backend.");
+                }
+            }
+        }
+
+        // 3. EVENTO DE CRIAR NOVO POST
         document.getElementById('postForm').onsubmit = async (e) => {
             e.preventDefault();
             const dados = {
@@ -34,15 +80,22 @@
                 conteudo: document.getElementById('conteudo').value
             };
 
-            const res = await fetch('https://meu-site-aodm.onrender.com/artigos', {
+            const res = await fetch(API_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(dados)
             });
 
-            if(res.ok) { alert('Postado com sucesso!'); window.location.href = 'blog.html'; }
-            else { alert('Erro ao postar.'); }
+            if(res.ok) { 
+                alert('Postado com sucesso!'); 
+                window.location.href = 'blog.html'; 
+            } else { 
+                alert('Erro ao postar.'); 
+            }
         };
+
+        // Inicia a lista quando a página abre
+        carregarPostsParaDeletar();
     </script>
 </body>
 </html>
