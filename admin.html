@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Novo Post - Admin</title>
+    <style>
+        body { background: #0f172a; color: white; font-family: sans-serif; padding: 50px; }
+        form { max-width: 600px; margin: auto; display: flex; flex-direction: column; gap: 15px; }
+        input, textarea { padding: 10px; border-radius: 5px; border: 1px solid #334155; background: #1e293b; color: white; }
+        button { padding: 15px; background: #3b82f6; color: white; border: none; cursor: pointer; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h1>📝 Criar Novo Artigo</h1>
+    <form id="postForm">
+        <input type="text" id="titulo" placeholder="Título do Artigo" required>
+        <input type="text" id="slug" placeholder="slug-do-artigo (ex: novo-concurso-ma)" required>
+        <input type="text" id="resumo" placeholder="Resumo curto" required>
+        <input type="text" id="capa_url" placeholder="URL da Imagem da Capa" required>
+        <input type="text" id="categoria" placeholder="Categoria (ex: Concursos)" required>
+        <textarea id="conteudo" rows="10" placeholder="Conteúdo do post..." required></textarea>
+        <button type="submit">Publicar no Site</button>
+    </form>
+
+    <script>
+        document.getElementById('postForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const dados = {
+                titulo: document.getElementById('titulo').value,
+                slug: document.getElementById('slug').value,
+                resumo: document.getElementById('resumo').value,
+                capa_url: document.getElementById('capa_url').value,
+                categoria: document.getElementById('categoria').value,
+                conteudo: document.getElementById('conteudo').value
+            };
+
+            const res = await fetch('https://meu-site-aodm.onrender.com/artigos', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(dados)
+            });
+
+            if(res.ok) { alert('Postado com sucesso!'); window.location.href = 'blog.html'; }
+            else { alert('Erro ao postar.'); }
+        };
+    </script>
+</body>
+</html>

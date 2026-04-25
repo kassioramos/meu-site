@@ -6,12 +6,23 @@
     { "source": "/simulados", "destination": "/simulados.html" },
     { "source": "/dicas-desenvolvimento", "destination": "/dicas-desenvolvimento.html" },
     { "source": "/post", "destination": "/post.html" },
-    { "source": "/concursos", "destination": "https://meu-site-aodm.onrender.com/concursos" },
-    { "source": "/artigos", "destination": "https://meu-site-aodm.onrender.com/artigos" },
     { 
       "source": "/sitemap.xml", 
       "destination": "https://meu-site-aodm.onrender.com/sitemap.xml" 
     },
+    { 
+      "source": "/concursos", 
+      "destination": "https://meu-site-aodm.onrender.com/concursos" 
+    },
+    { 
+      "source": "/artigos", 
+      "destination": "https://meu-site-aodm.onrender.com/artigos" 
+    },
+    { 
+      "source": "/artigos/:path*", 
+      "destination": "https://meu-site-aodm.onrender.com/artigos/:path*" 
+    },
+    { "source": "/admin", "destination": "/admin.html" },
     { "source": "/(.*)", "destination": "/$1" }
   ]
 }
