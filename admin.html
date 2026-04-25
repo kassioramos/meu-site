@@ -6,19 +6,26 @@
     <style>
         body { background: #0f172a; color: white; font-family: sans-serif; padding: 20px; }
         .container { max-width: 800px; margin: auto; }
+        
+        /* Ajustei para incluir o select no estilo */
         form { display: flex; flex-direction: column; gap: 15px; background: #1e293b; padding: 20px; border-radius: 10px; margin-bottom: 40px; }
-        input, textarea { padding: 10px; border-radius: 5px; border: 1px solid #334155; background: #0f172a; color: white; }
-        button { padding: 15px; background: #3b82f6; color: white; border: none; cursor: pointer; font-weight: bold; border-radius: 5px; }
+        input, textarea, select { padding: 10px; border-radius: 5px; border: 1px solid #334155; background: #0f172a; color: white; width: 100%; box-sizing: border-box; }
+        
+        button { padding: 15px; background: #3b82f6; color: white; border: none; cursor: pointer; font-weight: bold; border-radius: 5px; transition: 0.3s; }
+        button:hover { background: #2563eb; }
         
         .lista-posts { border-top: 1px solid #334155; padding-top: 20px; }
         .item-post { display: flex; justify-content: space-between; align-items: center; background: #1e293b; padding: 10px; margin-bottom: 10px; border-radius: 5px; }
-        .btn-delete { background: #ef4444; padding: 5px 10px; font-size: 0.8rem; }
+        
+        .btn-delete { background: #ef4444; padding: 5px 10px; font-size: 0.8rem; width: auto; }
+        .btn-delete:hover { background: #dc2626; }
+
+        nav { display: flex; justify-content: space-between; align-items: center; background: #1e293b; padding: 10px 20px; margin-bottom: 30px; border-radius: 8px; }
     </style>
 </head>
 <body>
 
-    <body>
-    <nav style="display: flex; justify-content: space-between; align-items: center; background: #1e293b; padding: 10px 20px; margin-bottom: 30px; border-radius: 8px;">
+    <nav>
         <span style="font-weight: bold; color: #3b82f6;">Painel Administrativo</span>
         <div>
             <a href="blog.html" style="color: white; text-decoration: none; margin-right: 20px; font-size: 0.9rem;">← Ver Blog</a>
@@ -33,7 +40,20 @@
             <input type="text" id="slug" placeholder="slug-do-artigo" required>
             <input type="text" id="resumo" placeholder="Resumo curto" required>
             <input type="text" id="capa_url" placeholder="URL da Imagem" required>
-            <input type="text" id="categoria" placeholder="Categoria (ex: Concursos)" required>
+            
+            <select id="categoria" required>
+                <option value="">Selecione uma Categoria</option>
+                <optgroup label="Notícias (Vão para o Blog)">
+                    <option value="Concursos">Concursos</option>
+                    <option value="ENEM">ENEM</option>
+                    <option value="UEMA">UEMA</option>
+                </optgroup>
+                <optgroup label="Dicas & Dev (Vão para Dicas)">
+                    <option value="Dicas de Estudo">Dicas de Estudo</option>
+                    <option value="Artigos de Dev">Artigos de Dev</option>
+                </optgroup>
+            </select>
+
             <textarea id="conteudo" rows="8" placeholder="Conteúdo do post..." required></textarea>
             <button type="submit">Publicar no Site</button>
         </form>
@@ -47,7 +67,6 @@
     <script>
         const API_URL = 'https://meu-site-aodm.onrender.com/artigos';
 
-        // 1. FUNÇÃO PARA CARREGAR E MOSTRAR OS POSTS NA TELA
         async function carregarPostsParaDeletar() {
             const container = document.getElementById('listaContainer');
             try {
@@ -56,7 +75,7 @@
                 
                 container.innerHTML = posts.map(p => `
                     <div class="item-post">
-                        <span>${p.titulo}</span>
+                        <span>${p.titulo} <small style="color: #94a3b8">(${p.categoria})</small></span>
                         <button class="btn-delete" onclick="deletarPost('${p.slug}')">Excluir</button>
                     </div>
                 `).join('');
@@ -65,20 +84,18 @@
             }
         }
 
-        // 2. FUNÇÃO PARA DELETAR
         async function deletarPost(slug) {
             if(confirm(`Deseja mesmo apagar o post "${slug}"?`)) {
                 const res = await fetch(`${API_URL}/${slug}`, { method: 'DELETE' });
                 if(res.ok) {
                     alert("Post deletado!");
-                    carregarPostsParaDeletar(); // Atualiza a lista
+                    carregarPostsParaDeletar(); 
                 } else {
-                    alert("Erro ao deletar. Verifique se a rota DELETE existe no seu backend.");
+                    alert("Erro ao deletar.");
                 }
             }
         }
 
-        // 3. EVENTO DE CRIAR NOVO POST
         document.getElementById('postForm').onsubmit = async (e) => {
             e.preventDefault();
             const dados = {
@@ -90,21 +107,25 @@
                 conteudo: document.getElementById('conteudo').value
             };
 
-            const res = await fetch(API_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(dados)
-            });
+            try {
+                const res = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(dados)
+                });
 
-            if(res.ok) { 
-                alert('Postado com sucesso!'); 
-                window.history.back();
-            } else { 
-                alert('Erro ao postar.'); 
+                if(res.ok) { 
+                    alert('Postado com sucesso!'); 
+                    document.getElementById('postForm').reset(); // Limpa o formulário
+                    carregarPostsParaDeletar(); // Atualiza a lista abaixo
+                } else { 
+                    alert('Erro ao postar.'); 
+                }
+            } catch (err) {
+                alert('Erro de conexão com o servidor.');
             }
         };
 
-        // Inicia a lista quando a página abre
         carregarPostsParaDeletar();
     </script>
 </body>
