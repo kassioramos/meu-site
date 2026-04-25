@@ -20,60 +20,76 @@
         }
         .btn-salvar:hover { background: #059669; transform: translateY(-2px); }
         .mensagem { margin-top: 20px; padding: 15px; border-radius: 8px; display: none; }
+        
+        /* Estilo da seção de Login */
+        #loginSection { max-width: 400px; margin: 100px auto; background: var(--card); padding: 30px; border-radius: 12px; border: 1px solid var(--border); text-align: center; }
+        #loginSection input { margin-bottom: 15px; }
     </style>
 </head>
 <body>
 
-<div class="admin-container">
-    <h1>🚀 Novo Post</h1>
-    <p>Preencha os campos abaixo para publicar no site.</p>
-    <hr style="opacity: 0.1; margin: 20px 0;">
+<div id="loginSection">
+    <h2 style="margin-bottom: 20px;">🔒 Acesso Restrito</h2>
+    <input type="email" id="emailAdmin" placeholder="Seu e-mail de admin">
+    <input type="password" id="senhaAdmin" placeholder="Sua senha">
+    <button onclick="fazerLogin()" class="btn-salvar">Entrar no Painel</button>
+</div>
 
-    <form id="formPost">
-        <div class="form-group">
-            <label>Título do Artigo</label>
-            <input type="text" id="titulo" placeholder="Ex: Guia Completo UEMA 2026" required>
+<div id="adminContent" style="display: none;">
+    <div class="admin-container">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h1>🚀 Novo Post</h1>
+            <button onclick="logout()" style="background: transparent; color: #ef4444; border: none; cursor: pointer;">Sair</button>
         </div>
+        <p>Preencha os campos abaixo para publicar no site.</p>
+        <hr style="opacity: 0.1; margin: 20px 0;">
 
-        <div class="form-group">
-            <label>Slug (URL amigável - sem espaços)</label>
-            <input type="text" id="slug" placeholder="ex: guia-completo-uema-2026" required>
-        </div>
+        <form id="formPost">
+            <div class="form-group">
+                <label>Título do Artigo</label>
+                <input type="text" id="titulo" placeholder="Ex: Guia Completo UEMA 2026" required>
+            </div>
 
-        <div class="form-group">
-            <label>Categoria</label>
-            <select id="categoria" required>
-                <option value="concursos">🏛️ Concursos</option>
-                <option value="enem">🎓 ENEM</option>
-                <option value="uema">🏹 UEMA</option>
-                <option value="dev">💻 Desenvolvimento</option>
-                <option value="dicas">🧠 Dicas de Estudo</option>
-            </select>
-        </div>
+            <div class="form-group">
+                <label>Slug (Automático)</label>
+                <input type="text" id="slug" required>
+            </div>
 
-        <div class="form-group">
-            <label>URL da Imagem de Capa</label>
-            <input type="url" id="capa_url" placeholder="https://linkdaimagem.com/foto.jpg">
-        </div>
+            <div class="form-group">
+                <label>Categoria</label>
+                <select id="categoria" required>
+                    <option value="concursos">🏛️ Concursos</option>
+                    <option value="enem">🎓 ENEM</option>
+                    <option value="uema">🏹 UEMA</option>
+                    <option value="dev">💻 Desenvolvimento</option>
+                    <option value="dicas">🧠 Dicas de Estudo</option>
+                </select>
+            </div>
 
-        <div class="form-group">
-            <label>Resumo (Aparece no card)</label>
-            <input type="text" id="resumo" placeholder="Uma breve descrição do que trata o post..." required>
-        </div>
+            <div class="form-group">
+                <label>URL da Imagem de Capa</label>
+                <input type="url" id="capa_url" placeholder="https://linkdaimagem.com/foto.jpg">
+            </div>
 
-        <div class="form-group">
-            <label>Conteúdo (Texto Completo)</label>
-            <textarea id="conteudo" placeholder="Escreva aqui o seu artigo..." required></textarea>
-        </div>
+            <div class="form-group">
+                <label>Resumo</label>
+                <input type="text" id="resumo" required>
+            </div>
 
-        <button type="submit" class="btn-salvar">Publicar Artigo Agora</button>
-        <div id="statusMsg" class="mensagem"></div>
-    </form>
+            <div class="form-group">
+                <label>Conteúdo (Texto Completo)</label>
+                <textarea id="conteudo" required></textarea>
+            </div>
+
+            <button type="submit" class="btn-salvar">Publicar Artigo Agora</button>
+            <div id="statusMsg" class="mensagem"></div>
+        </form>
+    </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-    // 1. Conexão com o Banco (Substitua pelos seus dados)
+    // Configurações (Use suas chaves reais aqui)
     const supabaseUrl = 'SUA_URL_AQUI';
     const supabaseKey = 'SUA_KEY_ANON_AQUI';
     const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
@@ -81,7 +97,37 @@
     const form = document.getElementById('formPost');
     const msg = document.getElementById('statusMsg');
 
-    // 2. Lógica de Envio
+    // --- LÓGICA DE AUTENTICAÇÃO ---
+
+    // Verificar se já está logado
+    async function checkUser() {
+        const { data: { user } } = await _supabase.auth.getUser();
+        if (user) {
+            document.getElementById('loginSection').style.display = 'none';
+            document.getElementById('adminContent').style.display = 'block';
+        }
+    }
+
+    async function fazerLogin() {
+        const email = document.getElementById('emailAdmin').value;
+        const password = document.getElementById('senhaAdmin').value;
+
+        const { error } = await _supabase.auth.signInWithPassword({ email, password });
+
+        if (error) {
+            alert("Erro: " + error.message);
+        } else {
+            checkUser(); // Mostra o painel se logar com sucesso
+        }
+    }
+
+    async function logout() {
+        await _supabase.auth.signOut();
+        location.reload();
+    }
+
+    // --- LÓGICA DE POSTAGEM ---
+
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
         msg.style.display = 'block';
@@ -95,32 +141,28 @@
             capa_url: document.getElementById('capa_url').value,
             resumo: document.getElementById('resumo').value,
             conteudo: document.getElementById('conteudo').value,
-            autor: "Kassio Ramos" // Seu nome fixo como autor
+            autor: "Kassio Ramos"
         };
 
-        // 3. Inserindo no Supabase
-        const { data, error } = await _supabase
-            .from('artigos')
-            .insert([novoPost]);
+        const { data, error } = await _supabase.from('artigos').insert([novoPost]);
 
         if (error) {
             msg.style.background = '#ef4444';
             msg.innerText = "Erro ao publicar: " + error.message;
-            console.error(error);
         } else {
             msg.style.background = '#10b981';
             msg.innerText = "🚀 Post publicado com sucesso!";
-            form.reset(); // Limpa o formulário
+            form.reset();
         }
     });
 
-    // 4. Gerador Automático de Slug (Opcional - Ajuda muito!)
     document.getElementById('titulo').addEventListener('input', function() {
-        const slug = this.value.toLowerCase()
-            .replace(/[^\w ]+/g, '')
-            .replace(/ +/g, '-');
+        const slug = this.value.toLowerCase().replace(/[^\w ]+/g, '').replace(/ +/g, '-');
         document.getElementById('slug').value = slug;
     });
+
+    // Inicia verificando se você já está logado
+    checkUser();
 </script>
 
 </body>
