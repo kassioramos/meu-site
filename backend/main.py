@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Query, HTTPException, Response
+from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 import psycopg2
 from psycopg2.extras import RealDictCursor
@@ -33,9 +34,41 @@ def get_db_connection():
     db_url = os.environ.get("DATABASE_URL")
     return psycopg2.connect(db_url, cursor_factory=RealDictCursor)
 
+# Crie um modelo para os dados do artigo
+class ArtigoBase(BaseModel):
+    titulo: str
+    slug: str
+    resumo: str
+    conteudo: str
+    capa_url: str
+    categoria: str
+
 @app.get("/")
 def home():
     return {"status": "online", "msg": "API Concursos Maranhão Pro funcionando! 🚀"}
+
+# Adicione a rota para salvar o post
+@app.post("/artigos")
+def criar_artigo(artigo: ArtigoBase):
+    conn = None
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        query = """
+            INSERT INTO artigos (titulo, slug, resumo, conteudo, capa_url, categoria)
+            VALUES (%s, %s, %s, %s, %s, %s) RETURNING id
+        """
+        cursor.execute(query, (
+            artigo.titulo, artigo.slug, artigo.resumo, 
+            artigo.conteudo, artigo.capa_url, artigo.categoria
+        ))
+        novo_id = cursor.fetchone()['id']
+        conn.commit()
+        return {"message": "Post criado com sucesso!", "id": novo_id}
+    except Exception as e:
+        return {"error": str(e)}
+    finally:
+        if conn: conn.close()
 
 @app.get("/health")
 async def health_check():
@@ -88,6 +121,7 @@ def listar_artigos():
         return {"error": str(e)}
     finally:
         if conn: conn.close()
+        
 
 @app.get("/artigos/{slug}")
 def obter_artigo_por_slug(slug: str):
