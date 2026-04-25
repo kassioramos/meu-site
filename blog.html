@@ -12,6 +12,7 @@
             --text-main: #f8fafc;
             --text-sub: #94a3b8;
             --border: rgba(255,255,255,0.1);
+            --accent: #10b981; /* Verde para Dicas/Desenvolvimento */
         }
 
         body {
@@ -37,11 +38,24 @@
         .btn-categoria.active { background: var(--primary); border-color: var(--primary); }
 
         /* Botão Novo Post */
-        .btn-post {
-            background: #10b981; color: white; padding: 10px 20px; 
-            border-radius: 8px; text-decoration: none; font-weight: bold;
-        }
+.btn-post {
+    position: absolute; 
+    top: 20px;    /* Afasta do topo */
+    right: 20px;  /* Afasta da lateral direita */
+    background: #10b981; 
+    color: white; 
+    padding: 10px 20px; 
+    border-radius: 8px; 
+    text-decoration: none; 
+    font-weight: bold;
+    transition: 0.3s; /* Opcional: deixa o hover suave */
+}
 
+/* Dica: Adicione um efeito de hover para ficar mais profissional */
+.btn-post:hover {
+    background: #059669;
+    transform: scale(1.05);
+}
         /* Grid de Artigos */
         .blog-grid {
             display: grid;
@@ -115,10 +129,9 @@
     <a href="index.html" class="nav-link">🏠 Início</a>
     <a href="simulados.html" class="nav-link">📝 Simulados</a>
     <a href="dicas-desenvolvimento.html" class="nav-link">💡 Dicas & Dev</a>
+    <a href="admin.html" class="btn-post">+ Novo Post</a>
 </div>
-    <div style="position: absolute; top: 0; right: 0;">
-        <a href="admin" class="btn-post">+ Novo Post</a>
-    </div>
+    
 
     <a href="#" class="btn-voltar" onclick="window.history.back(); return false;">← Voltar</a>
     

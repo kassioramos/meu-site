@@ -15,6 +15,15 @@
             --accent: #10b981; /* Verde para Dicas/Desenvolvimento */
         }
 
+        .btn-voltar {
+    text-decoration: none; /* Remove o sublinhado */
+    color: #3b82f6;        /* Mantém ou define a cor desejada */
+}
+
+    .btn-voltar:hover {
+    text-decoration: underline; /* Opcional: a linha só aparece quando passa o mouse */
+}
+
         body {
             font-family: 'Inter', sans-serif;
             background-color: var(--bg);
@@ -23,7 +32,7 @@
             padding: 20px;
         }
 
-        .container { max-width: 1000px; margin: 0 auto; position: relative; }
+        
 
         /* Navbar */
         .nav-menu {
@@ -110,10 +119,19 @@
         .conteudo p { color: var(--text-sub); font-size: 0.9rem; line-height: 1.5; }
 
         .btn-post {
-            position: absolute; top: 0; right: 0;
-            background: var(--accent); color: white; padding: 10px 20px; 
-            border-radius: 8px; text-decoration: none; font-weight: bold;
-        }
+            position: absolute; 
+            top: 20px;    /* Afasta do topo */
+            right: 20px;  /* Afasta da lateral direita */
+            background: #10b981; 
+            color: white; 
+            padding: 10px 20px; 
+            border-radius: 8px; 
+            text-decoration: none; 
+            font-weight: bold;
+            transition: 0.3s; /* Opcional: deixa o hover suave */
+}
+
+
     </style>
 </head>
 <body>
@@ -127,6 +145,9 @@
         <a href="blog.html" class="nav-link">📰 Notícias</a>
     
     </nav>
+        
+
+    <a href="#" class="btn-voltar" onclick="window.history.back(); return false;">← Voltar</a>
 
     <header>
         <h1>Dicas & Desenvolvimento</h1>
