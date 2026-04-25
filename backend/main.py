@@ -47,6 +47,27 @@ class ArtigoBase(BaseModel):
 def home():
     return {"status": "online", "msg": "API Concursos Maranhão Pro funcionando! 🚀"}
 
+@app.delete("/artigos/{slug}")
+async def deletar_artigo(slug: str):
+    conn = None
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # O comando SQL correto para deletar usando psycopg2
+        query = "DELETE FROM artigos WHERE slug = %s"
+        cursor.execute(query, (slug,))
+        
+        # Salva a alteração no banco
+        conn.commit()
+        
+        return {"message": f"Artigo '{slug}' deletado com sucesso!"}
+    except Exception as e:
+        return {"error": str(e)}
+    finally:
+        if conn:
+            conn.close()
+
 # Adicione a rota para salvar o post
 @app.post("/artigos")
 def criar_artigo(artigo: ArtigoBase):
