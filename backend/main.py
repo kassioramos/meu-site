@@ -1,12 +1,8 @@
 from fastapi import FastAPI, Query, HTTPException, Response
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
-import psycopg2
-from psycopg2.extras import RealDictCursor
 import os
-from datetime import date, datetime
-from decimal import Decimal
-import uuid
+from supabase import create_client, Client
 
 app = FastAPI()
 
@@ -19,22 +15,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# 🔄 Serializador para tipos especiais
-def serializar(obj):
-    if isinstance(obj, (date, datetime)):
-        return obj.isoformat()
-    if isinstance(obj, Decimal):
-        return float(obj)
-    if isinstance(obj, uuid.UUID):
-        return str(obj)
-    return obj
+# 🔑 Credenciais do Supabase
+# Na Vercel, use a 'service_role key' para o BACKEND para ignorar bloqueios de RLS em deletes/posts
+SUPABASE_URL = os.environ.get("SUPABASE_URL", "https://mczmhvuxujvhrudqmpvg.supabase.co")
+SUPABASE_KEY = os.environ.get("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1jem1odnV4dWp2aHJ1ZHFtcHZnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5MzgwMDksImV4cCI6MjA5MTUxNDAwOX0.vqNvzVRzpH9Otqb7DISpWXLw4b6eegdwzpaLBRJPwfY") 
 
-# 🔌 Conexão com o banco
-def get_db_connection():
-    db_url = os.environ.get("DATABASE_URL")
-    return psycopg2.connect(db_url, cursor_factory=RealDictCursor)
+if not SUPABASE_KEY:
+    print("AVISO: SUPABASE_KEY não encontrada nas variáveis de ambiente!")
 
-# Crie um modelo para os dados do artigo
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+
 class ArtigoBase(BaseModel):
     titulo: str
     slug: str
@@ -45,206 +35,101 @@ class ArtigoBase(BaseModel):
 
 @app.get("/")
 def home():
-    return {"status": "online", "msg": "API Concursos Maranhão Pro funcionando! 🚀"}
-
-@app.delete("/artigos/{slug}")
-async def deletar_artigo(slug: str):
-    conn = None
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        
-        # O comando SQL correto para deletar usando psycopg2
-        query = "DELETE FROM artigos WHERE slug = %s"
-        cursor.execute(query, (slug,))
-        
-        # Salva a alteração no banco
-        conn.commit()
-        
-        return {"message": f"Artigo '{slug}' deletado com sucesso!"}
-    except Exception as e:
-        return {"error": str(e)}
-    finally:
-        if conn:
-            conn.close()
-
-# Adicione a rota para salvar o post
-@app.post("/artigos")
-def criar_artigo(artigo: ArtigoBase):
-    conn = None
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        query = """
-            INSERT INTO artigos (titulo, slug, resumo, conteudo, capa_url, categoria)
-            VALUES (%s, %s, %s, %s, %s, %s) RETURNING id
-        """
-        cursor.execute(query, (
-            artigo.titulo, artigo.slug, artigo.resumo, 
-            artigo.conteudo, artigo.capa_url, artigo.categoria
-        ))
-        novo_id = cursor.fetchone()['id']
-        conn.commit()
-        return {"message": "Post criado com sucesso!", "id": novo_id}
-    except Exception as e:
-        return {"error": str(e)}
-    finally:
-        if conn: conn.close()
-
-@app.get("/health")
-async def health_check():
-    return {"status": "ok", "message": "Backend acordado!"}
-
-# ==========================================
-# 📚 BLOCO: QUESTÕES
-# ==========================================
-@app.get("/questoes")
-def listar_questoes(banca: str = Query(None)):
-    conn = None
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        sql_base = "SELECT id, banca, enunciado, disciplina, opcoes, alternativa_correta, comentario_professor FROM questoes"
-
-        if banca:
-            banca_limpa = banca.strip()
-            query = f"{sql_base} WHERE banca ILIKE %s"
-            cursor.execute(query, (f"%{banca_limpa}%",))
-        else:
-            cursor.execute(f"{sql_base} LIMIT 20")
-
-        dados = cursor.fetchall()
-        for item in dados:
-            for k, v in item.items():
-                item[k] = serializar(v)
-        return dados
-    except Exception as e:
-        return {"error": str(e)}
-    finally:
-        if conn: conn.close()
+    return {"status": "online", "msg": "API Concursos Maranhão Pro integrada ao Supabase! 🚀"}
 
 # ==========================================
 # 📰 BLOCO: BLOG (ARTIGOS)
 # ==========================================
+
 @app.get("/artigos")
 def listar_artigos():
-    conn = None
     try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute('SELECT id, titulo, slug, resumo, capa_url, categoria, created_at FROM artigos ORDER BY created_at DESC')
-        dados = cursor.fetchall()
-        for item in dados:
-            for k, v in item.items():
-                item[k] = serializar(v)
-        return dados
+        # Busca simples ordenada por data
+        response = supabase.table("artigos").select("id, titulo, slug, resumo, capa_url, categoria, created_at").order("created_at", desc=True).execute()
+        return response.data
     except Exception as e:
         return {"error": str(e)}
-    finally:
-        if conn: conn.close()
-        
 
 @app.get("/artigos/{slug}")
 def obter_artigo_por_slug(slug: str):
-    conn = None
     try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute('SELECT * FROM artigos WHERE slug = %s', (slug,))
-        artigo = cursor.fetchone()
-
-        if not artigo:
+        response = supabase.table("artigos").select("*").eq("slug", slug).maybe_single().execute()
+        if not response.data:
             raise HTTPException(status_code=404, detail="Artigo não encontrado")
-
-        for k, v in artigo.items():
-            artigo[k] = serializar(v)
-        return artigo
+        return response.data
     except Exception as e:
         return {"error": str(e)}
-    finally:
-        if conn: conn.close()
+
+@app.post("/artigos")
+def criar_artigo(artigo: ArtigoBase):
+    try:
+        response = supabase.table("artigos").insert(artigo.dict()).execute()
+        return {"message": "Post criado com sucesso!", "data": response.data}
+    except Exception as e:
+        return {"error": str(e)}
+
+@app.delete("/artigos/{slug}")
+async def deletar_artigo(slug: str):
+    try:
+        response = supabase.table("artigos").delete().eq("slug", slug).execute()
+        return {"message": f"Artigo '{slug}' deletado!", "data": response.data}
+    except Exception as e:
+        return {"error": str(e)}
+
+# ==========================================
+# 📚 BLOCO: QUESTÕES
+# ==========================================
+
+@app.get("/questoes")
+def listar_questoes(banca: str = Query(None)):
+    try:
+        query = supabase.table("questoes").select("*")
+        if banca:
+            query = query.ilike("banca", f"%{banca.strip()}%")
+        else:
+            query = query.limit(20)
+        
+        response = query.execute()
+        return response.data
+    except Exception as e:
+        return {"error": str(e)}
 
 # ==========================================
 # 📄 BLOCO: CONCURSOS
 # ==========================================
+
 @app.get("/concursos")
 def listar_concursos():
-    conn = None
     try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute('SELECT * FROM concursos ORDER BY id DESC')
-        dados = cursor.fetchall()
-        for item in dados:
-            for k, v in item.items():
-                item[k] = serializar(v)
-        return {"items": dados}
+        response = supabase.table("concursos").select("*").order("id", desc=True).execute()
+        # Mantendo o formato {"items": [...]} para não quebrar seu front-end
+        return {"items": response.data}
     except Exception as e:
         return {"error": str(e)}
-    finally:
-        if conn: conn.close()
 
-@app.get("/concursos/{concurso_id}")
-def obter_concurso_por_id(concurso_id: int):
-    conn = None
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute("SELECT * FROM concursos WHERE id = %s", (concurso_id,))
-        concurso = cursor.fetchone()
-        
-        if not concurso:
-            raise HTTPException(status_code=404, detail="Concurso não encontrado")
-            
-        for k, v in concurso.items():
-            concurso[k] = serializar(v)
-            
-        return concurso
-    except Exception as e:
-        return {"error": str(e)}
-    finally:
-        if conn: conn.close()
-        
-        # ==========================================
+# ==========================================
 # 🗺️ BLOCO: SEO (SITEMAP)
 # ==========================================
+
 @app.get("/sitemap.xml")
 async def sitemap():
-    conn = None
     BASE_URL = "https://meu-site-five-delta.vercel.app"
-    
     try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
+        # Busca dados necessários para o sitemap
+        concs = supabase.table("concursos").select("id").execute()
+        arts = supabase.table("artigos").select("slug").execute()
 
-        # 1. Busca IDs de concursos
-        cursor.execute("SELECT id FROM concursos")
-        concursos = cursor.fetchall()
-        
-        # 2. Busca Slugs de artigos
-        cursor.execute("SELECT slug FROM artigos")
-        artigos = cursor.fetchall()
-
-        # Início do XML
         xml = '<?xml version="1.0" encoding="UTF-8"?>'
         xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
-        
-        # URL da Home
         xml += f'<url><loc>{BASE_URL}/</loc><priority>1.0</priority></url>'
         
-        # URLs dinâmicas de Concursos
-        for c in concursos:
-            xml += f'<url><loc>{BASE_URL}/detalhes/{c["id"]}</loc><priority>0.8</priority></url>'
-            
-        # URLs dinâmicas de Artigos
-        for a in artigos:
-            xml += f'<url><loc>{BASE_URL}/post/{a["slug"]}</loc><priority>0.7</priority></url>'
+        for c in concs.data:
+            xml += f'<url><loc>{BASE_URL}/detalhes.html?id={c["id"]}</loc><priority>0.8</priority></url>'
+        
+        for a in arts.data:
+            xml += f'<url><loc>{BASE_URL}/post.html?slug={a["slug"]}</loc><priority>0.7</priority></url>'
             
         xml += '</urlset>'
-        
         return Response(content=xml, media_type="application/xml")
-        
     except Exception as e:
         return Response(content=f"<error>{str(e)}</error>", media_type="application/xml")
-    finally:
-        if conn: conn.close()
