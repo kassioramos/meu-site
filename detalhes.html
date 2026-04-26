@@ -113,7 +113,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
     const URL_SB = 'https://mczmhvuxujvhrudqmpvg.supabase.co';
-    const KEY_SB = 'sb_publishable_VTkTKTGqA7QtDR3cnENUwQ_mGDWVkle';
+    const KEY_SB = 'SUA_KEY';
     const _supabase = supabase.createClient(URL_SB, KEY_SB);
 
     const fmtMoeda = (v) => v ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v) : 'Consultar Edital';
@@ -201,10 +201,9 @@
 
             for (const letra in opcoes) {
                 opcoesHtml += `
-                    <button 
-                        onclick="mostrarResposta('${letra}','${q.alternativa_correta}', \`${q.comentario_professor || ''}\`)"
-                        style="display:block;width:100%;margin:10px 0;padding:12px;border:none;border-radius:8px;background:#334155;color:white;cursor:pointer;">
-                        ${letra.toUpperCase()}) ${opcoes[letra]}
+                    <button onclick="mostrarResposta('${letra}','${q.alternativa_correta}')"
+                    style="display:block;width:100%;margin:10px 0;padding:12px;border:none;border-radius:8px;background:#334155;color:white;cursor:pointer;">
+                    ${letra.toUpperCase()}) ${opcoes[letra]}
                     </button>
                 `;
             }
@@ -230,24 +229,13 @@
         `;
     }
 
-    function mostrarResposta(marcada, correta, comentario) {
+    function mostrarResposta(marcada, correta) {
         const resultado = document.getElementById('resultado');
 
         if (marcada === correta) {
-            resultado.innerHTML = `
-                <div class="sobre-secao" style="border-left:4px solid #10b981;">
-                    <h3>✅ Resposta correta!</h3>
-                    <p style="margin-top:10px;">${comentario}</p>
-                </div>
-            `;
+            resultado.innerHTML = `<div class="sobre-secao" style="border-left:4px solid #10b981;">✅ Resposta correta!</div>`;
         } else {
-            resultado.innerHTML = `
-                <div class="sobre-secao" style="border-left:4px solid #ef4444;">
-                    <h3>❌ Resposta errada!</h3>
-                    <p><strong>Resposta correta:</strong> ${correta.toUpperCase()}</p>
-                    <p style="margin-top:10px;">${comentario}</p>
-                </div>
-            `;
+            resultado.innerHTML = `<div class="sobre-secao" style="border-left:4px solid #ef4444;">❌ Resposta errada! Correta: ${correta.toUpperCase()}</div>`;
         }
     }
 
