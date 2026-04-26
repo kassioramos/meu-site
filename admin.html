@@ -38,15 +38,17 @@
 </head>
 <body>
 
-<div id="loginSection">
-    <h2 style="margin-bottom: 10px;">🔒 Acesso Restrito</h2>
-    <p style="color: #94a3b8; margin-bottom: 25px;">Entre com suas credenciais de administrador</p>
-    
-    <input type="email" id="emailAdmin" placeholder="E-mail" autocomplete="username">
-    <input type="password" id="senhaAdmin" placeholder="Senha" autocomplete="current-password">
-    
-    <button onclick="fazerLogin()" class="btn-salvar" id="btnLogin">Entrar no Painel</button>
-</div>
+<section id="loginSection">
+    <form onsubmit="event.preventDefault(); fazerLogin();">
+        <h2 style="margin-bottom: 10px;">🔒 Acesso Restrito</h2>
+        <p style="color: #94a3b8; margin-bottom: 25px;">Entre com suas credenciais</p>
+        
+        <input type="email" id="emailAdmin" placeholder="E-mail" autocomplete="username" required>
+        <input type="password" id="senhaAdmin" placeholder="Senha" autocomplete="current-password" required>
+        
+        <button type="submit" class="btn-salvar" id="btnLogin">Entrar no Painel</button>
+    </form>
+</section>
 
 <div id="adminContent" style="display: none;">
     <div class="admin-container">
