@@ -7,6 +7,28 @@
     <style>
         :root { --bg: #0f172a; --card: #1e293b; --primary: #10b981; --text: #f8fafc; --border: rgba(255,255,255,0.1); }
         body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); padding: 20px; margin: 0; }
+
+        .menu-admin{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    margin-bottom:20px;
+}
+.menu-admin button{
+    background:#334155;
+    color:#fff;
+    border:none;
+    padding:10px 16px;
+    border-radius:8px;
+    cursor:pointer;
+    font-weight:bold;
+}
+.menu-admin button:hover{
+    background:#3b82f6;
+}
+.secao-admin{
+    display:none;
+}
         
         #loginSection { max-width: 400px; margin: 80px auto; background: var(--card); padding: 30px; border-radius: 12px; border: 1px solid var(--border); text-align: center; }
         .admin-container { max-width: 900px; margin: 0 auto; background: var(--card); padding: 30px; border-radius: 12px; border: 1px solid var(--border); }
@@ -49,6 +71,12 @@
 <div id="adminContent" style="display: none;">
     <div class="admin-container">
         <div class="header-admin">
+            <div class="menu-admin">
+    <button onclick="mostrarSecao('artigo')">📄 Publicar Artigo</button>
+    <button onclick="mostrarSecao('questao')">❓ Cadastrar Questão</button>
+    <button onclick="mostrarSecao('concurso')">🏛️ Cadastrar Concurso</button>
+    <button onclick="mostrarSecao('excluir')">🗑️ Excluir</button>
+</div>
             <div>
                 <h1 style="margin: 0;">🚀 Novo Artigo</h1>
                 <p style="color: #94a3b8; margin: 5px 0 0 0;">Publicando no Concursos Maranhão Pro</p>
@@ -56,7 +84,7 @@
             <button onclick="logout()" class="btn-logout">Sair</button>
         </div>
 
-        <form id="formPost">
+        <form id="formPost" class="secao-admin" style="display:block;"></form>
             <div class="form-group">
                 <label>Título do Artigo</label>
                 <input type="text" id="titulo" placeholder="Ex: Dicas de Estudo para a UEMA" required>
@@ -99,6 +127,38 @@
             <button type="submit" class="btn-salvar" id="btnPublicar">Publicar Artigo Agora</button>
             <div id="statusMsg" class="mensagem"></div>
         </form>
+        <div id="formQuestao" class="secao-admin">
+    <h2>❓ Nova Questão</h2>
+    <input id="disciplina" placeholder="Disciplina"><br><br>
+    <input id="banca" placeholder="Banca"><br><br>
+    <textarea id="enunciadoQuestao" placeholder="Enunciado"></textarea><br><br>
+    <input id="altA" placeholder="Alternativa A"><br><br>
+    <input id="altB" placeholder="Alternativa B"><br><br>
+    <input id="altC" placeholder="Alternativa C"><br><br>
+    <input id="altD" placeholder="Alternativa D"><br><br>
+    <input id="correta" placeholder="Alternativa correta (a,b,c,d)"><br><br>
+    <textarea id="comentario" placeholder="Comentário do professor"></textarea><br><br>
+    <button class="btn-salvar" onclick="salvarQuestao()">Salvar Questão</button>
+</div>
+
+<div id="formConcurso" class="secao-admin">
+    <h2>🏛️ Novo Concurso</h2>
+    <input id="orgao" placeholder="Órgão"><br><br>
+    <input id="cidade" placeholder="Cidade"><br><br>
+    <input id="bancaConcurso" placeholder="Banca"><br><br>
+    <button class="btn-salvar" onclick="salvarConcurso()">Salvar Concurso</button>
+</div>
+
+<div id="secaoExcluir" class="secao-admin">
+    <h2>🗑️ Excluir Conteúdo</h2>
+    <select id="tipoExcluir">
+        <option value="artigos">Artigo</option>
+        <option value="questoes">Questão</option>
+        <option value="concursos">Concurso</option>
+    </select><br><br>
+    <input id="idExcluir" placeholder="ID"><br><br>
+    <button class="btn-salvar" onclick="excluirItem()">Excluir</button>
+</div>
     </div>
 </div>
 
@@ -194,6 +254,54 @@
             setTimeout(() => { msg.style.display = 'none'; }, 5000);
         }
     });
+    function mostrarSecao(secao){
+    document.getElementById('formPost').style.display='none';
+    document.getElementById('formQuestao').style.display='none';
+    document.getElementById('formConcurso').style.display='none';
+    document.getElementById('secaoExcluir').style.display='none';
+
+    if(secao==='artigo') document.getElementById('formPost').style.display='block';
+    if(secao==='questao') document.getElementById('formQuestao').style.display='block';
+    if(secao==='concurso') document.getElementById('formConcurso').style.display='block';
+    if(secao==='excluir') document.getElementById('secaoExcluir').style.display='block';
+}
+
+async function salvarQuestao(){
+    const dados = {
+        disciplina: disciplina.value,
+        banca: banca.value,
+        enunciado: enunciadoQuestao.value,
+        opcoes: {
+            a: altA.value,
+            b: altB.value,
+            c: altC.value,
+            d: altD.value
+        },
+        alternativa_correta: correta.value,
+        comentario_professor: comentario.value,
+        created_at: new Date()
+    };
+    await _supabase.from('questoes').insert([dados]);
+    alert('Questão salva!');
+}
+
+async function salvarConcurso(){
+    const dados = {
+        orgao: orgao.value,
+        cidade: cidade.value,
+        banca: bancaConcurso.value,
+        created_at: new Date()
+    };
+    await _supabase.from('concursos').insert([dados]);
+    alert('Concurso salvo!');
+}
+
+async function excluirItem(){
+    const tabela = tipoExcluir.value;
+    const id = idExcluir.value;
+    await _supabase.from(tabela).delete().eq('id', id);
+    alert('Excluído com sucesso!');
+}
 
     checkUser();
 </script>
