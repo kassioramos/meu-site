@@ -84,7 +84,7 @@
             <button onclick="logout()" class="btn-logout">Sair</button>
         </div>
 
-        <form id="formPost" class="secao-admin" style="display:block;"></form>
+        <form id="formPost" class="secao-admin" style="display:block;">
             <div class="form-group">
                 <label>Título do Artigo</label>
                 <input type="text" id="titulo" placeholder="Ex: Dicas de Estudo para a UEMA" required>
@@ -254,18 +254,39 @@
             setTimeout(() => { msg.style.display = 'none'; }, 5000);
         }
     });
-    function mostrarSecao(secao){
+function mostrarSecao(secao){
     document.getElementById('formPost').style.display='none';
     document.getElementById('formQuestao').style.display='none';
     document.getElementById('formConcurso').style.display='none';
     document.getElementById('secaoExcluir').style.display='none';
 
-    if(secao==='artigo') document.getElementById('formPost').style.display='block';
-    if(secao==='questao') document.getElementById('formQuestao').style.display='block';
-    if(secao==='concurso') document.getElementById('formConcurso').style.display='block';
-    if(secao==='excluir') document.getElementById('secaoExcluir').style.display='block';
-}
+    const titulo = document.querySelector('.header-admin h1');
+    const subtitulo = document.querySelector('.header-admin p');
 
+    if(secao==='artigo'){
+        document.getElementById('formPost').style.display='block';
+        titulo.innerText = '🚀 Novo Artigo';
+        subtitulo.innerText = 'Publicando no Concursos Maranhão Pro';
+    }
+
+    if(secao==='questao'){
+        document.getElementById('formQuestao').style.display='block';
+        titulo.innerText = '❓ Nova Questão';
+        subtitulo.innerText = 'Cadastrando questão no sistema';
+    }
+
+    if(secao==='concurso'){
+        document.getElementById('formConcurso').style.display='block';
+        titulo.innerText = '🏛️ Novo Concurso';
+        subtitulo.innerText = 'Cadastrando concurso no sistema';
+    }
+
+    if(secao==='excluir'){
+        document.getElementById('secaoExcluir').style.display='block';
+        titulo.innerText = '🗑️ Excluir Conteúdo';
+        subtitulo.innerText = 'Removendo conteúdo do sistema';
+    }
+}
 async function salvarQuestao(){
     const dados = {
         disciplina: disciplina.value,
