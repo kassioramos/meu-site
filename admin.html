@@ -143,9 +143,23 @@
 
 <div id="formConcurso" class="secao-admin">
     <h2>🏛️ Novo Concurso</h2>
+
     <input id="orgao" placeholder="Órgão"><br><br>
     <input id="cidade" placeholder="Cidade"><br><br>
     <input id="bancaConcurso" placeholder="Banca"><br><br>
+    <input id="statusConcurso" placeholder="Status"><br><br>
+    <input id="cargos" placeholder="Cargos"><br><br>
+    <input id="salarioMin" placeholder="Salário mínimo"><br><br>
+    <input id="salarioMax" placeholder="Salário máximo"><br><br>
+    <input id="faixaSalarial" placeholder="Faixa salarial"><br><br>
+    <input id="dataProva" placeholder="Data da prova"><br><br>
+    <input id="linkOficial" placeholder="Link oficial"><br><br>
+    <input id="linkInscricao" placeholder="Link inscrição"><br><br>
+    <input id="escolaridade" placeholder="Escolaridade"><br><br>
+    <input id="inicioInscricao" type="date"><br><br>
+    <input id="fimInscricao" type="date"><br><br>
+    <input id="valorInscricao" placeholder="Valor inscrição"><br><br>
+
     <button class="btn-salvar" onclick="salvarConcurso()">Salvar Concurso</button>
 </div>
 
@@ -317,7 +331,18 @@ async function salvarConcurso(){
         orgao: document.getElementById('orgao').value,
         cidade: document.getElementById('cidade').value,
         banca: document.getElementById('bancaConcurso').value,
-        created_at: new Date()
+        status: document.getElementById('statusConcurso').value,
+        cargos: document.getElementById('cargos').value,
+        salario_min: document.getElementById('salarioMin').value,
+        salario_max: document.getElementById('salarioMax').value,
+        faixa_salarial: document.getElementById('faixaSalarial').value,
+        data_prova: document.getElementById('dataProva').value,
+        link_oficial: document.getElementById('linkOficial').value,
+        link_inscricao: document.getElementById('linkInscricao').value,
+        escolaridade: document.getElementById('escolaridade').value,
+        inicio_inscricao: document.getElementById('inicioInscricao').value,
+        fim_inscricao: document.getElementById('fimInscricao').value,
+        valor_inscricao: document.getElementById('valorInscricao').value
     };
 
     const { error } = await _supabase.from('concursos').insert([dados]);
