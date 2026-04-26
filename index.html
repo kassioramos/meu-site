@@ -64,17 +64,17 @@
             <input type="text" id="inputBusca" placeholder="Ex: Professor, São Luís, UFMA...">
             <div class="filter-group">
                 <div class="filter-row" style="margin-bottom: 10px;">
-                    <a href="blog.html" class="btn-filter"><span>📰</span> Blog</a>
+                    <a href="blog.html" class="btn-filter"><span>📰</span> Blog Geral</a>
                     <button onclick="filtrar('São Luís')" class="btn-filter">São Luís</button>
                     <button onclick="filtrar('Imperatriz')" class="btn-filter">Imperatriz</button>
                     <button onclick="filtrar('Caxias')" class="btn-filter">Caxias</button>
                     <button onclick="gerarPDF()" class="btn-pdf">📥 Baixar Lista</button>
                 </div>
                 <div class="filter-row" style="margin-bottom: 10px;">
-                    <a href="blog.html" class="btn-filter"><span>📰</span> Notícias</a>
-                    <a href="blog.html?cat=uema" class="btn-filter"><span>🏹</span> UEMA</a>
-                    <a href="blog.html?cat=enem" class="btn-filter"><span>🎓</span> ENEM</a>
-                    <a href="blog.html?cat=dicas" class="btn-filter"><span>🧠</span> Dicas</a>
+                    <a href="blog.html?cat=Notícias" class="btn-filter"><span>📰</span> Notícias</a>
+                    <a href="blog.html?cat=UEMA" class="btn-filter"><span>🏹</span> UEMA</a>
+                    <a href="blog.html?cat=ENEM" class="btn-filter"><span>🎓</span> ENEM</a>
+                    <a href="blog.html?cat=Dicas" class="btn-filter"><span>🧠</span> Dicas</a>
                 </div>
             </div>
         </div>
@@ -106,7 +106,6 @@
     <main id="grid-concursos"></main>
 
     <script>
-        // CONFIGURAÇÃO PROFISSIONAL SUPABASE
         const URL_SB = 'https://mczmhvuxujvhrudqmpvg.supabase.co';
         const KEY_SB = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1jem1odnV4dWp2aHJ1ZHFtcHZnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5MzgwMDksImV4cCI6MjA5MTUxNDAwOX0.vqNvzVRzpH9Otqb7DISpWXLw4b6eegdwzpaLBRJPwfY';
         const sbClient = supabase.createClient(URL_SB, KEY_SB);
@@ -122,9 +121,7 @@
             grid.innerHTML = Array(6).fill('<div class="skeleton" style="height:300px"></div>').join('');
 
             try {
-                // QUERY PROFISSIONAL: Puxa apenas da tabela concursos
                 const { data, error } = await sbClient.from('concursos').select('*').order('created_at', { ascending: false });
-
                 if (error) throw error;
 
                 todosOsConcursos = data || [];
@@ -133,28 +130,22 @@
                     renderizar(todosOsConcursos);
                     renderizarGraficos(todosOsConcursos);
                     calcularEstatisticas(todosOsConcursos);
-                    
-                    const counter = document.getElementById('stats-counter');
-                    if(counter) counter.innerText = `${todosOsConcursos.length} editais encontrados`;
+                    document.getElementById('stats-counter').innerText = `${todosOsConcursos.length} editais encontrados`;
                 } else {
-                    grid.innerHTML = "<p style='text-align:center; grid-column: 1/-1;'>Nenhum edital encontrado no banco de dados.</p>";
+                    grid.innerHTML = "<p style='text-align:center; grid-column: 1/-1;'>Nenhum edital encontrado.</p>";
                 }
             } catch (err) {
-                console.error("Erro na conexão Supabase:", err.message);
-                grid.innerHTML = `<p style='text-align:center; grid-column: 1/-1;'>Erro de conexão com o banco de dados.</p>`;
+                grid.innerHTML = `<p style='text-align:center; grid-column: 1/-1;'>Erro de conexão.</p>`;
             }
         }
 
         function renderizar(dados) {
             const grid = document.getElementById('grid-concursos');
-            if (!grid) return;
             grid.innerHTML = "";
             
             dados.forEach(c => {
                 const card = document.createElement('div');
                 card.className = 'concurso-card';
-                const orgao = c.orgao || "Não informado";
-                const banca = c.banca || "A definir";
                 const sMax = parseFloat(c.salario_max) || 0;
                 const fmtMoeda = (v) => v > 0 ? v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : '---';
 
@@ -162,18 +153,18 @@
                     <div style="background: rgba(255,255,255,0.05); padding: 20px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); height: 100%; display: flex; flex-direction: column;">
                         <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
                             <span class="badge">${c.cidade || 'MA'}</span>
-                            <button onclick="toggleFavorito(this, '${orgao}')" style="background:none; border:none; cursor:pointer; color:#ffca28; font-size: 1.2rem;">☆</button>
+                            <button onclick="toggleFavorito(this, '${c.orgao}')" style="background:none; border:none; cursor:pointer; color:#ffca28; font-size: 1.2rem;">☆</button>
                         </div>
-                        <h2 style="font-size: 1rem; color: #60a5fa; margin: 10px 0; min-height: 2.4rem;">${orgao}</h2>
+                        <h2 style="font-size: 1rem; color: #60a5fa; margin: 10px 0; min-height: 2.4rem;">${c.orgao}</h2>
                         <div style="font-size: 0.8rem; display: grid; gap: 8px; flex-grow: 1;">
                             <div>📍 <strong>Cidade:</strong> ${c.cidade || 'Maranhão'}</div>
-                            <div>🏢 <strong>Banca:</strong> ${banca}</div>
+                            <div>🏢 <strong>Banca:</strong> ${c.banca || 'A definir'}</div>
                             <div>🎓 <strong>Vagas:</strong> ${c.vagas || 'Ver edital'}</div>
                             <div>💰 <strong>Até:</strong> ${fmtMoeda(sMax)}</div>
                         </div>
                         <div style="display: flex; gap: 8px; margin-top: 15px;">
                             <a href="detalhes.html?id=${c.id}&tipo=concurso" style="flex: 1; text-decoration: none; background: #3b82f6; color: white; text-align: center; padding: 10px; border-radius: 6px; font-weight: bold; font-size: 0.7rem;">DETALHES</a>
-                            <a href="questoes.html?banca=${encodeURIComponent(banca)}" style="flex: 1; text-decoration: none; background: #8b5cf6; color: white; text-align: center; padding: 10px; border-radius: 6px; font-weight: bold; font-size: 0.7rem;">QUESTÕES</a>
+                            <a href="questoes.html?banca=${encodeURIComponent(c.banca || '')}" style="flex: 1; text-decoration: none; background: #8b5cf6; color: white; text-align: center; padding: 10px; border-radius: 6px; font-weight: bold; font-size: 0.7rem;">QUESTÕES</a>
                         </div>
                     </div>`;
                 grid.appendChild(card);
@@ -183,11 +174,8 @@
         function renderizarGraficos(dados) {
             const isLight = document.body.classList.contains('light-theme');
             const labelColor = isLight ? '#1e293b' : '#ffffff';
-            
             const canvasBarras = document.getElementById('graficoVagasCidade');
             const canvasPizza = document.getElementById('graficoVagasArea');
-            
-            if (!canvasBarras || !canvasPizza) return;
             if (graficoBarras) graficoBarras.destroy();
             if (graficoPizza) graficoPizza.destroy();
 
@@ -221,16 +209,14 @@
 
         function alternarTema() {
             document.body.classList.toggle('light-theme');
-            const btn = document.getElementById('darkModeToggle');
-            if(btn) btn.innerText = document.body.classList.contains('light-theme') ? '☀️' : '🌙';
+            document.getElementById('darkModeToggle').innerText = document.body.classList.contains('light-theme') ? '☀️' : '🌙';
             if (todosOsConcursos.length > 0) renderizarGraficos(todosOsConcursos);
         }
 
         function filtrar(termo) {
             const busca = termo.toLowerCase();
             const filtrados = todosOsConcursos.filter(c => 
-                (c.orgao || "").toLowerCase().includes(busca) || 
-                (c.cidade || "").toLowerCase().includes(busca)
+                (c.orgao || "").toLowerCase().includes(busca) || (c.cidade || "").toLowerCase().includes(busca)
             );
             renderizar(filtrados);
         }
@@ -240,12 +226,8 @@
             const media = sals.length ? sals.reduce((a, b) => a + b) / sals.length : 0;
             const maior = sals.length ? Math.max(...sals) : 0;
             const fmt = val => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
-            
-            const elMedia = document.getElementById('media-salarial');
-            const elMaior = document.getElementById('maior-salario');
-            
-            if(elMedia) elMedia.innerText = fmt(media);
-            if(elMaior) elMaior.innerText = fmt(maior);
+            document.getElementById('media-salarial').innerText = fmt(media);
+            document.getElementById('maior-salario').innerText = fmt(maior);
         }
 
         function toggleFavorito(btn, nome) {
@@ -258,7 +240,6 @@
 
         function mostrarToast(msg, tipo) {
             const container = document.getElementById('toast-container');
-            if(!container) return;
             const t = document.createElement('div');
             t.className = `toast toast-${tipo}`;
             t.innerText = msg;

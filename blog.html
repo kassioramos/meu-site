@@ -28,10 +28,9 @@
         .container { 
             max-width: 1000px; 
             margin: 0 auto; 
-            position: relative; 
-            padding: 0 15px;
         }
 
+        /* Nav simplificada */
         .nav-menu {
             display: flex;
             justify-content: space-between;
@@ -39,47 +38,40 @@
             margin-bottom: 30px;
             padding-bottom: 10px;
             border-bottom: 1px solid var(--border);
-            flex-wrap: wrap;
-            gap: 15px;
         }
-
-        .nav-links-group { display: flex; gap: 10px; flex-wrap: wrap; }
 
         .nav-link {
             text-decoration: none;
             color: var(--text-sub);
             font-weight: 600;
-            font-size: 0.9rem;
             padding: 8px 16px;
-            border-radius: 8px;
             transition: 0.3s;
         }
-        .nav-link:hover, .nav-link.active { background: var(--card-bg); color: var(--primary); }
-
-        .btn-post {
-            background: #10b981; 
-            color: white; 
-            padding: 10px 20px; 
-            border-radius: 8px; 
-            text-decoration: none; 
-            font-weight: bold;
-            transition: 0.3s;
-            white-space: nowrap;
-        }
-        .btn-post:hover { background: #059669; transform: scale(1.05); }
+        .nav-link:hover { color: var(--primary); }
 
         header { text-align: center; margin: 40px 0; }
-        header h1 { color: var(--primary); font-size: 2.5rem; margin-bottom: 10px; }
-        header p { color: var(--text-sub); }
+        header h1 { color: var(--primary); font-size: 2.5rem; }
 
-        .filtros-blog { display: flex; justify-content: center; gap: 10px; margin-bottom: 30px; flex-wrap: wrap; }
+        /* Filtros */
+        .filtros-blog { 
+            display: flex; 
+            justify-content: center; 
+            gap: 10px; 
+            margin-bottom: 30px; 
+            flex-wrap: wrap; 
+        }
         .btn-categoria { 
-            background: var(--card-bg); border: 1px solid var(--border); 
-            color: white; padding: 8px 15px; border-radius: 20px; cursor: pointer; 
+            background: var(--card-bg); 
+            border: 1px solid var(--border); 
+            color: white; 
+            padding: 8px 20px; 
+            border-radius: 20px; 
+            cursor: pointer; 
             transition: 0.3s;
         }
         .btn-categoria.active { background: var(--primary); border-color: var(--primary); }
 
+        /* Grid */
         .blog-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -91,147 +83,142 @@
             border-radius: 15px;
             overflow: hidden;
             border: 1px solid var(--border);
-            transition: all 0.3s ease;
+            transition: 0.3s;
             text-decoration: none;
             color: inherit;
             display: flex;
             flex-direction: column;
-            height: 100%;
         }
-        .blog-card:hover { transform: translateY(-8px); border-color: var(--primary); box-shadow: 0 10px 20px rgba(0,0,0,0.3); }
+        .blog-card:hover { transform: translateY(-5px); border-color: var(--primary); }
         
-        .card-img { width: 100%; height: 200px; object-fit: cover; background: #000; border-bottom: 1px solid var(--border); }
-        .card-content { padding: 20px; flex-grow: 1; display: flex; flex-direction: column; }
+        .card-img { width: 100%; height: 180px; object-fit: cover; background: #000; }
+        .card-content { padding: 20px; }
         
-        .category { font-size: 0.7rem; text-transform: uppercase; font-weight: 700; letter-spacing: 1px; margin-bottom: 10px; display: block; }
-        .uema-tag { color: #f97316; } 
-        .enem-tag { color: #10b981; } 
-        .notícias-tag, .concursos-tag { color: #3b82f6; }
+        .category-tag { 
+            font-size: 0.7rem; 
+            text-transform: uppercase; 
+            font-weight: bold; 
+            color: var(--primary);
+            margin-bottom: 8px;
+            display: block;
+        }
 
-        .card-content h2 { font-size: 1.3rem; margin-bottom: 10px; line-height: 1.3; color: var(--text-main); }
-        .card-content p { color: var(--text-sub); font-size: 0.9rem; line-height: 1.6; }
-
-        .btn-voltar { color: var(--primary); text-decoration: none; font-weight: bold; margin-bottom: 20px; display: inline-block; transition: 0.2s; }
-        .btn-voltar:hover { opacity: 0.8; }
+        .card-content h2 { font-size: 1.2rem; margin-bottom: 10px; }
+        .card-content p { color: var(--text-sub); font-size: 0.9rem; line-height: 1.5; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <nav class="nav-menu">
-        <div class="nav-links-group">
-            <a href="index.html" class="nav-link">🏠 Início</a>
-            <a href="simulados.html" class="nav-link">📝 Simulados</a>
-            <a href="dicas-desenvolvimento.html" class="nav-link">💡 Dicas & Dev</a>
-        </div>
-        <a href="admin.html" class="btn-post" id="btnAdmin">+ Novo Post</a>
+        <a href="index.html" class="nav-link">🏠 Início</a>
+        <a href="admin.html" id="btnAdmin" style="color: var(--accent); text-decoration: none; font-weight: bold;">+ Novo Post</a>
     </nav>
 
-    <a href="#" class="btn-voltar" onclick="window.history.back(); return false;">← Voltar para a página anterior</a>
-    
     <header>
-        <h1>Notícias & Editais</h1>
-        <p>Fique por dentro de tudo o que acontece nos concursos do Maranhão.</p>
+        <h1 id="titulo-pagina">Notícias & Dicas</h1>
+        <p>Tudo o que você precisa para vencer nos concursos.</p>
     </header>
 
     <div class="filtros-blog">
         <button class="btn-categoria active" onclick="filtrar('todos')">📚 Tudo</button>
         <button class="btn-categoria" onclick="filtrar('Notícias')">📰 Notícias</button>
-        <button class="btn-categoria" onclick="filtrar('Concursos')">🏛️ Concursos</button>
-        <button class="btn-categoria" onclick="filtrar('ENEM')">🎓 ENEM</button>
+        <button class="btn-categoria" onclick="filtrar('Dicas')">💡 Dicas</button>
+        <button class="btn-categoria" onclick="filtrar('Desenvolvimento')">💻 Dev</button>
         <button class="btn-categoria" onclick="filtrar('UEMA')">🏹 UEMA</button>
+        <button class="btn-categoria" onclick="filtrar('ENEM')">🎓 ENEM</button>
     </div>
 
     <div id="blog-lista" class="blog-grid">
-        <p style="text-align: center; grid-column: 1/-1;">Carregando notícias do Maranhão...</p>
+        <p style="text-align: center; grid-column: 1/-1;">Carregando conteúdo...</p>
     </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
-    // 1. Configurações de Conexão
     const supabaseUrl = 'https://mczmhvuxujvhrudqmpvg.supabase.co';
     const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1jem1odnV4dWp2aHJ1ZHFtcHZnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5MzgwMDksImV4cCI6MjA5MTUxNDAwOX0.vqNvzVRzpH9Otqb7DISpWXLw4b6eegdwzpaLBRJPwfY';
     const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
     let artigosCache = [];
 
-    // 2. Carregamento Principal (Apenas Categorias de Notícias/Concursos)
-    async function carregarNoticias() {
-        const grid = document.getElementById('blog-lista');
-        
+    async function carregarBlog() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const catInicial = urlParams.get('cat'); 
+
         try {
+            // Busca TUDO uma vez só para o cache
             const { data, error } = await _supabase
                 .from('artigos')
                 .select('*')
-                // PROFISSIONAL: Filtra para não misturar posts de Dev/Dicas aqui
-                .in('categoria', ['Notícias', 'Concursos', 'UEMA', 'ENEM'])
                 .order('created_at', { ascending: false });
 
             if (error) throw error;
 
             artigosCache = data || [];
-            renderizar(artigosCache);
+
+            // Se veio com categoria na URL, filtra logo de cara
+            if (catInicial) {
+                filtrar(catInicial);
+            } else {
+                renderizar(artigosCache);
+            }
 
         } catch (err) {
-            console.error("Erro Supabase:", err);
-            grid.innerHTML = `<p style="color: #ef4444; text-align: center; grid-column: 1/-1;">Erro ao carregar dados. Verifique a conexão.</p>`;
+            console.error(err);
+            document.getElementById('blog-lista').innerHTML = "Erro ao carregar.";
         }
     }
 
-    // 3. Renderização dos Cards
     function renderizar(lista) {
         const grid = document.getElementById('blog-lista');
         
-        if (!lista || lista.length === 0) {
-            grid.innerHTML = `<p style="text-align: center; grid-column: 1/-1;">Nenhum post de notícia encontrado.</p>`;
+        if (lista.length === 0) {
+            grid.innerHTML = `<p style="text-align: center; grid-column: 1/-1;">Nenhum post encontrado nesta categoria.</p>`;
             return;
         }
 
-        grid.innerHTML = lista.map(post => {
-            // Ajuste de tags para o CSS
-            const catDisplay = post.categoria || 'Outros';
-            const tagClasse = `${catDisplay.toLowerCase()}-tag`;
-            
-            return `
-                <a href="detalhes.html?slug=${post.slug}&tipo=artigo" class="blog-card">
-                    <img src="${post.capa_url || 'https://via.placeholder.com/400x200'}" 
-                         class="card-img" 
-                         alt="${post.titulo}"
-                         onerror="this.src='https://via.placeholder.com/400x200'">
-                    <div class="card-content">
-                        <span class="category ${tagClasse}">${catDisplay}</span>
-                        <h2>${post.titulo}</h2>
-                        <p>${post.resumo || ''}</p>
-                    </div>
-                </a>
-            `;
-        }).join('');
+        grid.innerHTML = lista.map(post => `
+            <a href="detalhes.html?slug=${post.slug}&tipo=artigo" class="blog-card">
+                <img src="${post.capa_url || 'https://via.placeholder.com/400x200'}" class="card-img" onerror="this.src='https://via.placeholder.com/400x200'">
+                <div class="card-content">
+                    <span class="category-tag">${post.categoria}</span>
+                    <h2>${post.titulo}</h2>
+                    <p>${post.resumo || ''}</p>
+                </div>
+            </a>
+        `).join('');
     }
 
-    // 4. Sistema de Filtro
     function filtrar(cat) {
-        // Estilo dos botões
-        document.querySelectorAll('.btn-categoria').forEach(b => b.classList.remove('active'));
-        if (event) event.target.classList.add('active');
+        // Estilo visual dos botões
+        document.querySelectorAll('.btn-categoria').forEach(b => {
+            b.classList.remove('active');
+            if(b.innerText.includes(cat) || (cat === 'todos' && b.innerText.includes('Tudo'))) {
+                b.classList.add('active');
+            }
+        });
 
         if (cat === 'todos') {
             renderizar(artigosCache);
+            document.getElementById('titulo-pagina').innerText = "Notícias & Dicas";
         } else {
-            // Filtra o cache local pelo nome exato da categoria
-            const filtrados = artigosCache.filter(a => a.categoria === cat);
+            // Filtro inteligente (não diferencia maiúsculas/minúsculas)
+            const filtrados = artigosCache.filter(a => 
+                a.categoria.toLowerCase().includes(cat.toLowerCase())
+            );
             renderizar(filtrados);
+            document.getElementById('titulo-pagina').innerText = `Categoria: ${cat}`;
         }
     }
 
-    // 5. Inicialização
     document.addEventListener("DOMContentLoaded", () => {
-        const isAdmin = localStorage.getItem('token_admin'); 
-        if (isAdmin !== 'sou_o_dono_do_site') {
+        // Verifica admin
+        if (localStorage.getItem('token_admin') !== 'sou_o_dono_do_site') {
             document.getElementById('btnAdmin')?.remove();
         }
-        carregarNoticias();
+        carregarBlog();
     });
 </script>
 
