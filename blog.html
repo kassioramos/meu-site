@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Blog - Concursos Maranhão Pro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
             --primary: #3b82f6;
@@ -54,7 +55,7 @@
             border-radius: 8px;
             transition: 0.3s;
         }
-        .nav-link:hover, .nav-link.active { background: var(--card-bg); color: var(--primary); }
+        .nav-link:hover { background: var(--card-bg); color: var(--primary); }
 
         .btn-post {
             background: #10b981; 
@@ -107,14 +108,12 @@
         .uema-tag { color: #f97316; } 
         .enem-tag { color: #10b981; } 
         .concursos-tag { color: #3b82f6; }
-        .dev-tag { color: #a855f7; }
         .dicas-tag { color: #eab308; }
 
         .card-content h2 { font-size: 1.3rem; margin-bottom: 10px; line-height: 1.3; color: var(--text-main); }
         .card-content p { color: var(--text-sub); font-size: 0.9rem; line-height: 1.6; }
 
         .btn-voltar { color: var(--primary); text-decoration: none; font-weight: bold; margin-bottom: 20px; display: inline-block; transition: 0.2s; }
-        .btn-voltar:hover { opacity: 0.8; }
     </style>
 </head>
 <body>
@@ -124,12 +123,12 @@
         <div class="nav-links-group">
             <a href="index.html" class="nav-link">🏠 Início</a>
             <a href="simulados.html" class="nav-link">📝 Simulados</a>
-            <a href="dicas-desenvolvimento.html" class="nav-link">💡 Dicas & Dev</a>
+            <a href="dicas.html" class="nav-link">💡 Dicas & Dev</a>
         </div>
         <a href="admin.html" class="btn-post" id="btnAdmin">+ Novo Post</a>
     </nav>
 
-    <a href="#" class="btn-voltar" onclick="window.history.back(); return false;">← Voltar para a página anterior</a>
+    <a href="index.html" class="btn-voltar">← Voltar para a página anterior</a>
     
     <header>
         <h1>Notícias & Editais</h1>
@@ -163,14 +162,15 @@
         const grid = document.getElementById('blog-lista');
         
         try {
+            // Se no Supabase a tabela for 'posts', mantenha assim. Se for 'artigos', mude para 'artigos'.
             const { data, error } = await _supabase
-                .from('artigos')
+                .from('posts') 
                 .select('*')
                 .order('created_at', { ascending: false });
 
             if (error) throw error;
 
-            artigosCache = data;
+            artigosCache = data || [];
             renderizar(artigosCache);
 
         } catch (err) {
@@ -189,19 +189,19 @@
         }
 
         grid.innerHTML = lista.map(post => {
-            const cat = post.categoria ? post.categoria.toLowerCase() : 'outros';
-            const tagClasse = `${cat}-tag`;
+            const categoriaOriginal = post.categoria || 'outros';
+            const tagClasse = `${categoriaOriginal.toLowerCase()}-tag`;
             
             return `
-                <a href="post.html?slug=${post.slug}" class="blog-card">
+                <a href="post.html?id=${post.id}" class="blog-card">
                     <img src="${post.capa_url || 'https://via.placeholder.com/400x200'}" 
                          class="card-img" 
                          alt="${post.titulo}"
                          onerror="this.src='https://via.placeholder.com/400x200'">
                     <div class="card-content">
-                        <span class="category ${tagClasse}">${post.categoria}</span>
-                        <h2>${post.titulo}</h2>
-                        <p>${post.resumo}</p>
+                        <span class="category ${tagClasse}">${categoriaOriginal}</span>
+                        <h2>${post.titulo || 'Sem título'}</h2>
+                        <p>${post.resumo || ''}</p>
                     </div>
                 </a>
             `;
@@ -211,20 +211,26 @@
     // 4. Sistema de Filtro
     function filtrar(cat) {
         // Estilo dos botões
-        document.querySelectorAll('.btn-categoria').forEach(b => b.classList.remove('active'));
-        if (event) event.target.classList.add('active');
+        document.querySelectorAll('.btn-categoria').forEach(b => {
+            b.classList.remove('active');
+            if (b.innerText.toLowerCase().includes(cat.toLowerCase())) {
+                b.classList.add('active');
+            }
+        });
 
         if (cat === 'todos') {
             renderizar(artigosCache);
         } else {
-            const filtrados = artigosCache.filter(a => a.categoria && a.categoria.toLowerCase() === cat);
+            const filtrados = artigosCache.filter(a => 
+                a.categoria && a.categoria.toLowerCase() === cat.toLowerCase()
+            );
             renderizar(filtrados);
         }
     }
 
     // 5. Inicialização
     document.addEventListener("DOMContentLoaded", () => {
-        // Verifica se é o Kassio (admin) para mostrar o botão
+        // Verifica admin
         const isAdmin = localStorage.getItem('token_admin'); 
         if (isAdmin !== 'sou_o_dono_do_site') {
             document.getElementById('btnAdmin')?.remove();
