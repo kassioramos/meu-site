@@ -2,86 +2,101 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Painel Admin - Postar Artigo</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel Admin - Concursos Maranhão Pro</title>
     <style>
-        :root { --bg: #0f172a; --card: #1e293b; --primary: #10b981; --text: #f8fafc; }
-        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); padding: 40px; }
-        .admin-container { max-width: 800px; margin: 0 auto; background: var(--card); padding: 30px; border-radius: 12px; }
+        :root { --bg: #0f172a; --card: #1e293b; --primary: #10b981; --text: #f8fafc; --border: rgba(255,255,255,0.1); }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); padding: 20px; margin: 0; }
+        
+        /* Centralizar Login */
+        #loginSection { max-width: 400px; margin: 80px auto; background: var(--card); padding: 30px; border-radius: 12px; border: 1px solid var(--border); text-align: center; }
+        
+        .admin-container { max-width: 900px; margin: 0 auto; background: var(--card); padding: 30px; border-radius: 12px; border: 1px solid var(--border); }
+        
         .form-group { margin-bottom: 20px; }
         label { display: block; margin-bottom: 8px; font-weight: bold; color: #94a3b8; }
+        
         input, select, textarea { 
-            width: 100%; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); 
-            background: #0f172a; color: white; font-size: 1rem;
+            width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border); 
+            background: #0f172a; color: white; font-size: 1rem; box-sizing: border-box;
         }
-        textarea { height: 200px; resize: vertical; }
+        
+        textarea { height: 250px; resize: vertical; font-family: monospace; }
+        
         .btn-salvar { 
             background: var(--primary); color: white; border: none; padding: 15px 30px; 
             border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; transition: 0.3s;
         }
-        .btn-salvar:hover { background: #059669; transform: translateY(-2px); }
-        .mensagem { margin-top: 20px; padding: 15px; border-radius: 8px; display: none; }
         
-        /* Estilo da seção de Login */
-        #loginSection { max-width: 400px; margin: 100px auto; background: var(--card); padding: 30px; border-radius: 12px; border: 1px solid var(--border); text-align: center; }
-        #loginSection input { margin-bottom: 15px; }
+        .btn-salvar:hover { background: #059669; transform: translateY(-2px); }
+        
+        .mensagem { margin-top: 20px; padding: 15px; border-radius: 8px; display: none; text-align: center; font-weight: bold; }
+        
+        .header-admin { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .btn-logout { background: #ef4444; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; }
     </style>
 </head>
 <body>
 
 <div id="loginSection">
-    <h2 style="margin-bottom: 20px;">🔒 Acesso Restrito</h2>
-    <input type="email" id="emailAdmin" placeholder="Seu e-mail de admin">
-    <input type="password" id="senhaAdmin" placeholder="Sua senha">
-    <button onclick="fazerLogin()" class="btn-salvar">Entrar no Painel</button>
+    <h2 style="margin-bottom: 10px;">🔒 Acesso Restrito</h2>
+    <p style="color: #94a3b8; margin-bottom: 25px;">Entre com suas credenciais de administrador</p>
+    
+    <input type="email" id="emailAdmin" placeholder="E-mail" autocomplete="username">
+    <input type="password" id="senhaAdmin" placeholder="Senha" autocomplete="current-password">
+    
+    <button onclick="fazerLogin()" class="btn-salvar" id="btnLogin">Entrar no Painel</button>
 </div>
 
 <div id="adminContent" style="display: none;">
     <div class="admin-container">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            <h1>🚀 Novo Post</h1>
-            <button onclick="logout()" style="background: transparent; color: #ef4444; border: none; cursor: pointer;">Sair</button>
+        <div class="header-admin">
+            <div>
+                <h1 style="margin: 0;">🚀 Novo Post</h1>
+                <p style="color: #94a3b8; margin: 5px 0 0 0;">Publique conteúdo para o blog</p>
+            </div>
+            <button onclick="logout()" class="btn-logout">Sair</button>
         </div>
-        <p>Preencha os campos abaixo para publicar no site.</p>
-        <hr style="opacity: 0.1; margin: 20px 0;">
 
         <form id="formPost">
             <div class="form-group">
                 <label>Título do Artigo</label>
-                <input type="text" id="titulo" placeholder="Ex: Guia Completo UEMA 2026" required>
+                <input type="text" id="titulo" placeholder="Ex: Guia Definitivo PAES UEMA 2026" required>
             </div>
 
             <div class="form-group">
-                <label>Slug (Automático)</label>
-                <input type="text" id="slug" required>
+                <label>Slug (URL Amigável)</label>
+                <input type="text" id="slug" placeholder="guia-definitivo-uema-2026" readonly required>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div class="form-group">
+                    <label>Categoria</label>
+                    <select id="categoria" required>
+                        <option value="concursos">🏛️ Concursos</option>
+                        <option value="uema">🏹 UEMA</option>
+                        <option value="enem">🎓 ENEM</option>
+                        <option value="dev">💻 Desenvolvimento</option>
+                        <option value="dicas">🧠 Dicas de Estudo</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>URL da Capa (Imagem)</label>
+                    <input type="url" id="capa_url" placeholder="https://imgur.com/suafoto.jpg" required>
+                </div>
             </div>
 
             <div class="form-group">
-                <label>Categoria</label>
-                <select id="categoria" required>
-                    <option value="concursos">🏛️ Concursos</option>
-                    <option value="enem">🎓 ENEM</option>
-                    <option value="uema">🏹 UEMA</option>
-                    <option value="dev">💻 Desenvolvimento</option>
-                    <option value="dicas">🧠 Dicas de Estudo</option>
-                </select>
+                <label>Resumo Curto (Para a listagem)</label>
+                <input type="text" id="resumo" maxlength="200" placeholder="Uma breve descrição do que trata o artigo..." required>
             </div>
 
             <div class="form-group">
-                <label>URL da Imagem de Capa</label>
-                <input type="url" id="capa_url" placeholder="https://linkdaimagem.com/foto.jpg">
+                <label>Conteúdo (HTML ou Texto Plano)</label>
+                <textarea id="conteudo" placeholder="Escreva aqui o corpo do seu artigo..." required></textarea>
             </div>
 
-            <div class="form-group">
-                <label>Resumo</label>
-                <input type="text" id="resumo" required>
-            </div>
-
-            <div class="form-group">
-                <label>Conteúdo (Texto Completo)</label>
-                <textarea id="conteudo" required></textarea>
-            </div>
-
-            <button type="submit" class="btn-salvar">Publicar Artigo Agora</button>
+            <button type="submit" class="btn-salvar" id="btnPublicar">Publicar Artigo Agora</button>
             <div id="statusMsg" class="mensagem"></div>
         </form>
     </div>
@@ -89,19 +104,16 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-    // USE EXATAMENTE ESTAS DUAS LINHAS
-const supabaseUrl = 'https://mczmhvuxujvhrudqmpvg.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1jem1odnV4dWp2aHJ1ZHFtcHZnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5MzgwMDksImV4cCI6MjA5MTUxNDAwOX0.vqNvzVRzpH9Otqb7DISpWXLw4b6eegdwzpaLBRJPwfY';
+    // Configurações do Supabase
+    const supabaseUrl = 'https://mczmhvuxujvhrudqmpvg.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1jem1odnV4dWp2aHJ1ZHFtcHZnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5MzgwMDksImV4cCI6MjA5MTUxNDAwOX0.vqNvzVRzpH9Otqb7DISpWXLw4b6eegdwzpaLBRJPwfY';
+    const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
-const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
-
-
+    // Seletores
     const form = document.getElementById('formPost');
     const msg = document.getElementById('statusMsg');
 
-    // --- LÓGICA DE AUTENTICAÇÃO ---
-
-    // Verificar se já está logado
+    // 1. LÓGICA DE AUTENTICAÇÃO
     async function checkUser() {
         const { data: { user } } = await _supabase.auth.getUser();
         if (user) {
@@ -113,13 +125,16 @@ const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
     async function fazerLogin() {
         const email = document.getElementById('emailAdmin').value;
         const password = document.getElementById('senhaAdmin').value;
+        const btn = document.getElementById('btnLogin');
 
+        btn.innerText = "Verificando...";
         const { error } = await _supabase.auth.signInWithPassword({ email, password });
 
         if (error) {
-            alert("Erro: " + error.message);
+            alert("Acesso Negado: " + error.message);
+            btn.innerText = "Entrar no Painel";
         } else {
-            checkUser(); // Mostra o painel se logar com sucesso
+            checkUser();
         }
     }
 
@@ -128,13 +143,27 @@ const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
         location.reload();
     }
 
-    // --- LÓGICA DE POSTAGEM ---
+    // 2. GERADOR DE SLUG AUTOMÁTICO
+    document.getElementById('titulo').addEventListener('input', function() {
+        const slug = this.value
+            .toLowerCase()
+            .trim()
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '') // Remove acentos
+            .replace(/[^\w ]+/g, '')        // Remove caracteres especiais
+            .replace(/ +/g, '-');           // Substitui espaços por traços
+        document.getElementById('slug').value = slug;
+    });
 
+    // 3. ENVIO DOS DADOS
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
+        
+        const btn = document.getElementById('btnPublicar');
+        btn.disabled = true;
         msg.style.display = 'block';
         msg.style.background = '#3b82f6';
-        msg.innerText = "Publicando...";
+        msg.innerText = "⏳ Enviando para o banco de dados...";
 
         const novoPost = {
             titulo: document.getElementById('titulo').value,
@@ -143,27 +172,31 @@ const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
             capa_url: document.getElementById('capa_url').value,
             resumo: document.getElementById('resumo').value,
             conteudo: document.getElementById('conteudo').value,
-            autor: "Kassio Ramos"
+            created_at: new Date()
         };
 
-        const { data, error } = await _supabase.from('artigos').insert([novoPost]);
+        const { data, error } = await _supabase
+            .from('artigos')
+            .insert([novoPost])
+            .select();
 
         if (error) {
             msg.style.background = '#ef4444';
-            msg.innerText = "Erro ao publicar: " + error.message;
+            msg.innerText = "❌ Erro: " + error.message;
+            console.error(error);
+            btn.disabled = false;
         } else {
             msg.style.background = '#10b981';
-            msg.innerText = "🚀 Post publicado com sucesso!";
+            msg.innerText = "🚀 Artigo publicado com sucesso!";
             form.reset();
+            setTimeout(() => { 
+                msg.style.display = 'none';
+                btn.disabled = false;
+            }, 5000);
         }
     });
 
-    document.getElementById('titulo').addEventListener('input', function() {
-        const slug = this.value.toLowerCase().replace(/[^\w ]+/g, '').replace(/ +/g, '-');
-        document.getElementById('slug').value = slug;
-    });
-
-    // Inicia verificando se você já está logado
+    // Inicia verificando sessão
     checkUser();
 </script>
 
