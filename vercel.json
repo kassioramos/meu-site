@@ -5,6 +5,10 @@
     {
       "src": "main.py",
       "use": "@vercel/python"
+    },
+    {
+      "src": "*.html",
+      "use": "@vercel/static"
     }
   ],
   "rewrites": [
@@ -14,15 +18,11 @@
     { "source": "/post", "destination": "/post.html" },
     { "source": "/admin", "destination": "/admin.html" },
     
-    
     { "source": "/sitemap.xml", "destination": "/main.py" },
     { "source": "/concursos", "destination": "/main.py" },
     { "source": "/concursos/:id", "destination": "/main.py" },
     { "source": "/artigos", "destination": "/main.py" },
     { "source": "/artigos/:path*", "destination": "/main.py" },
-    { "source": "/questoes", "destination": "/main.py" },
-    
-    
-    { "source": "/(.*)", "destination": "/$1" }
+    { "source": "/questoes", "destination": "/main.py" }
   ]
 }
