@@ -2,137 +2,114 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Questões - Concursos MA Pro</title>
-<style>
-    body { font-family: sans-serif; background: #0f172a; color: white; padding: 20px; }
-    .questao-card { background: #1e293b; padding: 20px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #334155; }
-    .enunciado { font-size: 1.1em; margin-bottom: 15px; line-height: 1.6; }
-    .disciplina { color: #38bdf8; font-size: 0.9em; margin-bottom: 10px; font-weight: bold; }
-    
-    .alternativas-lista { list-style: none; padding: 0; }
-    
-    .alternativa-btn { 
-        width: 100%; 
-        text-align: left; 
-        background: #334155; 
-        color: white; 
-        border: 2px solid transparent; 
-        padding: 12px; 
-        margin: 8px 0; 
-        border-radius: 8px; 
-        cursor: pointer; 
-        transition: 0.2s;
-        font-size: 1em;
-    }
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Questões e Simulados | Concursos Maranhão Pro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * { font-family: 'Inter', sans-serif; box-sizing: border-box; }
+        body { margin: 0; background-color: #0f172a; color: white; }
+        header { padding: 30px; text-align: center; background: #1e293b; }
+        .container { max-width: 1100px; margin: 0 auto; padding: 20px; }
+        
+        /* Estilo dos Filtros */
+        .filter-section { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-bottom: 30px; }
+        .btn-cat { padding: 10px 20px; border-radius: 8px; border: 1px solid #3b82f6; background: transparent; color: white; cursor: pointer; transition: 0.3s; text-decoration: none; font-size: 0.9rem; }
+        .btn-cat:hover, .btn-cat.active { background: #3b82f6; }
+        .btn-redacao { border-color: #ef4444; color: #ef4444; }
+        .btn-redacao:hover { background: #ef4444; color: white; }
+        .btn-obras { border-color: #fbbf24; color: #fbbf24; }
+        .btn-obras:hover { background: #fbbf24; color: #000; }
 
-    .alternativa-btn:hover:not(:disabled) { background: #475569; border-color: #38bdf8; }
-
-    /* Cores de Feedback */
-    .correta { background: #065f46 !important; border-color: #10b981 !important; }
-    .errada { background: #7f1d1d !important; border-color: #ef4444 !important; }
-
-    /* NOVA CAIXA DE COMENTÁRIO */
-    .feedback { 
-        margin-top: 15px; 
-        padding: 15px; 
-        border-radius: 8px; 
-        display: none; 
-        background: #1e293b;
-        border: 1px solid #38bdf8;
-        line-height: 1.5;
-    }
-    .comentario-texto {
-        margin-top: 10px;
-        color: #cbd5e1;
-        font-weight: normal;
-        font-size: 0.95em;
-        border-top: 1px solid #334155;
-        padding-top: 10px;
-    }
-</style>
+        #lista-questoes { display: grid; gap: 20px; }
+        .questao-card { background: rgba(255,255,255,0.05); padding: 20px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); }
+        .tag { font-size: 0.7rem; padding: 3px 8px; border-radius: 4px; background: #3b82f6; margin-right: 5px; }
+    </style>
 </head>
 <body>
 
-    <a href="javascript:history.back()" style="color: #38bdf8; text-decoration: none;">← Voltar</a>
-    <h2 id="titulo-banca">Carregando...</h2>
-    <div id="lista-questoes">Buscando questões no banco de dados...</div>
+<header>
+    <a href="index.html" style="color: #94a3b8; text-decoration: none; font-size: 0.9rem;">← Voltar ao Início</a>
+    <h1>Banco de Questões</h1>
+    <p>Simulados, Redações e Análises de Obras</p>
+</header>
+
+<div class="container">
+    <div class="filter-section">
+        <button class="btn-cat active" onclick="filtrarQuestoes('todos')">Tudo</button>
+        <button class="btn-cat" onclick="filtrarQuestoes('ENEM')">🎓 ENEM</button>
+        <button class="btn-cat" onclick="filtrarQuestoes('UEMA')">🏹 UEMA</button>
+        
+        <select id="selectBanca" class="btn-cat" onchange="filtrarQuestoes(this.value)" style="background: #0f172a;">
+            <option value="todos">Concursos por banca</option>
+            <option value="FGV">FGV</option>
+            <option value="CESPE">Cebraspe</option>
+            <option value="FCC">FCC</option>
+            <option value="Instituto JK">Instituto JK</option>
+        </select>
+
+        <button class="btn-cat btn-redacao" onclick="filtrarQuestoes('Redação')">✍️ Redação</button>
+        <button class="btn-cat btn-obras" onclick="filtrarQuestoes('Obras UEMA')">📚 Obras UEMA</button>
+    </div>
+
+    <div id="lista-questoes">
+        </div>
+</div>
 
 <script>
+    const URL_SB = 'https://mczmhvuxujvhrudqmpvg.supabase.co';
+    const KEY_SB = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1jem1odnV4dWp2aHJ1ZHFtcHZnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5MzgwMDksImV4cCI6MjA5MTUxNDAwOX0.vqNvzVRzpH9Otqb7DISpWXLw4b6eegdwzpaLBRJPwfY';
+    const _sb = supabase.createClient(URL_SB, KEY_SB);
+
+    let baseQuestoes = [];
+
     async function carregarQuestoes() {
-        const params = new URLSearchParams(window.location.search);
-        const banca = params.get('banca') || "Instituto JK";
+        const { data, error } = await _sb.from('questoes').select('*');
+        if (error) {
+            document.getElementById('lista-questoes').innerHTML = "Erro ao carregar banco de dados.";
+            return;
+        }
+        baseQuestoes = data;
+        renderizar(data);
+    }
+
+    function renderizar(lista) {
         const container = document.getElementById('lista-questoes');
-        document.getElementById('titulo-banca').innerText = `Questões: ${banca}`;
-
-        const URL_API = `https://meu-site-aodm.onrender.com/questoes?banca=${encodeURIComponent(banca)}`;
-
-        try {
-            const response = await fetch(URL_API);
-            const data = await response.json();
-
-            if (!data || data.length === 0) {
-                container.innerHTML = "<h3>Nenhuma questão encontrada.</h3>";
-                return;
-            }
-
-            container.innerHTML = data.map((q, index) => {
-                const opcoes = q.opcoes || {};
-                const botoes = Object.keys(opcoes).map(letra => `
-                    <button class="alternativa-btn" 
-                            onclick="verificarResposta(this, '${letra}', '${q.alternativa_correta}', 'feedback-${index}')">
-                        ${letra.toUpperCase()}) ${opcoes[letra]}
-                    </button>
-                `).join('');
-
-                return `
-                <div class="questao-card">
-                    <div class="disciplina">📚 ${q.disciplina || 'Geral'}</div>
-                    <p class="enunciado">${q.enunciado}</p>
-                    <div class="alternativas-lista">${botoes}</div>
-                    
-                    <div id="feedback-${index}" class="feedback">
-                        <div id="status-${index}"></div>
-                        <div class="comentario-texto">
-                            <strong>Comentário do Professor:</strong><br>
-                            ${q.comentario_professor || "Sem comentário disponível para esta questão."}
-                        </div>
-                    </div>
-                </div>`;
-            }).join('');
-
-        } catch (error) {
-            container.innerHTML = "<p>Erro ao carregar questões.</p>";
+        if(lista.length === 0) {
+            container.innerHTML = "<p style='text-align:center'>Nenhum conteúdo encontrado nesta categoria.</p>";
+            return;
         }
+
+        container.innerHTML = lista.map(q => `
+            <div class="questao-card">
+                <div>
+                    <span class="tag">${q.categoria || 'Geral'}</span>
+                    <span class="tag" style="background:#10b981">${q.banca || 'Simulado'}</span>
+                </div>
+                <h3 style="margin: 15px 0; font-size: 1.1rem;">${q.titulo}</h3>
+                <p style="color: #94a3b8; font-size: 0.9rem;">${q.descricao || 'Clique abaixo para acessar o conteúdo completo.'}</p>
+                <a href="detalhes.html?id=${q.id}&tipo=questao" style="color: #60a5fa; text-decoration: none; font-weight: bold; font-size: 0.9rem;">ACESSAR MATERIAL →</a>
+            </div>
+        `).join('');
     }
 
-    function verificarResposta(botao, letraEscolhida, letraCorreta, feedbackId) {
-        const feedbackDiv = document.getElementById(feedbackId);
-        const index = feedbackId.split('-')[1];
-        const statusDiv = document.getElementById(`status-${index}`);
+    function filtrarQuestoes(termo) {
+        // Remove 'active' de todos e coloca no clicado
+        document.querySelectorAll('.btn-cat').forEach(b => b.classList.remove('active'));
         
-        const card = botao.parentElement.parentElement; // Sobe para o card
-        const todosBotoes = card.querySelectorAll('.alternativa-btn');
-
-        todosBotoes.forEach(btn => btn.disabled = true);
-
-        feedbackDiv.style.display = "block";
-
-        if (letraEscolhida.toLowerCase() === letraCorreta.toLowerCase()) {
-            botao.classList.add('correta');
-            statusDiv.innerHTML = "<span style='color: #10b981'>✅ Resposta Correta!</span>";
+        if (termo === 'todos') {
+            renderizar(baseQuestoes);
         } else {
-            botao.classList.add('errada');
-            statusDiv.innerHTML = `<span style='color: #ef4444'>❌ Resposta Errada. A correta é a letra ${letraCorreta.toUpperCase()}.</span>`;
-            
-            todosBotoes.forEach(btn => {
-                if (btn.innerText.trim().startsWith(letraCorreta.toUpperCase() + ")")) {
-                    btn.classList.add('correta');
-                }
-            });
+            const filtradas = baseQuestoes.filter(q => 
+                (q.categoria && q.categoria.includes(termo)) || 
+                (q.banca && q.banca.includes(termo)) ||
+                (q.titulo && q.titulo.includes(termo))
+            );
+            renderizar(filtradas);
         }
     }
 
-    window.onload = carregarQuestoes;
+    carregarQuestoes();
 </script>
 </body>
 </html>
