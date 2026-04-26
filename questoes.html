@@ -12,7 +12,6 @@
         header { padding: 30px; text-align: center; background: #1e293b; }
         .container { max-width: 1100px; margin: 0 auto; padding: 20px; }
         
-        /* Estilo dos Filtros */
         .filter-section { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-bottom: 30px; }
         .btn-cat { padding: 10px 20px; border-radius: 8px; border: 1px solid #3b82f6; background: transparent; color: white; cursor: pointer; transition: 0.3s; text-decoration: none; font-size: 0.9rem; }
         .btn-cat:hover, .btn-cat.active { background: #3b82f6; }
@@ -24,6 +23,7 @@
         #lista-questoes { display: grid; gap: 20px; }
         .questao-card { background: rgba(255,255,255,0.05); padding: 20px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); }
         .tag { font-size: 0.7rem; padding: 3px 8px; border-radius: 4px; background: #3b82f6; margin-right: 5px; }
+        .disciplina-tag { background: #8b5cf6; } /* Cor roxa para disciplinas */
     </style>
 </head>
 <body>
@@ -43,17 +43,15 @@
         <select id="selectBanca" class="btn-cat" onchange="filtrarQuestoes(this.value)" style="background: #0f172a;">
             <option value="todos">Concursos por banca</option>
             <option value="FGV">FGV</option>
-            <option value="CESPE">Cebraspe</option>
-            <option value="FCC">FCC</option>
             <option value="Instituto JK">Instituto JK</option>
+            <option value="FCC">FCC</option>
         </select>
 
         <button class="btn-cat btn-redacao" onclick="filtrarQuestoes('Redação')">✍️ Redação</button>
         <button class="btn-cat btn-obras" onclick="filtrarQuestoes('Obras UEMA')">📚 Obras UEMA</button>
     </div>
 
-    <div id="lista-questoes">
-        </div>
+    <div id="lista-questoes"></div>
 </div>
 
 <script>
@@ -83,27 +81,28 @@
         container.innerHTML = lista.map(q => `
             <div class="questao-card">
                 <div>
-                    <span class="tag">${q.categoria || 'Geral'}</span>
+                    <span class="tag disciplina-tag">${q.disciplina || 'Geral'}</span>
                     <span class="tag" style="background:#10b981">${q.banca || 'Simulado'}</span>
                 </div>
-                <h3 style="margin: 15px 0; font-size: 1.1rem;">${q.titulo}</h3>
-                <p style="color: #94a3b8; font-size: 0.9rem;">${q.descricao || 'Clique abaixo para acessar o conteúdo completo.'}</p>
-                <a href="detalhes.html?id=${q.id}&tipo=questao" style="color: #60a5fa; text-decoration: none; font-weight: bold; font-size: 0.9rem;">ACESSAR MATERIAL →</a>
+                <h3 style="margin: 15px 0; font-size: 1rem; line-height: 1.4; color: #e2e8f0;">
+                    ${q.enunciado ? q.enunciado.substring(0, 150) + '...' : 'Questão sem título'}
+                </h3>
+                <p style="color: #94a3b8; font-size: 0.85rem;">
+                    Banca: ${q.banca} | Matéria: ${q.disciplina}
+                </p>
+                <a href="detalhes.html?id=${q.id}&tipo=questao" style="display: inline-block; margin-top: 10px; color: #60a5fa; text-decoration: none; font-weight: bold; font-size: 0.9rem;">RESPONDER QUESTÃO →</a>
             </div>
         `).join('');
     }
 
     function filtrarQuestoes(termo) {
-        // Remove 'active' de todos e coloca no clicado
-        document.querySelectorAll('.btn-cat').forEach(b => b.classList.remove('active'));
-        
         if (termo === 'todos') {
             renderizar(baseQuestoes);
         } else {
             const filtradas = baseQuestoes.filter(q => 
-                (q.categoria && q.categoria.includes(termo)) || 
+                (q.disciplina && q.disciplina.includes(termo)) || 
                 (q.banca && q.banca.includes(termo)) ||
-                (q.titulo && q.titulo.includes(termo))
+                (q.enunciado && q.enunciado.includes(termo))
             );
             renderizar(filtradas);
         }
