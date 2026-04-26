@@ -4,7 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Concursos Maranhão Pro | Dashboard</title>
+    <meta name="google-site-verification" content="0Z_754Cw5srRkVIMK3NOaLltkeMBk3HrY17mFIivPGg" />
+    <title>Concursos Maranhão Pro 2026 | Editais, Simulados e Notícias</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -13,103 +14,206 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
-        /* Mantendo exatamente o seu estilo das imagens */
         * { font-family: 'Inter', sans-serif; box-sizing: border-box; }
-        body { margin: 0; background-color: #0f172a; color: white; overflow-x: hidden; }
+        body { margin: 0; transition: background 0.3s; background-color: #0f172a; color: white; overflow-x: hidden; }
+        body.light-theme { background-color: #f8fafc; color: #1e293b; }
+        #toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 9999; }
+        .toast { padding: 12px 20px; margin-top: 10px; border-radius: 8px; color: white; font-weight: 500; box-shadow: 0 4px 12px rgba(0,0,0,0.15); display: flex; align-items: center; gap: 10px; animation: slideIn 0.3s ease-out; }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        .toast-success { background-color: #10b981; }
+        .toast-error { background-color: #ef4444; }
         header { padding: 40px 20px; text-align: center; background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%); }
+        body.light-theme header { background: linear-gradient(180deg, #e2e8f0 0%, #f8fafc 100%); }
         #grid-concursos { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; padding: 20px; max-width: 1200px; margin: 0 auto; }
-        .concurso-card { background: rgba(255,255,255,0.05); padding: 20px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); transition: 0.2s; }
-        .concurso-card:hover { transform: translateY(-5px); border-color: #3b82f6; }
+        .concurso-card { width: 100%; transition: transform 0.2s; }
+        .concurso-card:hover { transform: translateY(-5px); }
+        .chart-container { position: relative; height: 280px; width: 100%; }
+        .skeleton { animation: pulse 1.5s infinite ease-in-out; background: rgba(255,255,255,0.05); border-radius: 12px; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .dark-mode-btn { position: fixed; top: 20px; right: 20px; z-index: 1000; background: #3b82f6; border: none; border-radius: 50%; width: 45px; height: 45px; cursor: pointer; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
         .stat-card { background: rgba(255,255,255,0.05); padding: 20px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); text-align: center; }
-        .btn-filter { padding: 8px 15px; border-radius: 20px; border: 1px solid #3b82f6; background: transparent; color: #3b82f6; cursor: pointer; text-decoration: none; font-size: 0.8rem; margin: 2px; display: inline-flex; align-items: center; }
-        input#inputBusca { width: 100%; max-width: 600px; padding: 12px; border-radius: 8px; border: none; margin-bottom: 15px; outline: none; }
+        body.light-theme .stat-card { background: #ffffff; border: 1px solid #e2e8f0; color: #1e293b; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .btn-filter { padding: 8px 15px; border-radius: 20px; border: 1px solid #3b82f6; background: transparent; color: #3b82f6; cursor: pointer; font-weight: 500; font-size: 0.8rem; margin: 2px; text-decoration: none; display: inline-flex; align-items: center; }
+        .btn-filter:hover { background: #3b82f6; color: white; }
+        .btn-pdf { background: #ef4444; color: white; border: none; padding: 8px 15px; border-radius: 20px; cursor: pointer; font-weight: 600; }
         .badge { background: #3b82f6; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; }
+        input#inputBusca { width: 100%; padding: 12px; border-radius: 8px; border: none; margin-bottom: 15px; color: #000; outline: none; }
     </style>
 </head>
 
-<body>
-    
+<body class="dark-theme">
+    <div id="toast-container"></div>
+    <button id="darkModeToggle" class="dark-mode-btn" onclick="alternarTema()">🌙</button>
+
     <header>
         <h1>Concursos Maranhão Pro</h1>
-        <div id="stats-counter">Conectando ao banco...</div>
-        <div style="margin-top: 20px;">
-            <input type="text" id="inputBusca" placeholder="Ex: Professor, São Luís, UFMA...">
-            <div style="margin-top: 10px;">
-                <a href="blog.html" class="btn-filter">📰 Blog</a>
-                <a href="blog.html?cat=UEMA" class="btn-filter">🏹 UEMA</a>
-                <a href="blog.html?cat=ENEM" class="btn-filter">🎓 ENEM</a>
+        <div id="stats-counter">Iniciando conexão...</div>
+
+        <div class="search-container" style="max-width: 600px; margin: 20px auto;">
+            <input type="text" id="inputBusca" placeholder="Pesquisar editais...">
+            <div class="filter-group">
+                <div class="filter-row" style="margin-bottom: 10px;">
+                    <a href="blog.html" class="btn-filter"><span>📰</span> Blog</a>
+                    <button onclick="filtrar('São Luís')" class="btn-filter">São Luís</button>
+                    <button onclick="gerarPDF()" class="btn-pdf">📥 Lista PDF</button>
+                </div>
+                <div class="filter-row">
+                    <a href="blog.html?cat=Notícias" class="btn-filter"><span>📰</span> Notícias</a>
+                    <a href="blog.html?cat=UEMA" class="btn-filter"><span>🏹</span> UEMA</a>
+                    <a href="blog.html?cat=ENEM" class="btn-filter"><span>🎓</span> ENEM</a>
+                    <a href="blog.html?cat=Dicas" class="btn-filter"><span>🧠</span> Dicas</a>
+                </div>
             </div>
         </div>
     </header>
 
-    <section style="max-width: 1200px; margin: 20px auto; padding: 0 20px;">
+    <section id="dashboard-stats" style="max-width: 1200px; margin: 0 auto 30px auto; padding: 0 20px;">
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
             <div class="stat-card"><span>💰 Média Salarial</span><h3 id="media-salarial">---</h3></div>
             <div class="stat-card"><span>🏢 Maior Salário</span><h3 id="maior-salario">---</h3></div>
+        </div>
+        <div style="display: flex; flex-wrap: wrap; gap: 20px; justify-content: center;">
+            <div class="stat-card" style="flex: 1; min-width: 300px;">
+                <h3 style="font-size: 1rem; margin-bottom: 15px;">📊 Vagas por Cidade</h3>
+                <div class="chart-container"><canvas id="graficoVagasCidade"></canvas></div>
+            </div>
+            <div class="stat-card" style="flex: 1; min-width: 300px;">
+                <h3 style="font-size: 1rem; margin-bottom: 15px;">🍩 Distribuição</h3>
+                <div class="chart-container"><canvas id="graficoVagasArea"></canvas></div>
+            </div>
         </div>
     </section>
 
     <main id="grid-concursos"></main>
 
     <script>
-        // VERIFIQUE SE ESTES DADOS SÃO EXATAMENTE OS DO SEU PAINEL DO SUPABASE
+        // CONFIGURAÇÃO
         const URL_SB = 'https://mczmhvuxujvhrudqmpvg.supabase.co';
         const KEY_SB = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1jem1odnV4dWp2aHJ1ZHFtcHZnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5MzgwMDksImV4cCI6MjA5MTUxNDAwOX0.vqNvzVRzpH9Otqb7DISpWXLw4b6eegdwzpaLBRJPwfY';
-        const _supabase = supabase.createClient(URL_SB, KEY_SB);
+        const sbClient = supabase.createClient(URL_SB, KEY_SB);
 
-        let concursosLocais = [];
+        let todosOsConcursos = [];
+        let graficoBarras = null;
+        let graficoPizza = null;
 
-        async function buscarDados() {
+        window.onload = () => { inicializar(); };
+
+        async function inicializar() {
+            const grid = document.getElementById('grid-concursos');
+            grid.innerHTML = Array(6).fill('<div class="skeleton" style="height:300px"></div>').join('');
+
             try {
                 // Tenta buscar da tabela 'concursos'
-                const { data, error } = await _supabase
-                    .from('concursos')
-                    .select('*')
-                    .order('created_at', { ascending: false });
+                const { data, error } = await sbClient.from('concursos').select('*');
 
-                if (error) throw error;
+                if (error) {
+                    console.error("Erro Supabase:", error);
+                    grid.innerHTML = `<p style='text-align:center; grid-column: 1/-1;'>Erro: ${error.message}. Verifique o RLS no Supabase.</p>`;
+                    return;
+                }
 
-                concursosLocais = data;
-                renderizarCards(data);
-                atualizarStats(data);
-                document.getElementById('stats-counter').innerText = `${data.length} editais encontrados`;
+                todosOsConcursos = data || [];
 
+                if (todosOsConcursos.length > 0) {
+                    renderizar(todosOsConcursos);
+                    renderizarGraficos(todosOsConcursos);
+                    calcularEstatisticas(todosOsConcursos);
+                    document.getElementById('stats-counter').innerText = `${todosOsConcursos.length} editais carregados`;
+                } else {
+                    grid.innerHTML = "<p style='text-align:center; grid-column: 1/-1;'>O banco retornou 0 registros. Adicione dados no Supabase.</p>";
+                }
             } catch (err) {
-                console.error("Erro Supabase:", err);
-                document.getElementById('grid-concursos').innerHTML = `<p style="text-align:center; grid-column: 1/-1;">Erro ao carregar: ${err.message}</p>`;
+                grid.innerHTML = `<p style='text-align:center; grid-column: 1/-1;'>Erro crítico de conexão.</p>`;
             }
         }
 
-        function renderizarCards(lista) {
+        function renderizar(dados) {
             const grid = document.getElementById('grid-concursos');
-            grid.innerHTML = lista.map(c => `
-                <div class="concurso-card">
-                    <span class="badge">${c.cidade || 'MA'}</span>
-                    <h2 style="font-size: 1.1rem; color: #60a5fa; margin: 10px 0;">${c.orgao}</h2>
-                    <p style="font-size: 0.85rem; color: #94a3b8;">Banca: ${c.banca || 'A definir'}</p>
-                    <p style="font-weight: bold; color: #10b981;">${c.salario_max ? 'Até R$ ' + c.salario_max : 'Consulte o edital'}</p>
-                    <a href="detalhes.html?id=${c.id}&tipo=concurso" style="display: block; text-align: center; background: #3b82f6; color: white; text-decoration: none; padding: 10px; border-radius: 6px; margin-top: 15px; font-weight: bold; font-size: 0.8rem;">VER DETALHES</a>
-                </div>
-            `).join('');
+            grid.innerHTML = "";
+            dados.forEach(c => {
+                const card = document.createElement('div');
+                card.className = 'concurso-card';
+                const sMax = parseFloat(c.salario_max) || 0;
+                card.innerHTML = `
+                    <div style="background: rgba(255,255,255,0.05); padding: 20px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); height: 100%; display: flex; flex-direction: column;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                            <span class="badge">${c.cidade || 'MA'}</span>
+                            <button onclick="toggleFavorito(this, '${c.orgao}')" style="background:none; border:none; cursor:pointer; color:#ffca28; font-size: 1.2rem;">☆</button>
+                        </div>
+                        <h2 style="font-size: 1rem; color: #60a5fa; margin: 10px 0;">${c.orgao}</h2>
+                        <div style="font-size: 0.8rem; display: grid; gap: 8px; flex-grow: 1;">
+                            <div>📍 ${c.cidade || 'Maranhão'}</div>
+                            <div>🏢 ${c.banca || 'A definir'}</div>
+                            <div>💰 Até ${sMax.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</div>
+                        </div>
+                        <div style="display: flex; gap: 8px; margin-top: 15px;">
+                            <a href="detalhes.html?id=${c.id}&tipo=concurso" style="flex: 1; text-decoration: none; background: #3b82f6; color: white; text-align: center; padding: 10px; border-radius: 6px; font-weight: bold; font-size: 0.7rem;">DETALHES</a>
+                        </div>
+                    </div>`;
+                grid.appendChild(card);
+            });
         }
 
-        function atualizarStats(data) {
-            const salarios = data.map(c => parseFloat(c.salario_max)).filter(s => s > 0);
-            if (salarios.length > 0) {
-                const media = salarios.reduce((a, b) => a + b, 0) / salarios.length;
-                const maior = Math.max(...salarios);
-                document.getElementById('media-salarial').innerText = media.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-                document.getElementById('maior-salario').innerText = maior.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-            }
+        function renderizarGraficos(dados) {
+            const isLight = document.body.classList.contains('light-theme');
+            const labelColor = isLight ? '#1e293b' : '#ffffff';
+            if (graficoBarras) graficoBarras.destroy();
+            if (graficoPizza) graficoPizza.destroy();
+
+            const cidMap = {};
+            dados.forEach(c => { const n = c.cidade || "MA"; cidMap[n] = (cidMap[n] || 0) + 1; });
+            const top5 = Object.entries(cidMap).sort((a, b) => b[1] - a[1]).slice(0, 5);
+
+            graficoBarras = new Chart(document.getElementById('graficoVagasCidade'), {
+                type: 'bar',
+                data: { labels: top5.map(x => x[0]), datasets: [{ label: 'Editais', data: top5.map(x => x[1]), backgroundColor: '#3b82f6' }] },
+                options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, scales: { x: { ticks: { color: labelColor } }, y: { ticks: { color: labelColor } } }, plugins: { legend: { display: false } } }
+            });
+
+            const areas = { 'Educação': 0, 'Saúde': 0, 'Outros': 0 };
+            dados.forEach(c => {
+                const txt = (c.orgao || "").toLowerCase();
+                if (txt.includes('educ') || txt.includes('prof')) areas['Educação']++;
+                else if (txt.includes('saud') || txt.includes('med')) areas['Saúde']++;
+                else areas['Outros']++;
+            });
+
+            graficoPizza = new Chart(document.getElementById('graficoVagasArea'), {
+                type: 'doughnut',
+                data: { labels: Object.keys(areas), datasets: [{ data: Object.values(areas), backgroundColor: ['#60a5fa', '#34d399', '#94a3b8'], borderWidth: 0 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: labelColor } } } }
+            });
         }
 
-        document.getElementById('inputBusca').addEventListener('input', (e) => {
-            const busca = e.target.value.toLowerCase();
-            const filtrados = concursosLocais.filter(c => c.orgao.toLowerCase().includes(busca) || c.cidade.toLowerCase().includes(busca));
-            renderizarCards(filtrados);
-        });
+        function alternarTema() {
+            document.body.classList.toggle('light-theme');
+            if (todosOsConcursos.length > 0) renderizarGraficos(todosOsConcursos);
+        }
 
-        buscarDados();
+        function filtrar(termo) {
+            const busca = termo.toLowerCase();
+            renderizar(todosOsConcursos.filter(c => (c.orgao || "").toLowerCase().includes(busca) || (c.cidade || "").toLowerCase().includes(busca)));
+        }
+
+        function calcularEstatisticas(dados) {
+            const sals = dados.map(c => parseFloat(c.salario_max) || 0).filter(s => s > 0);
+            const media = sals.length ? sals.reduce((a, b) => a + b) / sals.length : 0;
+            const maior = sals.length ? Math.max(...sals) : 0;
+            const fmt = val => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
+            document.getElementById('media-salarial').innerText = fmt(media);
+            document.getElementById('maior-salario').innerText = fmt(maior);
+        }
+
+        function gerarPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            doc.text("Concursos Maranhão Pro - Editais 2026", 10, 10);
+            const rows = todosOsConcursos.map(c => [c.orgao, c.cidade || 'MA', `R$ ${c.salario_max || 0}`]);
+            doc.autoTable({ head: [['Órgão', 'Cidade', 'Salário']], body: rows });
+            doc.save('concursos-maranhao.pdf');
+        }
+
+        document.getElementById('inputBusca').addEventListener('input', e => filtrar(e.target.value));
     </script>
 </body>
 </html>
