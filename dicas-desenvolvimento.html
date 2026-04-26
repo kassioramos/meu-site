@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dicas & Desenvolvimento - Concursos Maranhão</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
             --primary: #3b82f6;
@@ -12,10 +13,9 @@
             --text-main: #f8fafc;
             --text-sub: #94a3b8;
             --border: rgba(255,255,255,0.1);
-            --accent: #10b981; /* Verde para Dicas/Desenvolvimento */
+            --accent: #10b981; 
         }
 
-        /* RESET GLOBAL PARA EVITAR BARRA LATERAL */
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
@@ -33,11 +33,9 @@
             color: #3b82f6;
             display: inline-block;
             margin-bottom: 20px;
+            font-weight: 600;
         }
 
-        .btn-voltar:hover { text-decoration: underline; }
-
-        /* Navbar */
         .nav-menu {
             display: flex;
             gap: 15px;
@@ -64,7 +62,6 @@
         header h1 { color: var(--accent); font-size: 2.5rem; margin-bottom: 10px; }
         header p { color: var(--text-sub); max-width: 600px; margin: 0 auto; }
 
-        /* Filtros */
         .filtros-container {
             display: flex;
             justify-content: center;
@@ -90,7 +87,6 @@
             box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
         }
 
-        /* Grid */
         .artigos-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -112,7 +108,7 @@
 
         .artigo-card:hover { transform: translateY(-5px); border-color: var(--accent); }
 
-        .capa { width: 100%; height: 180px; object-fit: cover; background: #000; }
+        .capa { width: 100%; height: 180px; object-fit: cover; background: #111; }
         .conteudo { padding: 20px; flex-grow: 1; }
         .tag { 
             font-size: 0.7rem; 
@@ -122,13 +118,10 @@
             display: block;
             margin-bottom: 10px;
         }
-        .conteudo h2 { font-size: 1.25rem; margin: 0 0 10px 0; }
+        .conteudo h2 { font-size: 1.25rem; margin: 0 0 10px 0; color: #fff; }
         .conteudo p { color: var(--text-sub); font-size: 0.9rem; line-height: 1.5; }
 
         .btn-post {
-            position: absolute; 
-            top: 0; 
-            right: 0; 
             background: #10b981; 
             color: white; 
             padding: 10px 20px; 
@@ -136,33 +129,34 @@
             text-decoration: none; 
             font-weight: bold;
             transition: 0.3s;
-            z-index: 10;
         }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <a href="admin.html" class="btn-post" id="btnAdmin">+ Novo Artigo</a>
-
     <nav class="nav-menu">
-        <a href="index.html" class="nav-link">🏠 Início</a>
-        <a href="simulados.html" class="nav-link">📝 Simulados</a>
-        <a href="blog.html" class="nav-link">📰 Notícias</a>
-        <a href="#" class="nav-link active">💡 Dicas</a>
+        <div style="flex-grow: 1; display: flex; gap: 10px;">
+            <a href="index.html" class="nav-link">🏠 Início</a>
+            <a href="simulados.html" class="nav-link">📝 Simulados</a>
+            <a href="blog.html" class="nav-link">📰 Notícias</a>
+            <a href="#" class="nav-link active">💡 Dicas</a>
+        </div>
+        <a href="admin.html" class="btn-post" id="btnAdmin" style="display: none;">+ Novo Artigo</a>
     </nav>
         
-    <a href="#" class="btn-voltar" onclick="window.history.back(); return false;">← Voltar</a>
+    <a href="index.html" class="btn-voltar">← Voltar</a>
 
     <header>
         <h1>Dicas & Desenvolvimento</h1>
-        <p>Evolua seus estudos com técnicas comprovadas e mergulhe no mundo da tecnologia.</p>
+        <p>Técnicas de estudo e tecnologia para acelerar sua aprovação.</p>
     </header>
 
     <div class="filtros-container">
         <button class="btn-filtro active" onclick="filtrar('todos')">📚 Ver Tudo</button>
-        <button class="btn-filtro" onclick="filtrar('dicas')">🧠 Dicas de Estudo</button>
-        <button class="btn-filtro" onclick="filtrar('dev')">💻 Artigos de Dev</button>
+        <button class="btn-filtro" onclick="filtrar('dicas')">🧠 Dicas</button>
+        <button class="btn-filtro" onclick="filtrar('dev')">💻 Dev</button>
+        <button class="btn-filtro" onclick="filtrar('uema')">🏹 UEMA</button>
     </div>
 
     <div id="lista-artigos" class="artigos-grid">
@@ -170,26 +164,32 @@
     </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <script>
+    // Configurações de Conexão (Mesmas do seu Index/Blog)
+    const supabaseUrl = 'https://mczmhvuxujvhrudqmpvg.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1jem1odnV4dWp2aHJ1ZHFtcHZnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5MzgwMDksImV4cCI6MjA5MTUxNDAwOX0.vqNvzVRzpH9Otqb7DISpWXLw4b6eegdwzpaLBRJPwfY';
+    const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
+
     let todosArtigos = [];
 
     async function carregarArtigos() {
         const grid = document.getElementById('lista-artigos');
         try {
-            // USANDO O SUPABASE AGORA
-            const { data, error } = await supabase
+            // Buscando da tabela 'artigos' conforme sua imagem do Supabase
+            const { data, error } = await _supabase
                 .from('artigos')
                 .select('*')
-                .in('categoria', ['dicas', 'dev']) // Filtro profissional pelas categorias do banco
                 .order('created_at', { ascending: false });
 
             if (error) throw error;
 
-            todosArtigos = data;
+            todosArtigos = data || [];
             exibirArtigos(todosArtigos);
             
         } catch (error) {
-            grid.innerHTML = "<p style='grid-column: 1/-1; text-align: center;'>Erro ao conectar com a biblioteca de artigos.</p>";
+            grid.innerHTML = "<p style='grid-column: 1/-1; text-align: center; color: #ef4444;'>Erro ao carregar os artigos.</p>";
             console.error(error);
         }
     }
@@ -202,41 +202,41 @@
         }
 
         grid.innerHTML = lista.map(artigo => `
-            <a href="post.html?slug=${artigo.slug}" class="artigo-card">
+            <a href="post.html?id=${artigo.id}" class="artigo-card">
                 <img src="${artigo.capa_url || 'https://via.placeholder.com/400x200'}" 
                      class="capa" 
                      alt="${artigo.titulo}"
                      onerror="this.src='https://via.placeholder.com/400x200'">
                 <div class="conteudo">
-                    <span class="tag">${artigo.categoria}</span>
+                    <span class="tag">${artigo.categoria || 'Geral'}</span>
                     <h2>${artigo.titulo}</h2>
-                    <p>${artigo.resumo}</p>
+                    <p>${artigo.resumo || ''}</p>
                 </div>
             </a>
         `).join('');
     }
 
     function filtrar(cat) {
-        // Atualiza estilo dos botões
+        // Estilo dos botões
         document.querySelectorAll('.btn-filtro').forEach(b => b.classList.remove('active'));
         if (event) event.target.classList.add('active');
 
         if (cat === 'todos') {
             exibirArtigos(todosArtigos);
         } else {
-            // Filtra o que já está no cache local (muito mais rápido)
-            const filtrados = todosArtigos.filter(a => a.categoria.toLowerCase() === cat);
+            const filtrados = todosArtigos.filter(a => 
+                a.categoria && a.categoria.toLowerCase() === cat.toLowerCase()
+            );
             exibirArtigos(filtrados);
         }
     }
 
-    // Inicialização e controle de acesso
     document.addEventListener("DOMContentLoaded", () => {
+        // Controle de Admin
         const isAdmin = localStorage.getItem('token_admin'); 
-        if (isAdmin !== 'sou_o_dono_do_site') {
-            document.getElementById('btnAdmin')?.remove();
+        if (isAdmin === 'sou_o_dono_do_site') {
+            document.getElementById('btnAdmin').style.display = 'block';
         }
-        
         carregarArtigos();
     });
 </script>
