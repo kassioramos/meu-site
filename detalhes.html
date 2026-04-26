@@ -113,7 +113,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
     const URL_SB = 'https://mczmhvuxujvhrudqmpvg.supabase.co';
-    const KEY_SB = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1jem1odnV4dWp2aHJ1ZHFtcHZnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5MzgwMDksImV4cCI6MjA5MTUxNDAwOX0.vqNvzVRzpH9Otqb7DISpWXLw4b6eegdwzpaLBRJPwfY';
+    const KEY_SB = 'sb_publishable_VTkTKTGqA7QtDR3cnENUwQ_mGDWVkle';
     const _supabase = supabase.createClient(URL_SB, KEY_SB);
 
     const fmtMoeda = (v) => v ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v) : 'Consultar Edital';
@@ -139,6 +139,10 @@
                 const { data, error } = await _supabase.from('artigos').select('*').eq('slug', slug).single();
                 dados = data;
                 erroBusca = error;
+            } else if (tipo === 'questao' && id) {
+                const { data, error } = await _supabase.from('questoes').select('*').eq('id', id).single();
+                dados = data;
+                erroBusca = error;
             }
 
             if (erroBusca || !dados) {
@@ -148,8 +152,10 @@
 
             if (tipo === 'concurso') {
                 renderizarConcurso(dados);
-            } else {
+            } else if (tipo === 'artigo') {
                 renderizarArtigo(dados);
+            } else if (tipo === 'questao') {
+                renderizarQuestao(dados);
             }
 
         } catch (err) {
@@ -168,20 +174,6 @@
                 <h1>${c.orgao}</h1>
                 <p>📍 ${c.cidade || 'Maranhão'} | 🏢 Banca: ${c.banca || 'A definir'}</p>
             </div>
-
-            <div class="grid-info">
-                <div class="info-item"><label>💰 Salário até</label><span>${fmtMoeda(c.salario_max)}</span></div>
-                <div class="info-item"><label>🎓 Vagas</label><span>${c.vagas || 'Ver edital'}</span></div>
-                <div class="info-item"><label>📅 Inscrições até</label><span>${fmtData(c.data_fim)}</span></div>
-            </div>
-
-            <div class="sobre-secao">
-                <h3>📝 Sobre o Concurso</h3>
-                <p>${c.resumo || 'Informações detalhadas disponíveis no edital oficial.'}</p>
-            </div>
-
-            <a href="${c.link_edital}" target="_blank" class="btn-acao btn-inscricao">📄 ACESSAR EDITAL OFICIAL</a>
-            <a href="questoes.html?banca=${encodeURIComponent(c.banca)}" class="btn-acao btn-questoes">✍️ TREINAR COM QUESTÕES</a>
         `;
     }
 
@@ -195,15 +187,56 @@
                 <h1>${a.titulo}</h1>
                 <p>📅 Postado em: ${fmtData(a.created_at)}</p>
             </div>
-            
-            <img src="${a.capa_url || 'https://via.placeholder.com/800x400'}" class="capa-artigo" onerror="this.style.display='none'">
-
-            <div class="artigo-corpo">
-                ${a.conteudo || '<p>Conteúdo em breve...</p>'}
-            </div>
-            
-            <a href="blog.html" class="btn-acao">📖 VER OUTRAS NOTÍCIAS</a>
         `;
+    }
+
+    function renderizarQuestao(q) {
+        const container = document.getElementById('conteudo-dinamico');
+        document.title = `Questão - ${q.disciplina}`;
+
+        let opcoesHtml = '';
+
+        if (q.opcoes) {
+            const opcoes = typeof q.opcoes === 'string' ? JSON.parse(q.opcoes) : q.opcoes;
+
+            for (const letra in opcoes) {
+                opcoesHtml += `
+                    <button onclick="mostrarResposta('${letra}','${q.alternativa_correta}')"
+                    style="display:block;width:100%;margin:10px 0;padding:12px;border:none;border-radius:8px;background:#334155;color:white;cursor:pointer;">
+                    ${letra.toUpperCase()}) ${opcoes[letra]}
+                    </button>
+                `;
+            }
+        }
+
+        container.innerHTML = `
+            <div class="header-content">
+                <span class="status-tag">${q.banca}</span>
+                <h1>${q.disciplina}</h1>
+            </div>
+
+            <div class="sobre-secao">
+                <h3>📘 Enunciado</h3>
+                <p>${q.enunciado}</p>
+            </div>
+
+            <div class="sobre-secao">
+                <h3>📝 Alternativas</h3>
+                ${opcoesHtml}
+            </div>
+
+            <div id="resultado"></div>
+        `;
+    }
+
+    function mostrarResposta(marcada, correta) {
+        const resultado = document.getElementById('resultado');
+
+        if (marcada === correta) {
+            resultado.innerHTML = `<div class="sobre-secao" style="border-left:4px solid #10b981;">✅ Resposta correta!</div>`;
+        } else {
+            resultado.innerHTML = `<div class="sobre-secao" style="border-left:4px solid #ef4444;">❌ Resposta errada! Correta: ${correta.toUpperCase()}</div>`;
+        }
     }
 
     document.addEventListener('DOMContentLoaded', carregarConteudo);
