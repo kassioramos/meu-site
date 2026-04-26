@@ -201,13 +201,13 @@
 
             for (const letra in opcoes) {
                 opcoesHtml += `
-<button 
-    class="opcao-btn"
-    data-letra="${letra}"
-    onclick="mostrarResposta('${letra}','${q.alternativa_correta}', \`${q.comentario_professor || ''}\`)"
-    style="display:block;width:100%;margin:10px 0;padding:12px;border:none;border-radius:8px;background:#334155;color:white;cursor:pointer;">
-    ${letra.toUpperCase()}) ${opcoes[letra]}
-</button>
+        <button 
+            class="opcao-btn"
+            data-letra="${letra}"
+            onclick="mostrarResposta('${letra}','${q.alternativa_correta}', \`${q.comentario_professor || ''}\`)"
+            style="display:block;width:100%;margin:10px 0;padding:12px;border:none;border-radius:8px;background:#334155;color:white;cursor:pointer;">
+            ${letra.toUpperCase()}) ${opcoes[letra]}
+        </button>
                 `;
             }
         }
