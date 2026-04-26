@@ -1,28 +1,28 @@
 {
   "version": 2,
   "cleanUrls": true,
+  "builds": [
+    {
+      "src": "main.py",
+      "use": "@vercel/python"
+    }
+  ],
   "rewrites": [
     { "source": "/blog", "destination": "/blog.html" },
     { "source": "/simulados", "destination": "/simulados.html" },
     { "source": "/dicas-desenvolvimento", "destination": "/dicas-desenvolvimento.html" },
     { "source": "/post", "destination": "/post.html" },
-    { 
-      "source": "/sitemap.xml", 
-      "destination": "https://meu-site-aodm.onrender.com/sitemap.xml" 
-    },
-    { 
-      "source": "/concursos", 
-      "destination": "https://meu-site-aodm.onrender.com/concursos" 
-    },
-    { 
-      "source": "/artigos", 
-      "destination": "https://meu-site-aodm.onrender.com/artigos" 
-    },
-    { 
-      "source": "/artigos/:path*", 
-      "destination": "https://meu-site-aodm.onrender.com/artigos/:path*" 
-    },
     { "source": "/admin", "destination": "/admin.html" },
+    
+    
+    { "source": "/sitemap.xml", "destination": "/main.py" },
+    { "source": "/concursos", "destination": "/main.py" },
+    { "source": "/concursos/:id", "destination": "/main.py" },
+    { "source": "/artigos", "destination": "/main.py" },
+    { "source": "/artigos/:path*", "destination": "/main.py" },
+    { "source": "/questoes", "destination": "/main.py" },
+    
+    
     { "source": "/(.*)", "destination": "/$1" }
   ]
 }
