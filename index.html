@@ -5,40 +5,43 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="google-site-verification" content="0Z_754Cw5srRkVIMK3NOaLltkeMBk3HrY17mFIivPGg" />
-<title>Concursos Maranhão Pro 2026 | Editais, Simulados e Notícias</title>
-<meta name="description" content="A maior plataforma de concursos do Maranhão. Prepare-se para a UEMA, ENEM e seletivos com simulados, questões comentadas e editais atualizados em tempo real.">
-<meta name="keywords" content="concursos maranhão 2026, edital uema, seletivo imperatriz, simulados enem, questões comentadas maranhão">
-<meta property="og:type" content="website">
-<meta property="og:url" content="https://meu-site-five-delta.vercel.app/">
-<meta property="og:title" content="Concursos Maranhão Pro - Sua Aprovação Começa Aqui">
-<meta property="og:description" content="Editais abertos, simulados gratuitos e dicas de estudo focadas no Maranhão.">
-<meta property="og:image" content="https://meu-site-five-delta.vercel.app/banner-og.jpg"> <link rel="icon" type="image/x-icon" href="/favicon.ico">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <title>Concursos Maranhão Pro 2026 | Editais, Simulados e Notícias</title>
+    <meta name="description" content="A maior plataforma de concursos do Maranhão. Prepare-se para a UEMA, ENEM e seletivos com simulados, questões comentadas e editais atualizados em tempo real.">
+    <meta name="keywords" content="concursos maranhão 2026, edital uema, seletivo imperatriz, simulados enem, questões comentadas maranhão">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://meu-site-five-delta.vercel.app/">
+    <meta property="og:title" content="Concursos Maranhão Pro - Sua Aprovação Começa Aqui">
+    <meta property="og:description" content="Editais abertos, simulados gratuitos e dicas de estudo focadas no Maranhão.">
+    <meta property="og:image" content="https://meu-site-five-delta.vercel.app/banner-og.jpg"> 
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
-
         .btn-blog {
-    padding: 8px 15px;
-    border-radius: 20px;
-    border: 1px solid #10b981; /* Verde esmeralda para destacar */
-    background: transparent;
-    color: #10b981;
-    text-decoration: none;
-    font-weight: 500;
-    font-size: 0.8rem;
-    margin: 2px;
-    display: inline-flex;
-    align-items: center;
-    transition: all 0.2s;
-}
+            padding: 8px 15px;
+            border-radius: 20px;
+            border: 1px solid #10b981;
+            background: transparent;
+            color: #10b981;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.8rem;
+            margin: 2px;
+            display: inline-flex;
+            align-items: center;
+            transition: all 0.2s;
+        }
 
-.btn-blog:hover {
-    background: #10b981;
-    color: white;
-}
+        .btn-blog:hover {
+            background: #10b981;
+            color: white;
+        }
+
         * { font-family: 'Inter', sans-serif; box-sizing: border-box; }
         body { margin: 0; transition: background 0.3s; background-color: #0f172a; color: white; overflow-x: hidden; }
         body.light-theme { background-color: #f8fafc; color: #1e293b; }
@@ -80,7 +83,7 @@
 
     <header>
         <h1>Concursos Maranhão Pro</h1>
-        <div id="stats-counter" class="stats-badge">Mais de 50 editais e seletivos monitorados no MA</div>
+        <div id="stats-counter" class="stats-badge">Carregando editais...</div>
 
         <div class="search-container" style="max-width: 600px; margin: 20px auto;">
             <input type="text" id="inputBusca" placeholder="Ex: Professor, São Luís, UFMA..." style="width: 100%; padding: 12px; border-radius: 8px; border: none; margin-bottom: 15px; color: #000;">
@@ -127,7 +130,12 @@
     <main id="grid-concursos"></main>
 
     <script>
-        const API_URL = 'https://meu-site-aodm.onrender.com'; 
+        // --- CONFIGURAÇÃO SUPABASE ---
+        // --- CONFIGURAÇÃO SUPABASE ---
+const SUPABASE_URL = 'https://mczmhvuxujvhrudqmpvg.supabase.co'; 
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1jem1odnV4dWp2aHJ1ZHFtcHZnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5MzgwMDksImV4cCI6MjA5MTUxNDAwOX0.vqNvzVRzpH9Otqb7DISpWXLw4b6eegdwzpaLBRJPwfY';
+const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
         
         let todosOsConcursos = [];
         let graficoBarras = null;
@@ -142,10 +150,15 @@
             grid.innerHTML = Array(6).fill('<div class="skeleton" style="height:300px"></div>').join('');
 
             try {
-                const response = await fetch(`${API_URL}/concursos`);
-                const data = await response.json();
-                
-                todosOsConcursos = Array.isArray(data) ? data : (data.items || []);
+                // Busca dados da tabela 'concursos' do Supabase
+                const { data, error } = await _supabase
+                    .from('concursos')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+
+                todosOsConcursos = data || [];
 
                 if (todosOsConcursos.length > 0) {
                     renderizar(todosOsConcursos);
@@ -154,62 +167,60 @@
                     atualizarBadgeFavoritos();
                     document.getElementById('stats-counter').innerText = `${todosOsConcursos.length} editais encontrados`;
                 } else {
-                    grid.innerHTML = "<p style='text-align:center; grid-column: 1/-1;'>Nenhum edital encontrado no banco.</p>";
+                    grid.innerHTML = "<p style='text-align:center; grid-column: 1/-1;'>Nenhum edital encontrado no Supabase.</p>";
                 }
             } catch (error) {
-                console.error("Erro na API:", error);
-                grid.innerHTML = "<p style='text-align:center; grid-column: 1/-1;'>Erro ao conectar com o servidor.</p>";
+                console.error("Erro Supabase:", error);
+                grid.innerHTML = "<p style='text-align:center; grid-column: 1/-1;'>Erro ao carregar dados do banco.</p>";
             }
         }
 
-function renderizar(dados) {
-    const grid = document.getElementById('grid-concursos');
-    grid.innerHTML = "";
-    
-    dados.forEach(c => {
-        const card = document.createElement('div');
-        card.className = 'concurso-card';
-        
-        // Padronização das variáveis que vêm do banco
-        const orgao = c.orgao || c.orgão || "Órgão não informado";
-        const banca = c.banca || "A definir";
-        const sMin = c.salario_min || c.salário_mínimo || 1412;
-        const sMax = c.salario_max || c.salário_máximo || 0;
-
-        const fmtMoeda = (v) => v ? v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : '---';
-
-        card.innerHTML = `
-            <div style="background: rgba(255,255,255,0.05); padding: 20px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); height: 100%; position: relative; display: flex; flex-direction: column;">
+        function renderizar(dados) {
+            const grid = document.getElementById('grid-concursos');
+            grid.innerHTML = "";
+            
+            dados.forEach(c => {
+                const card = document.createElement('div');
+                card.className = 'concurso-card';
                 
-                <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-                    <span class="badge">${c.cidade || 'MA'}</span>
-                    <button onclick="toggleFavorito(this, '${orgao}')" style="background:none; border:none; cursor:pointer; color:#ffca28; font-size: 1.2rem;">☆</button>
-                </div>
+                const orgao = c.orgao || "Órgão não informado";
+                const banca = c.banca || "A definir";
+                const sMin = parseFloat(c.salario_min) || 0;
+                const sMax = parseFloat(c.salario_max) || 0;
 
-                <h2 style="font-size: 1rem; color: #60a5fa; margin: 10px 0; min-height: 2.4rem;">${orgao}</h2>
+                const fmtMoeda = (v) => v > 0 ? v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : '---';
 
-                <div style="font-size: 0.8rem; display: grid; gap: 8px; flex-grow: 1;">
-                    <div>📍 <strong>Cidade:</strong> ${c.cidade || 'Maranhão'}</div>
-                    <div>🏢 <strong>Banca:</strong> ${banca}</div>
-                    <div>🎓 <strong>Escolaridade:</strong> ${c.escolaridade || 'Ver edital'}</div>
-                    <div>💰 <strong>Salários:</strong> ${fmtMoeda(sMin)} até ${fmtMoeda(sMax)}</div>
-                </div>
+                card.innerHTML = `
+                    <div style="background: rgba(255,255,255,0.05); padding: 20px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); height: 100%; position: relative; display: flex; flex-direction: column;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                            <span class="badge">${c.cidade || 'MA'}</span>
+                            <button onclick="toggleFavorito(this, '${orgao}')" style="background:none; border:none; cursor:pointer; color:#ffca28; font-size: 1.2rem;">☆</button>
+                        </div>
 
-                <div style="display: flex; gap: 8px; margin-top: 15px;">
-                    <a href="detalhes.html?id=${c.id}" 
-                       style="flex: 1; text-decoration: none; background: #3b82f6; color: white; text-align: center; padding: 10px; border-radius: 6px; font-weight: bold; font-size: 0.7rem; display: flex; align-items: center; justify-content: center;">
-                       DETALHES
-                    </a>
-                    <a href="questoes.html?banca=${encodeURIComponent(banca)}" 
-                       style="flex: 1; text-decoration: none; background: #8b5cf6; color: white; text-align: center; padding: 10px; border-radius: 6px; font-weight: bold; font-size: 0.7rem; display: flex; align-items: center; justify-content: center;">
-                       QUESTÕES
-                    </a>
-                </div>
-            </div>
-        `;
-        grid.appendChild(card);
-    });
-}
+                        <h2 style="font-size: 1rem; color: #60a5fa; margin: 10px 0; min-height: 2.4rem;">${orgao}</h2>
+
+                        <div style="font-size: 0.8rem; display: grid; gap: 8px; flex-grow: 1;">
+                            <div>📍 <strong>Cidade:</strong> ${c.cidade || 'Maranhão'}</div>
+                            <div>🏢 <strong>Banca:</strong> ${banca}</div>
+                            <div>🎓 <strong>Escolaridade:</strong> ${c.escolaridade || 'Ver edital'}</div>
+                            <div>💰 <strong>Salários:</strong> ${fmtMoeda(sMin)} até ${fmtMoeda(sMax)}</div>
+                        </div>
+
+                        <div style="display: flex; gap: 8px; margin-top: 15px;">
+                            <a href="post.html?slug=${c.slug || c.id}" 
+                               style="flex: 1; text-decoration: none; background: #3b82f6; color: white; text-align: center; padding: 10px; border-radius: 6px; font-weight: bold; font-size: 0.7rem; display: flex; align-items: center; justify-content: center;">
+                               DETALHES
+                            </a>
+                            <a href="questoes.html?banca=${encodeURIComponent(banca)}" 
+                               style="flex: 1; text-decoration: none; background: #8b5cf6; color: white; text-align: center; padding: 10px; border-radius: 6px; font-weight: bold; font-size: 0.7rem; display: flex; align-items: center; justify-content: center;">
+                               QUESTÕES
+                            </a>
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
 
         function renderizarGraficos(dados) {
             const isLight = document.body.classList.contains('light-theme');
@@ -237,7 +248,7 @@ function renderizar(dados) {
 
             const areas = { 'Educação': 0, 'Saúde': 0, 'Outros': 0 };
             dados.forEach(c => {
-                const txt = ((c.orgao || "") + (c.cargos || "")).toLowerCase();
+                const txt = ((c.orgao || "") + (c.resumo || "")).toLowerCase();
                 if (txt.includes('educ') || txt.includes('prof')) areas['Educação']++;
                 else if (txt.includes('saud') || txt.includes('med')) areas['Saúde']++;
                 else areas['Outros']++;
@@ -279,7 +290,7 @@ function renderizar(dados) {
 
         function filtrarFavoritos() {
             const favs = JSON.parse(localStorage.getItem('favoritos') || '[]');
-            renderizar(todosOsConcursos.filter(c => favs.includes(c.orgao || c.orgão)));
+            renderizar(todosOsConcursos.filter(c => favs.includes(c.orgao)));
         }
 
         function toggleFavorito(btn, nome) {
@@ -304,7 +315,7 @@ function renderizar(dados) {
         }
 
         function calcularEstatisticas(dados) {
-            const sals = dados.map(c => Number(c.salario_max || c.salário_máximo) || 0).filter(s => s > 0);
+            const sals = dados.map(c => parseFloat(c.salario_max) || 0).filter(s => s > 0);
             const media = sals.length ? sals.reduce((a, b) => a + b) / sals.length : 0;
             const maior = sals.length ? Math.max(...sals) : 0;
             const fmt = val => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
@@ -325,7 +336,7 @@ function renderizar(dados) {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
             doc.text("Concursos Maranhão Pro - Editais 2026", 10, 10);
-            const rows = todosOsConcursos.map(c => [c.orgao || c.orgão, c.cidade || 'MA', `R$ ${c.salario_max || c.salário_máximo || 0}`]);
+            const rows = todosOsConcursos.map(c => [c.orgao, c.cidade || 'MA', `R$ ${c.salario_max || 0}`]);
             doc.autoTable({ head: [['Órgão', 'Cidade', 'Salário']], body: rows });
             doc.save('concursos-maranhao.pdf');
         }
