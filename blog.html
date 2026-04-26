@@ -106,9 +106,7 @@
         .category { font-size: 0.7rem; text-transform: uppercase; font-weight: 700; letter-spacing: 1px; margin-bottom: 10px; display: block; }
         .uema-tag { color: #f97316; } 
         .enem-tag { color: #10b981; } 
-        .concursos-tag { color: #3b82f6; }
-        .dev-tag { color: #a855f7; }
-        .dicas-tag { color: #eab308; }
+        .notícias-tag, .concursos-tag { color: #3b82f6; }
 
         .card-content h2 { font-size: 1.3rem; margin-bottom: 10px; line-height: 1.3; color: var(--text-main); }
         .card-content p { color: var(--text-sub); font-size: 0.9rem; line-height: 1.6; }
@@ -138,9 +136,10 @@
 
     <div class="filtros-blog">
         <button class="btn-categoria active" onclick="filtrar('todos')">📚 Tudo</button>
-        <button class="btn-categoria" onclick="filtrar('concursos')">🏛️ Concursos</button>
-        <button class="btn-categoria" onclick="filtrar('enem')">🎓 ENEM</button>
-        <button class="btn-categoria" onclick="filtrar('uema')">🏹 UEMA</button>
+        <button class="btn-categoria" onclick="filtrar('Notícias')">📰 Notícias</button>
+        <button class="btn-categoria" onclick="filtrar('Concursos')">🏛️ Concursos</button>
+        <button class="btn-categoria" onclick="filtrar('ENEM')">🎓 ENEM</button>
+        <button class="btn-categoria" onclick="filtrar('UEMA')">🏹 UEMA</button>
     </div>
 
     <div id="blog-lista" class="blog-grid">
@@ -158,7 +157,7 @@
 
     let artigosCache = [];
 
-    // 2. Carregamento Principal
+    // 2. Carregamento Principal (Apenas Categorias de Notícias/Concursos)
     async function carregarNoticias() {
         const grid = document.getElementById('blog-lista');
         
@@ -166,11 +165,13 @@
             const { data, error } = await _supabase
                 .from('artigos')
                 .select('*')
+                // PROFISSIONAL: Filtra para não misturar posts de Dev/Dicas aqui
+                .in('categoria', ['Notícias', 'Concursos', 'UEMA', 'ENEM'])
                 .order('created_at', { ascending: false });
 
             if (error) throw error;
 
-            artigosCache = data;
+            artigosCache = data || [];
             renderizar(artigosCache);
 
         } catch (err) {
@@ -178,31 +179,31 @@
             grid.innerHTML = `<p style="color: #ef4444; text-align: center; grid-column: 1/-1;">Erro ao carregar dados. Verifique a conexão.</p>`;
         }
     }
-    
 
     // 3. Renderização dos Cards
     function renderizar(lista) {
         const grid = document.getElementById('blog-lista');
         
         if (!lista || lista.length === 0) {
-            grid.innerHTML = `<p style="text-align: center; grid-column: 1/-1;">Nenhum post encontrado.</p>`;
+            grid.innerHTML = `<p style="text-align: center; grid-column: 1/-1;">Nenhum post de notícia encontrado.</p>`;
             return;
         }
 
         grid.innerHTML = lista.map(post => {
-            const cat = post.categoria ? post.categoria.toLowerCase() : 'outros';
-            const tagClasse = `${cat}-tag`;
+            // Ajuste de tags para o CSS
+            const catDisplay = post.categoria || 'Outros';
+            const tagClasse = `${catDisplay.toLowerCase()}-tag`;
             
             return `
-                <a href="post.html?slug=${post.slug}" class="blog-card">
+                <a href="detalhes.html?slug=${post.slug}&tipo=artigo" class="blog-card">
                     <img src="${post.capa_url || 'https://via.placeholder.com/400x200'}" 
                          class="card-img" 
                          alt="${post.titulo}"
                          onerror="this.src='https://via.placeholder.com/400x200'">
                     <div class="card-content">
-                        <span class="category ${tagClasse}">${post.categoria}</span>
+                        <span class="category ${tagClasse}">${catDisplay}</span>
                         <h2>${post.titulo}</h2>
-                        <p>${post.resumo}</p>
+                        <p>${post.resumo || ''}</p>
                     </div>
                 </a>
             `;
@@ -218,14 +219,14 @@
         if (cat === 'todos') {
             renderizar(artigosCache);
         } else {
-            const filtrados = artigosCache.filter(a => a.categoria && a.categoria.toLowerCase() === cat);
+            // Filtra o cache local pelo nome exato da categoria
+            const filtrados = artigosCache.filter(a => a.categoria === cat);
             renderizar(filtrados);
         }
     }
 
     // 5. Inicialização
     document.addEventListener("DOMContentLoaded", () => {
-        // Verifica se é o Kassio (admin) para mostrar o botão
         const isAdmin = localStorage.getItem('token_admin'); 
         if (isAdmin !== 'sou_o_dono_do_site') {
             document.getElementById('btnAdmin')?.remove();

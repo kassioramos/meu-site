@@ -3,13 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Concurso Pro - Maranhão</title>
-<meta name="description" id="meta-desc" content="Informações completas, edital e inscrições para este concurso no Maranhão.">
-<meta property="og:title" id="og-title" content="Concurso Pro MA">
-<meta property="og:description" id="og-desc" content="Confira salários, vagas e prazos.">
-<meta property="og:image" id="og-img" content="">
+    <title>Carregando... - Concursos Maranhão Pro</title>
     <style>
-        /* --- VARIÁVEIS E BASE --- */
         :root { 
             --primary: #3b82f6; 
             --bg: #0f172a; 
@@ -25,28 +20,29 @@
             color: var(--text-main); 
             margin: 0; 
             line-height: 1.5;
+            padding: 20px;
         }
 
-        .container-detalhes { max-width: 800px; margin: 40px auto; padding: 20px; }
-        .btn-voltar { display: inline-block; margin-bottom: 20px; color: var(--primary); text-decoration: none; font-weight: 600; }
+        .container-detalhes { max-width: 850px; margin: 20px auto; }
+        .btn-voltar { display: inline-block; margin-bottom: 20px; color: var(--primary); text-decoration: none; font-weight: 600; transition: 0.3s; }
+        .btn-voltar:hover { transform: translateX(-5px); }
         
-        /* --- CARD DE DETALHES --- */
         .detalhes-card { 
             background: var(--card-bg); 
             border-radius: 12px; 
             padding: 30px; 
             border-top: 5px solid var(--primary); 
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
         }
 
-        .detalhes-header h1 { color: var(--primary); margin: 10px 0; font-size: 1.8rem; }
+        .header-content h1 { color: var(--primary); margin: 10px 0; font-size: 2rem; line-height: 1.2; }
         
-        /* --- GRID DE INFORMAÇÕES --- */
+        /* Grid para Concursos */
         .grid-info { 
             display: grid; 
             grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); 
             gap: 15px; 
-            margin-bottom: 30px; 
+            margin: 25px 0; 
         }
 
         .info-item { 
@@ -57,48 +53,29 @@
             text-align: center; 
         }
 
-        .info-item label { display: block; font-size: 10px; text-transform: uppercase; color: var(--text-sub); margin-bottom: 6px; }
-        .info-item span { font-size: 1rem; font-weight: 700; }
+        .info-item label { display: block; font-size: 11px; text-transform: uppercase; color: var(--text-sub); margin-bottom: 5px; font-weight: 700; }
+        .info-item span { font-size: 1rem; font-weight: 700; color: var(--text-main); }
+
+        /* Conteúdo do Artigo/Blog */
+        .artigo-corpo { font-size: 1.1rem; line-height: 1.8; color: #cbd5e1; }
+        .artigo-corpo h2, .artigo-corpo h3 { color: var(--primary); margin: 25px 0 15px 0; }
+        .artigo-corpo p { margin-bottom: 20px; }
+        .capa-artigo { width: 100%; border-radius: 12px; margin-bottom: 25px; border: 1px solid var(--border); }
 
         .sobre-secao { 
-            line-height: 1.8; 
             background: rgba(0,0,0,0.2); 
             padding: 25px; 
             border-radius: 12px; 
-            border-left: 4px solid var(--primary); 
+            border-left: 4px solid var(--primary);
+            margin: 20px 0;
         }
 
-        /* --- ESTILOS DA TABELA --- */
-        .table-container { 
-            width: 100%; 
-            overflow-x: auto; 
-            margin: 15px 0; 
-            border-radius: 8px; 
-            border: 1px solid var(--border);
-        }
+        .table-container { width: 100%; overflow-x: auto; margin: 15px 0; border-radius: 8px; border: 1px solid var(--border); }
+        table { width: 100%; border-collapse: collapse; min-width: 500px; }
+        th { background: rgba(59, 130, 246, 0.15); color: var(--primary); padding: 12px; text-align: left; }
+        td { padding: 12px; border-bottom: 1px solid var(--border); }
 
-        .tabela-vagas { 
-            width: 100%; 
-            border-collapse: collapse; 
-            min-width: 500px; 
-        }
-
-        .tabela-vagas th { 
-            background: rgba(59, 130, 246, 0.15); 
-            color: var(--primary); 
-            text-align: left; 
-            padding: 12px; 
-            border-bottom: 1px solid var(--border); 
-        }
-
-        .tabela-vagas td { 
-            padding: 12px; 
-            border-bottom: 1px solid var(--border); 
-            color: var(--text-main);
-        }
-
-        /* --- BOTÕES DE AÇÃO --- */
-        .btn-edital { 
+        .btn-acao { 
             display: block; 
             width: 100%; 
             text-align: center; 
@@ -109,122 +86,101 @@
             text-decoration: none; 
             font-weight: 700; 
             margin-top: 15px; 
-            transition: opacity 0.2s;
+            transition: 0.3s;
         }
-
         .btn-inscricao { background: #10b981; }
-        .btn-questoes { background: #8b5cf6; } /* Cor Roxa */
-        .btn-edital:hover { opacity: 0.9; }
-        .status-tag { background: #10b981; color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; }
+        .btn-questoes { background: #8b5cf6; }
+        .btn-acao:hover { opacity: 0.9; transform: translateY(-2px); }
+
+        .status-tag { background: #10b981; color: white; padding: 5px 15px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; }
 
         @media (max-width: 600px) {
-            .container-detalhes { padding: 10px; margin: 20px auto; }
-            .detalhes-card { padding: 20px 15px; }
+            .detalhes-card { padding: 20px; }
+            .header-content h1 { font-size: 1.5rem; }
         }
     </style>
 </head>
 <body>
 
 <div class="container-detalhes">
-    <a href="index.html" class="btn-voltar">← Voltar para a lista</a>
-    <div id="conteudo-detalhes" class="detalhes-card">
-        <div class="loading-msg">Carregando informações detalhadas...</div>
+    <a href="#" class="btn-voltar" onclick="window.history.back(); return false;">← Voltar</a>
+    <div id="conteudo-dinamico" class="detalhes-card">
+        <p style="text-align: center;">Buscando informações...</p>
     </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-    // 1. Configuração do Supabase (Igual à sua Index)
     const URL_SB = 'https://mczmhvuxujvhrudqmpvg.supabase.co';
     const KEY_SB = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1jem1odnV4dWp2aHJ1ZHFtcHZnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5MzgwMDksImV4cCI6MjA5MTUxNDAwOX0.vqNvzVRzpH9Otqb7DISpWXLw4b6eegdwzpaLBRJPwfY';
     const _supabase = supabase.createClient(URL_SB, KEY_SB);
 
     const fmtMoeda = (v) => v ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v) : 'Consultar Edital';
+    const fmtData = (d) => (d && d !== 'null') ? new Date(d).toLocaleDateString('pt-BR', {timeZone: 'UTC'}) : 'A definir';
 
-    const fmtData = (d) => {
-        if (!d || d === 'null') return 'A definir';
-        try {
-            return new Date(d).toLocaleDateString('pt-BR', {timeZone: 'UTC'});
-        } catch(e) { return 'A definir'; }
-    };
-
-    const exibirDataProva = (valor) => {
-        if (!valor || valor.toString().toLowerCase() === 'null') return 'A definir';
-        const regexData = /^\d{4}-\d{2}-\d{2}/;
-        if (regexData.test(valor)) {
-            return new Date(valor).toLocaleDateString('pt-BR', {timeZone: 'UTC'});
-        }
-        return valor;
-    };
-
-    async function carregarDetalhes() {
+    async function carregarPagina() {
         const params = new URLSearchParams(window.location.search);
-        const id = params.get('id');
-        const container = document.getElementById('conteudo-detalhes');
-
-        if (!id) {
-            container.innerHTML = "❌ Erro: Concurso não identificado.";
-            return;
-        }
+        const id = params.get('id');       // Para Concursos
+        const slug = params.get('slug');   // Para Artigos/Blog
+        const container = document.getElementById('conteudo-dinamico');
 
         try {
-            // BUSCA DIRETO NO SUPABASE AGORA
-            const { data: c, error } = await _supabase
-                .from('concursos')
-                .select('*')
-                .eq('id', id)
-                .single();
+            if (id) {
+                // MODO CONCURSO
+                const { data: c, error } = await _supabase.from('concursos').select('*').eq('id', id).single();
+                if (error || !c) throw new Error();
 
-            if (error || !c) throw new Error('Concurso não encontrado');
-
-            // --- SEO DINÂMICO ---
-            const nomeConcurso = c.orgao || "Concurso";
-            document.title = `${nomeConcurso} - Concursos MA Pro`;
-
-            const conteudoVagas = c.tabela_vagas 
-                ? `<div class="table-container">${c.tabela_vagas}</div>` 
-                : `<p><strong>Cargos:</strong> ${c.cargos || 'Conforme edital'}</p>`;
-
-            // Injeta o HTML (Mantendo sua estrutura original)
-            container.innerHTML = `
-                <div class="detalhes-header">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                document.title = `${c.orgao} - Concursos MA Pro`;
+                
+                container.innerHTML = `
+                    <div class="header-content">
                         <span class="status-tag">${c.status || 'Aberto'}</span>
+                        <h1>${c.orgao}</h1>
                     </div>
-                    <h1>${nomeConcurso}</h1>
-                </div>
+                    <div class="grid-info">
+                        <div class="info-item"><label>📍 Local</label><span>${c.cidade || 'Maranhão'}</span></div>
+                        <div class="info-item"><label>🏢 Banca</label><span>${c.banca || 'A definir'}</span></div>
+                        <div class="info-item"><label>💰 Salário</label><span>${fmtMoeda(c.salario_max)}</span></div>
+                        <div class="info-item"><label>📅 Prova</label><span>${fmtData(c.data_prova)}</span></div>
+                    </div>
+                    <div class="sobre-secao">
+                        <h3 style="color:var(--primary); margin-top:0;">Informações do Certame</h3>
+                        <div class="table-container">${c.tabela_vagas || `<p>${c.cargos || 'Ver edital'}</p>`}</div>
+                        <p style="margin-top:20px; color:var(--text-sub);">${c.descricao_seo || ''}</p>
+                    </div>
+                    <a href="questoes.html?banca=${encodeURIComponent(c.banca || '')}" class="btn-acao btn-questoes">✍️ Treinar Questões da ${c.banca || 'Banca'}</a>
+                    ${c.link_oficial ? `<a href="${c.link_oficial}" target="_blank" class="btn-acao">📄 Ver Edital Oficial</a>` : ''}
+                    ${c.link_inscricao ? `<a href="${c.link_inscricao}" target="_blank" class="btn-acao btn-inscricao">📝 Fazer Inscrição</a>` : ''}
+                `;
 
-                <div class="grid-info">
-                    <div class="info-item"><label>📍 Localização</label><span>${c.cidade || 'Maranhão'}</span></div>
-                    <div class="info-item"><label>🏢 Banca</label><span>${c.banca || 'A definir'}</span></div>
-                    <div class="info-item"><label>🎓 Nível</label><span>${c.escolaridade || 'Ver edital'}</span></div>
-                    <div class="info-item"><label>💰 Salário Máx.</label><span style="color:#10b981">${fmtMoeda(c.salario_max)}</span></div>
-                    <div class="info-item"><label>📅 Inscrições</label><span>${fmtData(c.inicio_inscricao)} - ${fmtData(c.fim_inscricao)}</span></div>
-                    <div class="info-item"><label>📝 Data da Prova</label><span>${exibirDataProva(c.data_prova)}</span></div>
-                </div>
+            } else if (slug) {
+                // MODO ARTIGO / BLOG
+                const { data: a, error } = await _supabase.from('artigos').select('*').eq('slug', slug).single();
+                if (error || !a) throw new Error();
 
-                <div class="sobre-secao">
-                    <h3 style="color:var(--primary); margin-top:0;">Distribuição de Vagas</h3>
-                    ${conteudoVagas}
-                    <hr style="opacity: 0.1; margin: 20px 0;">
-                    <p>${c.descricao_seo || 'Confira os detalhes oficiais no edital abaixo.'}</p>
-                </div>
+                document.title = `${a.titulo} - Blog MA Pro`;
 
-                <div class="container-acoes">
-                    <a href="questoes.html?banca=${encodeURIComponent(c.banca || '')}" class="btn-edital btn-questoes">
-                        ✍️ Responder Questões da ${c.banca || 'Banca'}
-                    </a>
-                    ${c.link_oficial ? `<a href="${c.link_oficial}" target="_blank" class="btn-edital">📄 Baixar Edital Oficial</a>` : ''}
-                    ${c.link_inscricao ? `<a href="${c.link_inscricao}" target="_blank" class="btn-edital btn-inscricao">📝 Ir para Página de Inscrição</a>` : ''}
-                </div>
-            `;
-        } catch (error) {
-            container.innerHTML = "❌ Erro ao carregar detalhes. Verifique se o ID está correto.";
-            console.error(error);
+                container.innerHTML = `
+                    <div class="header-content">
+                        <span class="status-tag" style="background:var(--primary)">${a.categoria}</span>
+                        <h1 style="margin-bottom:25px;">${a.titulo}</h1>
+                        ${a.capa_url ? `<img src="${a.capa_url}" class="capa-artigo" alt="Capa">` : ''}
+                    </div>
+                    <div class="artigo-corpo">
+                        ${a.conteudo}
+                    </div>
+                    <p style="margin-top:40px; font-size:0.8rem; color:var(--text-sub)">Publicado em: ${fmtData(a.created_at)}</p>
+                `;
+            } else {
+                container.innerHTML = "❌ Conteúdo não encontrado.";
+            }
+
+        } catch (e) {
+            container.innerHTML = "❌ Erro ao carregar os dados. Tente novamente.";
         }
     }
 
-    window.onload = carregarDetalhes;
+    window.onload = carregarPagina;
 </script>
 </body>
 </html>

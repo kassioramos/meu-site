@@ -34,6 +34,7 @@
             display: inline-block;
             margin-bottom: 20px;
             font-weight: 600;
+            cursor: pointer;
         }
 
         .nav-menu {
@@ -43,6 +44,7 @@
             padding-bottom: 10px;
             border-bottom: 1px solid var(--border);
             align-items: center;
+            flex-wrap: wrap;
         }
 
         .nav-link {
@@ -106,9 +108,9 @@
             height: 100%;
         }
 
-        .artigo-card:hover { transform: translateY(-5px); border-color: var(--accent); }
+        .artigo-card:hover { transform: translateY(-5px); border-color: var(--accent); box-shadow: 0 10px 20px rgba(0,0,0,0.2); }
 
-        .capa { width: 100%; height: 180px; object-fit: cover; background: #111; }
+        .capa { width: 100%; height: 180px; object-fit: cover; background: #111; border-bottom: 1px solid var(--border); }
         .conteudo { padding: 20px; flex-grow: 1; }
         .tag { 
             font-size: 0.7rem; 
@@ -118,7 +120,7 @@
             display: block;
             margin-bottom: 10px;
         }
-        .conteudo h2 { font-size: 1.25rem; margin: 0 0 10px 0; color: #fff; }
+        .conteudo h2 { font-size: 1.25rem; margin: 0 0 10px 0; color: #fff; line-height: 1.3; }
         .conteudo p { color: var(--text-sub); font-size: 0.9rem; line-height: 1.5; }
 
         .btn-post {
@@ -145,7 +147,7 @@
         <a href="admin.html" class="btn-post" id="btnAdmin" style="display: none;">+ Novo Artigo</a>
     </nav>
         
-    <a href="index.html" class="btn-voltar">← Voltar</a>
+    <a onclick="window.history.back()" class="btn-voltar">← Voltar</a>
 
     <header>
         <h1>Dicas & Desenvolvimento</h1>
@@ -154,9 +156,9 @@
 
     <div class="filtros-container">
         <button class="btn-filtro active" onclick="filtrar('todos')">📚 Ver Tudo</button>
-        <button class="btn-filtro" onclick="filtrar('dicas')">🧠 Dicas</button>
-        <button class="btn-filtro" onclick="filtrar('dev')">💻 Dev</button>
-        <button class="btn-filtro" onclick="filtrar('uema')">🏹 UEMA</button>
+        <button class="btn-filtro" onclick="filtrar('Dicas')">🧠 Dicas</button>
+        <button class="btn-filtro" onclick="filtrar('Desenvolvimento')">💻 Dev</button>
+        <button class="btn-filtro" onclick="filtrar('UEMA')">🏹 UEMA</button>
     </div>
 
     <div id="lista-artigos" class="artigos-grid">
@@ -167,7 +169,6 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
-    // Configurações de Conexão (Mesmas do seu Index/Blog)
     const supabaseUrl = 'https://mczmhvuxujvhrudqmpvg.supabase.co';
     const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1jem1odnV4dWp2aHJ1ZHFtcHZnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5MzgwMDksImV4cCI6MjA5MTUxNDAwOX0.vqNvzVRzpH9Otqb7DISpWXLw4b6eegdwzpaLBRJPwfY';
     const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
@@ -177,7 +178,6 @@
     async function carregarArtigos() {
         const grid = document.getElementById('lista-artigos');
         try {
-            // Buscando da tabela 'artigos' conforme sua imagem do Supabase
             const { data, error } = await _supabase
                 .from('artigos')
                 .select('*')
@@ -196,13 +196,17 @@
 
     function exibirArtigos(lista) {
         const grid = document.getElementById('lista-artigos');
+        
+        // PROFISSIONAL: Se você estiver na página de Dicas, talvez queira ocultar a categoria "Notícias" por padrão
+        // Vou deixar todos para você filtrar, mas se quiser esconder notícias aqui, use o filter() antes.
+
         if (lista.length === 0) {
             grid.innerHTML = "<p style='grid-column: 1/-1; text-align: center;'>Ainda estamos preparando este conteúdo.</p>";
             return;
         }
 
         grid.innerHTML = lista.map(artigo => `
-            <a href="post.html?id=${artigo.id}" class="artigo-card">
+            <a href="detalhes.html?slug=${artigo.slug}&tipo=artigo" class="artigo-card">
                 <img src="${artigo.capa_url || 'https://via.placeholder.com/400x200'}" 
                      class="capa" 
                      alt="${artigo.titulo}"
@@ -217,7 +221,6 @@
     }
 
     function filtrar(cat) {
-        // Estilo dos botões
         document.querySelectorAll('.btn-filtro').forEach(b => b.classList.remove('active'));
         if (event) event.target.classList.add('active');
 
@@ -232,7 +235,6 @@
     }
 
     document.addEventListener("DOMContentLoaded", () => {
-        // Controle de Admin
         const isAdmin = localStorage.getItem('token_admin'); 
         if (isAdmin === 'sou_o_dono_do_site') {
             document.getElementById('btnAdmin').style.display = 'block';
