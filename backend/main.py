@@ -6,7 +6,7 @@ from supabase import create_client, Client
 
 app = FastAPI()
 
-# 🔓 Configuração de CORS
+# 🔓 Configuração de CORS - Permite que seu site na Vercel acesse a API
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -16,12 +16,10 @@ app.add_middleware(
 )
 
 # 🔑 Credenciais do Supabase
-# Na Vercel, use a 'service_role key' para o BACKEND para ignorar bloqueios de RLS em deletes/posts
+# Se estiver no local, ele usa a string. Na Vercel, ele pegará das 'Environment Variables'.
 SUPABASE_URL = os.environ.get("SUPABASE_URL", "https://mczmhvuxujvhrudqmpvg.supabase.co")
-SUPABASE_KEY = os.environ.get("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1jem1odnV4dWp2aHJ1ZHFtcHZnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5MzgwMDksImV4cCI6MjA5MTUxNDAwOX0.vqNvzVRzpH9Otqb7DISpWXLw4b6eegdwzpaLBRJPwfY") 
-
-if not SUPABASE_KEY:
-    print("AVISO: SUPABASE_KEY não encontrada nas variáveis de ambiente!")
+# CORREÇÃO AQUI: O primeiro argumento é o NOME da variável, o segundo é o VALOR padrão.
+SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1jem1odnV4dWp2aHJ1ZHFtcHZnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5MzgwMDksImV4cCI6MjA5MTUxNDAwOX0.vqNvzVRzpH9Otqb7DISpWXLw4b6eegdwzpaLBRJPwfY")
 
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
@@ -44,21 +42,21 @@ def home():
 @app.get("/artigos")
 def listar_artigos():
     try:
-        # Busca simples ordenada por data
         response = supabase.table("artigos").select("id, titulo, slug, resumo, capa_url, categoria, created_at").order("created_at", desc=True).execute()
         return response.data
     except Exception as e:
-        return {"error": str(e)}
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/artigos/{slug}")
 def obter_artigo_por_slug(slug: str):
     try:
+        # Usamos .maybe_single() para retornar um objeto ou null, sem dar erro de lista
         response = supabase.table("artigos").select("*").eq("slug", slug).maybe_single().execute()
         if not response.data:
             raise HTTPException(status_code=404, detail="Artigo não encontrado")
         return response.data
     except Exception as e:
-        return {"error": str(e)}
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/artigos")
 def criar_artigo(artigo: ArtigoBase):
@@ -66,15 +64,20 @@ def criar_artigo(artigo: ArtigoBase):
         response = supabase.table("artigos").insert(artigo.dict()).execute()
         return {"message": "Post criado com sucesso!", "data": response.data}
     except Exception as e:
-        return {"error": str(e)}
+        raise HTTPException(status_code=500, detail=str(e))
 
-@app.delete("/artigos/{slug}")
-async def deletar_artigo(slug: str):
+# ==========================================
+# 📄 BLOCO: CONCURSOS
+# ==========================================
+
+@app.get("/concursos")
+def listar_concursos():
     try:
-        response = supabase.table("artigos").delete().eq("slug", slug).execute()
-        return {"message": f"Artigo '{slug}' deletado!", "data": response.data}
+        response = supabase.table("concursos").select("*").order("id", desc=True).execute()
+        # Importante: Mantendo o formato {"items": [...]} que o seu front-end espera
+        return {"items": response.data}
     except Exception as e:
-        return {"error": str(e)}
+        raise HTTPException(status_code=500, detail=str(e))
 
 # ==========================================
 # 📚 BLOCO: QUESTÕES
@@ -92,20 +95,7 @@ def listar_questoes(banca: str = Query(None)):
         response = query.execute()
         return response.data
     except Exception as e:
-        return {"error": str(e)}
-
-# ==========================================
-# 📄 BLOCO: CONCURSOS
-# ==========================================
-
-@app.get("/concursos")
-def listar_concursos():
-    try:
-        response = supabase.table("concursos").select("*").order("id", desc=True).execute()
-        # Mantendo o formato {"items": [...]} para não quebrar seu front-end
-        return {"items": response.data}
-    except Exception as e:
-        return {"error": str(e)}
+        raise HTTPException(status_code=500, detail=str(e))
 
 # ==========================================
 # 🗺️ BLOCO: SEO (SITEMAP)
@@ -115,7 +105,6 @@ def listar_concursos():
 async def sitemap():
     BASE_URL = "https://meu-site-five-delta.vercel.app"
     try:
-        # Busca dados necessários para o sitemap
         concs = supabase.table("concursos").select("id").execute()
         arts = supabase.table("artigos").select("slug").execute()
 
