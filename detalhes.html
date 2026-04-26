@@ -201,11 +201,13 @@
 
             for (const letra in opcoes) {
                 opcoesHtml += `
-                    <button 
-                        onclick="mostrarResposta('${letra}','${q.alternativa_correta}', \`${q.comentario_professor || ''}\`)"
-                        style="display:block;width:100%;margin:10px 0;padding:12px;border:none;border-radius:8px;background:#334155;color:white;cursor:pointer;">
-                        ${letra.toUpperCase()}) ${opcoes[letra]}
-                    </button>
+<button 
+    class="opcao-btn"
+    data-letra="${letra}"
+    onclick="mostrarResposta('${letra}','${q.alternativa_correta}', \`${q.comentario_professor || ''}\`)"
+    style="display:block;width:100%;margin:10px 0;padding:12px;border:none;border-radius:8px;background:#334155;color:white;cursor:pointer;">
+    ${letra.toUpperCase()}) ${opcoes[letra]}
+</button>
                 `;
             }
         }
@@ -230,26 +232,49 @@
         `;
     }
 
-    function mostrarResposta(marcada, correta, comentario) {
-        const resultado = document.getElementById('resultado');
+function mostrarResposta(marcada, correta, comentario) {
+    const resultado = document.getElementById('resultado');
+    const botoes = document.querySelectorAll('.opcao-btn');
 
-        if (marcada === correta) {
-            resultado.innerHTML = `
-                <div class="sobre-secao" style="border-left:4px solid #10b981;">
-                    <h3>✅ Resposta correta!</h3>
-                    <p style="margin-top:10px;">${comentario}</p>
-                </div>
-            `;
-        } else {
-            resultado.innerHTML = `
-                <div class="sobre-secao" style="border-left:4px solid #ef4444;">
-                    <h3>❌ Resposta errada!</h3>
-                    <p><strong>Resposta correta:</strong> ${correta.toUpperCase()}</p>
-                    <p style="margin-top:10px;">${comentario}</p>
-                </div>
-            `;
+    // limpa estilos anteriores
+    botoes.forEach(btn => {
+        btn.style.background = '#334155';
+        btn.style.border = 'none';
+    });
+
+    // pinta os botões
+    botoes.forEach(btn => {
+        const letraBtn = btn.getAttribute('data-letra');
+
+        if (letraBtn === correta) {
+            btn.style.background = '#16a34a'; // verde
+            btn.style.border = '2px solid #22c55e';
         }
+
+        if (letraBtn === marcada && marcada !== correta) {
+            btn.style.background = '#dc2626'; // vermelho
+            btn.style.border = '2px solid #ef4444';
+        }
+    });
+
+    // mostra comentário
+    if (marcada === correta) {
+        resultado.innerHTML = `
+            <div class="sobre-secao" style="border-left:4px solid #10b981;">
+                <h3>✅ Resposta correta!</h3>
+                <p style="margin-top:10px;">${comentario}</p>
+            </div>
+        `;
+    } else {
+        resultado.innerHTML = `
+            <div class="sobre-secao" style="border-left:4px solid #ef4444;">
+                <h3>❌ Resposta errada!</h3>
+                <p><strong>Resposta correta:</strong> ${correta.toUpperCase()}</p>
+                <p style="margin-top:10px;">${comentario}</p>
+            </div>
+        `;
     }
+}
 
     document.addEventListener('DOMContentLoaded', carregarConteudo);
 </script>
