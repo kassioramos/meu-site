@@ -289,32 +289,44 @@ function mostrarSecao(secao){
 }
 async function salvarQuestao(){
     const dados = {
-        disciplina: disciplina.value,
-        banca: banca.value,
-        enunciado: enunciadoQuestao.value,
+        disciplina: document.getElementById('disciplina').value,
+        banca: document.getElementById('banca').value,
+        enunciado: document.getElementById('enunciadoQuestao').value,
         opcoes: {
-            a: altA.value,
-            b: altB.value,
-            c: altC.value,
-            d: altD.value
+            a: document.getElementById('altA').value,
+            b: document.getElementById('altB').value,
+            c: document.getElementById('altC').value,
+            d: document.getElementById('altD').value
         },
-        alternativa_correta: correta.value,
-        comentario_professor: comentario.value,
+        alternativa_correta: document.getElementById('correta').value,
+        comentario_professor: document.getElementById('comentario').value,
         created_at: new Date()
     };
-    await _supabase.from('questoes').insert([dados]);
-    alert('Questão salva!');
+
+    const { error } = await _supabase.from('questoes').insert([dados]);
+
+    if(error){
+        alert('Erro ao salvar questão: ' + error.message);
+    } else {
+        alert('Questão salva com sucesso!');
+    }
 }
 
 async function salvarConcurso(){
     const dados = {
-        orgao: orgao.value,
-        cidade: cidade.value,
-        banca: bancaConcurso.value,
+        orgao: document.getElementById('orgao').value,
+        cidade: document.getElementById('cidade').value,
+        banca: document.getElementById('bancaConcurso').value,
         created_at: new Date()
     };
-    await _supabase.from('concursos').insert([dados]);
-    alert('Concurso salvo!');
+
+    const { error } = await _supabase.from('concursos').insert([dados]);
+
+    if(error){
+        alert('Erro ao salvar concurso: ' + error.message);
+    } else {
+        alert('Concurso salvo com sucesso!');
+    }
 }
 
 async function excluirItem(){
