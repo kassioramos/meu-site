@@ -132,7 +132,13 @@
     </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
+    // 1. Configuração do Supabase (Igual à sua Index)
+    const URL_SB = 'https://mczmhvuxujvhrudqmpvg.supabase.co';
+    const KEY_SB = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1jem1odnV4dWp2aHJ1ZHFtcHZnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5MzgwMDksImV4cCI6MjA5MTUxNDAwOX0.vqNvzVRzpH9Otqb7DISpWXLw4b6eegdwzpaLBRJPwfY';
+    const _supabase = supabase.createClient(URL_SB, KEY_SB);
+
     const fmtMoeda = (v) => v ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v) : 'Consultar Edital';
 
     const fmtData = (d) => {
@@ -151,7 +157,7 @@
         return valor;
     };
 
-async function carregarDetalhes() {
+    async function carregarDetalhes() {
         const params = new URLSearchParams(window.location.search);
         const id = params.get('id');
         const container = document.getElementById('conteudo-detalhes');
@@ -162,45 +168,37 @@ async function carregarDetalhes() {
         }
 
         try {
-            // Busca os dados do concurso
-            const response = await fetch(`https://meu-site-aodm.onrender.com/concursos/${id}`);
-            if (!response.ok) throw new Error('Falha ao buscar dados');
-            
-            const c = await response.json();
+            // BUSCA DIRETO NO SUPABASE AGORA
+            const { data: c, error } = await _supabase
+                .from('concursos')
+                .select('*')
+                .eq('id', id)
+                .single();
 
-            // --- MÁGICA DO SEO DINÂMICO ---
+            if (error || !c) throw new Error('Concurso não encontrado');
+
+            // --- SEO DINÂMICO ---
             const nomeConcurso = c.orgao || "Concurso";
-            const tituloSEO = `${nomeConcurso} - Concursos MA Pro`;
-            document.title = tituloSEO;
-
-            // Atualiza as meta tags dinamicamente
-            document.querySelector('meta[name="description"]').setAttribute("content", `Edital para ${nomeConcurso}. Salário de até ${fmtMoeda(c.salario_max)}. Confira prazos e vagas.`);
-            document.getElementById('og-title').setAttribute("content", tituloSEO);
-            document.getElementById('og-desc').setAttribute("content", `Vagas para ${c.escolaridade}. Inscrições até ${fmtData(c.fim_inscricao)}.`);
-            // ------------------------------
-
-            const orgao = c.orgao || 'Não informado';
-            const banca = c.banca || 'A definir';
-            const sMax = c.salario_max || 0;
+            document.title = `${nomeConcurso} - Concursos MA Pro`;
 
             const conteudoVagas = c.tabela_vagas 
                 ? `<div class="table-container">${c.tabela_vagas}</div>` 
                 : `<p><strong>Cargos:</strong> ${c.cargos || 'Conforme edital'}</p>`;
 
-            // Injeta o HTML no container
+            // Injeta o HTML (Mantendo sua estrutura original)
             container.innerHTML = `
                 <div class="detalhes-header">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <span class="status-tag">${c.status || 'Aberto'}</span>
                     </div>
-                    <h1>${orgao}</h1>
+                    <h1>${nomeConcurso}</h1>
                 </div>
 
                 <div class="grid-info">
                     <div class="info-item"><label>📍 Localização</label><span>${c.cidade || 'Maranhão'}</span></div>
-                    <div class="info-item"><label>🏢 Banca</label><span>${banca}</span></div>
+                    <div class="info-item"><label>🏢 Banca</label><span>${c.banca || 'A definir'}</span></div>
                     <div class="info-item"><label>🎓 Nível</label><span>${c.escolaridade || 'Ver edital'}</span></div>
-                    <div class="info-item"><label>💰 Salário Máx.</label><span style="color:#10b981">${fmtMoeda(sMax)}</span></div>
+                    <div class="info-item"><label>💰 Salário Máx.</label><span style="color:#10b981">${fmtMoeda(c.salario_max)}</span></div>
                     <div class="info-item"><label>📅 Inscrições</label><span>${fmtData(c.inicio_inscricao)} - ${fmtData(c.fim_inscricao)}</span></div>
                     <div class="info-item"><label>📝 Data da Prova</label><span>${exibirDataProva(c.data_prova)}</span></div>
                 </div>
@@ -213,16 +211,15 @@ async function carregarDetalhes() {
                 </div>
 
                 <div class="container-acoes">
-                    <a href="questoes.html?banca=${encodeURIComponent(banca)}" class="btn-edital btn-questoes">
-                        ✍️ Responder Questões da ${banca}
+                    <a href="questoes.html?banca=${encodeURIComponent(c.banca || '')}" class="btn-edital btn-questoes">
+                        ✍️ Responder Questões da ${c.banca || 'Banca'}
                     </a>
-
                     ${c.link_oficial ? `<a href="${c.link_oficial}" target="_blank" class="btn-edital">📄 Baixar Edital Oficial</a>` : ''}
                     ${c.link_inscricao ? `<a href="${c.link_inscricao}" target="_blank" class="btn-edital btn-inscricao">📝 Ir para Página de Inscrição</a>` : ''}
                 </div>
             `;
         } catch (error) {
-            container.innerHTML = "❌ Erro ao carregar detalhes. Verifique sua conexão.";
+            container.innerHTML = "❌ Erro ao carregar detalhes. Verifique se o ID está correto.";
             console.error(error);
         }
     }

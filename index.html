@@ -71,16 +71,17 @@
             <input type="text" id="inputBusca" placeholder="Ex: Professor, São Luís, UFMA...">
             <div class="filter-group">
                 <div class="filter-row" style="margin-bottom: 10px;">
-                    <a href="/blog.html" class="btn-filter"><span>📰</span> Blog</a>
+                    <a href="blog.html" class="btn-filter"><span>📰</span> Blog</a>
                     <button onclick="filtrar('São Luís')" class="btn-filter">São Luís</button>
                     <button onclick="filtrar('Imperatriz')" class="btn-filter">Imperatriz</button>
                     <button onclick="filtrar('Caxias')" class="btn-filter">Caxias</button>
                 </div>
-                <div class="filter-row">
-                    <button id="btn-meus-favoritos" onclick="filtrarFavoritos()" class="btn-filter" style="border-color: #ffca28; color: #ffca28;">⭐ Favoritos (0)</button>
-                    <button onclick="verTudo()" class="btn-filter" style="border-color: #94a3b8; color: #94a3b8;">Ver Tudo</button>
-                    <button onclick="gerarPDF()" class="btn-pdf">📄 Exportar PDF</button>
-                </div>
+<div class="filter-row" style="margin-bottom: 10px;">
+    <a href="blog.html" class="btn-filter"><span>📰</span> Notícias</a>
+    <a href="blog.html?cat=uema" class="btn-filter"><span>🏹</span> UEMA</a>
+    <a href="blog.html?cat=enem" class="btn-filter"><span>🎓</span> ENEM</a>
+    <a href="blog.html?cat=dicas" class="btn-filter"><span>🧠</span> Dicas</a>
+</div>
             </div>
         </div>
     </header>
@@ -174,7 +175,7 @@
                             <div>💰 <strong>Até:</strong> ${fmtMoeda(sMax)}</div>
                         </div>
                         <div style="display: flex; gap: 8px; margin-top: 15px;">
-                            <a href="post.html?id=${c.id}" style="flex: 1; text-decoration: none; background: #3b82f6; color: white; text-align: center; padding: 10px; border-radius: 6px; font-weight: bold; font-size: 0.7rem;">DETALHES</a>
+                            <a href="detalhes.html?id=${c.id}" style="flex: 1; text-decoration: none; background: #3b82f6; color: white; text-align: center; padding: 10px; border-radius: 6px; font-weight: bold; font-size: 0.7rem;">DETALHES</a>
                             <a href="questoes.html?banca=${encodeURIComponent(banca)}" style="flex: 1; text-decoration: none; background: #8b5cf6; color: white; text-align: center; padding: 10px; border-radius: 6px; font-weight: bold; font-size: 0.7rem;">QUESTÕES</a>
                         </div>
                     </div>`;
