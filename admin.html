@@ -340,8 +340,8 @@ async function salvarConcurso(){
         link_oficial: document.getElementById('linkOficial').value,
         link_inscricao: document.getElementById('linkInscricao').value,
         escolaridade: document.getElementById('escolaridade').value,
-        inicio_inscricao: document.getElementById('inicioInscricao').value,
-        fim_inscricao: document.getElementById('fimInscricao').value,
+        inicio_inscricao: document.getElementById('inicioInscricao').value || null,
+        fim_inscricao: document.getElementById('fimInscricao').value || null,
         valor_inscricao: document.getElementById('valorInscricao').value
     };
 
