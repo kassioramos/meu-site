@@ -33,51 +33,73 @@
     const KEY_SB = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1jem1odnV4dWp2aHJ1ZHFtcHZnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5MzgwMDksImV4cCI6MjA5MTUxNDAwOX0.vqNvzVRzpH9Otqb7DISpWXLw4b6eegdwzpaLBRJPwfY';
     const _sb = supabase.createClient(URL_SB, KEY_SB);
 
-    async function carregarPost() {
+async function carregarPost() {
         const urlParams = new URLSearchParams(window.location.search);
         const slug = urlParams.get('slug');
 
-        const { data: post, error } = await _sb
-            .from('artigos')
-            .select('*')
-            .eq('slug', slug)
-            .single();
-
-        if (error || !post) {
-            document.getElementById('render-post').innerHTML = "<h1>Post não encontrado.</h1>";
+        if (!slug) {
+            document.getElementById('render-post').innerHTML = "<h1>Slug não definido na URL.</h1>";
             return;
         }
 
-        document.title = post.titulo;
-        document.getElementById('render-post').innerHTML = `
-            <div class="header-post">
-                <span class="categoria">${post.categoria}</span>
-                <h1>${post.titulo}</h1>
-                <div class="meta">Postado em ${new Date(post.created_at).toLocaleDateString('pt-BR')}</div>
-            </div>
-            
-            ${post.capa_url ? `<img src="${post.capa_url}" class="capa">` : ''}
-            
-            <div class="conteudo">
-                ${post.conteudo}
-            </div>
-            <div style="margin-top: 50px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); text-align: center;">
-    <a href="blog.html" style="
-        display: inline-block;
-        padding: 12px 25px;
-        background-color: var(--primary);
-        color: white;
-        text-decoration: none;
-        border-radius: 8px;
-        font-weight: bold;
-        transition: 0.3s;
-    " onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">
-        ← Voltar para a lista de notícias
-    </a>
-</div>
-        `;
+        try {
+            // Busca o artigo pelo slug
+            const { data: post, error } = await _sb
+                .from('artigos')
+                .select('*')
+                .eq('slug', slug)
+                .single();
+
+            if (error) {
+                console.error("Erro Supabase:", error);
+                document.getElementById('render-post').innerHTML = "<h1>Erro ao buscar no banco.</h1>";
+                return;
+            }
+
+            if (!post) {
+                document.getElementById('render-post').innerHTML = "<h1>Post não encontrado.</h1>";
+                return;
+            }
+
+            // Atualiza o título da aba do navegador
+            document.title = post.titulo;
+
+            // Renderiza o conteúdo usando o nome exato da coluna: conteudo
+            document.getElementById('render-post').innerHTML = `
+                <div class="header-post">
+                    <span class="categoria">${post.categoria || 'Notícias'}</span>
+                    <h1>${post.titulo}</h1>
+                    <div class="meta">Postado em ${new Date(post.created_at).toLocaleDateString('pt-BR')}</div>
+                </div>
+                
+                ${post.capa_url ? `<img src="${post.capa_url}" class="capa" alt="Capa">` : ''}
+                
+                <div class="conteudo">
+                    ${post.conteudo} 
+                </div>
+
+                <div style="margin-top: 50px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); text-align: center;">
+                    <a href="blog.html" style="
+                        display: inline-block;
+                        padding: 12px 25px;
+                        background-color: var(--primary);
+                        color: white;
+                        text-decoration: none;
+                        border-radius: 8px;
+                        font-weight: bold;
+                        transition: 0.3s;
+                    " onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">
+                        ← Voltar para a lista de notícias
+                    </a>
+                </div>
+            `;
+        } catch (err) {
+            console.error("Erro inesperado:", err);
+            document.getElementById('render-post').innerHTML = "<h1>Ocorreu um erro ao carregar a página.</h1>";
+        }
     }
 
+    // Executa a função
     carregarPost();
 </script>
 </body>
