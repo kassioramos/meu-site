@@ -328,21 +328,21 @@ async function salvarQuestao(){
 
 async function salvarConcurso(){
     const dados = {
-        orgao: document.getElementById('orgao').value,
-        cidade: document.getElementById('cidade').value,
-        banca: document.getElementById('bancaConcurso').value,
-        status: document.getElementById('statusConcurso').value,
+        orgao: document.getElementById('orgao').value || null,
+        cidade: document.getElementById('cidade').value || null,
+        banca: document.getElementById('bancaConcurso').value || null,
+        status: document.getElementById('statusConcurso').value || null,
         cargos: document.getElementById('cargos').value,
-        salario_min: document.getElementById('salarioMin').value,
+        salario_min: document.getElementById('salarioMin').value || null,
         salario_max: document.getElementById('salarioMax').value,
-        faixa_salarial: document.getElementById('faixaSalarial').value,
-        data_prova: document.getElementById('dataProva').value,
-        link_oficial: document.getElementById('linkOficial').value,
-        link_inscricao: document.getElementById('linkInscricao').value,
-        escolaridade: document.getElementById('escolaridade').value,
+        faixa_salarial: document.getElementById('faixaSalarial').value || null,
+        data_prova: document.getElementById('dataProva').value || null,
+        link_oficial: document.getElementById('linkOficial').value || null,
+        link_inscricao: document.getElementById('linkInscricao').value || null,
+        escolaridade: document.getElementById('escolaridade').value || null,
         inicio_inscricao: document.getElementById('inicioInscricao').value || null,
         fim_inscricao: document.getElementById('fimInscricao').value || null,
-        valor_inscricao: document.getElementById('valorInscricao').value
+        valor_inscricao: document.getElementById('valorInscricao').value || null,
     };
 
     const { error } = await _supabase.from('concursos').insert([dados]);
