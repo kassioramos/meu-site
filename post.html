@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blog - Concursos Maranhão Pro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root { --bg: #0f172a; --card: #1e293b; --primary: #3b82f6; --text: #f8fafc; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; line-height: 1.8; }
+        .container { max-width: 800px; margin: 0 auto; padding: 40px 20px; }
+        .header-post { text-align: center; margin-bottom: 40px; }
+        .header-post h1 { font-size: 2.5rem; margin: 20px 0; line-height: 1.2; }
+        .meta { color: #94a3b8; font-size: 0.9rem; }
+        .categoria { background: var(--primary); padding: 4px 12px; border-radius: 20px; font-weight: bold; font-size: 0.75rem; }
+        .capa { width: 100%; border-radius: 15px; margin-bottom: 40px; border: 1px solid rgba(255,255,255,0.1); }
+        .conteudo { font-size: 1.15rem; color: #cbd5e1; white-space: pre-wrap; }
+        .btn-voltar { color: var(--primary); text-decoration: none; font-weight: bold; display: block; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <a href="blog.html" class="btn-voltar">← Voltar ao Blog</a>
+    <div id="render-post">
+        <p style="text-align: center;">Carregando artigo...</p>
+    </div>
+</div>
+
+<script>
+    const URL_SB = 'https://mczmhvuxujvhrudqmpvg.supabase.co';
+    const KEY_SB = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1jem1odnV4dWp2aHJ1ZHFtcHZnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5MzgwMDksImV4cCI6MjA5MTUxNDAwOX0.vqNvzVRzpH9Otqb7DISpWXLw4b6eegdwzpaLBRJPwfY';
+    const _sb = supabase.createClient(URL_SB, KEY_SB);
+
+    async function carregarPost() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const slug = urlParams.get('slug');
+
+        const { data: post, error } = await _sb
+            .from('artigos')
+            .select('*')
+            .eq('slug', slug)
+            .single();
+
+        if (error || !post) {
+            document.getElementById('render-post').innerHTML = "<h1>Post não encontrado.</h1>";
+            return;
+        }
+
+        document.title = post.titulo;
+        document.getElementById('render-post').innerHTML = `
+            <div class="header-post">
+                <span class="categoria">${post.categoria}</span>
+                <h1>${post.titulo}</h1>
+                <div class="meta">Postado em ${new Date(post.created_at).toLocaleDateString('pt-BR')}</div>
+            </div>
+            
+            ${post.capa_url ? `<img src="${post.capa_url}" class="capa">` : ''}
+            
+            <div class="conteudo">
+                ${post.conteudo}
+            </div>
+            <div style="margin-top: 50px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); text-align: center;">
+    <a href="blog.html" style="
+        display: inline-block;
+        padding: 12px 25px;
+        background-color: var(--primary);
+        color: white;
+        text-decoration: none;
+        border-radius: 8px;
+        font-weight: bold;
+        transition: 0.3s;
+    " onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">
+        ← Voltar para a lista de notícias
+    </a>
+</div>
+        `;
+    }
+
+    carregarPost();
+</script>
+</body>
+</html>

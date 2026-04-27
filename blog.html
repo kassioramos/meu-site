@@ -179,16 +179,16 @@
             return;
         }
 
-        grid.innerHTML = lista.map(post => `
-            <a href="detalhes.html?slug=${post.slug}&tipo=artigo" class="blog-card">
-                <img src="${post.capa_url || 'https://via.placeholder.com/400x200'}" class="card-img" onerror="this.src='https://via.placeholder.com/400x200'">
-                <div class="card-content">
-                    <span class="category-tag">${post.categoria}</span>
-                    <h2>${post.titulo}</h2>
-                    <p>${post.resumo || ''}</p>
-                </div>
-            </a>
-        `).join('');
+grid.innerHTML = lista.map(post => `
+    <a href="post.html?slug=${post.slug}" class="blog-card">
+        <img src="${post.capa_url || 'https://via.placeholder.com/400x200'}" class="card-img">
+        <div class="card-content">
+            <span class="category-tag">${post.categoria}</span>
+            <h2>${post.titulo}</h2>
+            <p>${post.resumo || ''}</p>
+        </div>
+    </a>
+`).join('');
     }
 
     function filtrar(cat) {
