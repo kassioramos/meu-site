@@ -4,92 +4,189 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Concursos Maranhão Pro</title>
+
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
     <style>
-        :root { --bg: #0f172a; --card: #1e293b; --primary: #3b82f6; --text: #f8fafc; }
-        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; line-height: 1.8; }
-        .container { max-width: 800px; margin: 0 auto; padding: 40px 20px; }
-        
+        :root {
+            --bg: #0f172a;
+            --card: #1e293b;
+            --primary: #3b82f6;
+            --text: #f8fafc;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.8;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .btn-voltar {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: bold;
+            display: inline-block;
+            margin-bottom: 20px;
+        }
+
         /* CABEÇALHO */
-        .header-post { text-align: center; margin-bottom: 40px; }
-        .header-post h1 { font-size: 2.5rem; margin: 20px 0; line-height: 1.2; color: white; }
-        .meta { color: #94a3b8; font-size: 0.9rem; }
-        .categoria { background: var(--primary); padding: 4px 12px; border-radius: 20px; font-weight: bold; font-size: 0.75rem; text-transform: uppercase; }
-        
-        /* IMAGEM: SEM ALTURA FIXA = SEM CORTES */
-        .capa { 
-            width: 100%; 
-            height: auto; /* Deixa a imagem definir a própria altura */
-            display: block;
-            border-radius: 15px; 
-            margin-bottom: 40px; 
+        .header-post {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header-post h1 {
+            font-size: 2.5rem;
+            margin: 20px 0;
+            line-height: 1.2;
+            color: white;
+        }
+
+        .meta {
+            color: #94a3b8;
+            font-size: 0.9rem;
+        }
+
+        .categoria {
+            background: var(--primary);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+        }
+
+        /* CAIXA DA IMAGEM */
+        .img-box {
+            width: 100%;
+            max-height: 500px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            border-radius: 15px;
+            margin-bottom: 40px;
+            background: #111827;
             border: 1px solid rgba(255,255,255,0.1);
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
-        
-        .conteudo { font-size: 1.15rem; color: #cbd5e1; white-space: pre-wrap; }
-        .btn-voltar { color: var(--primary); text-decoration: none; font-weight: bold; display: inline-block; margin-bottom: 20px; }
+
+        /* IMAGEM */
+        .capa {
+            max-width: 100%;
+            max-height: 100%;
+            width: auto;
+            height: auto;
+            object-fit: contain;
+            display: block;
+        }
+
+        /* CONTEÚDO */
+        .conteudo {
+            font-size: 1.15rem;
+            color: #cbd5e1;
+            white-space: pre-wrap;
+        }
+
+        /* RESPONSIVO */
+        @media(max-width: 768px) {
+            .header-post h1 {
+                font-size: 2rem;
+            }
+
+            .img-box {
+                max-height: 300px;
+            }
+
+            .conteudo {
+                font-size: 1rem;
+            }
+        }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <a href="blog.html" class="btn-voltar">← Voltar ao Blog</a>
-    <div id="render-post">
-        <p style="text-align: center; padding: 50px;">Carregando...</p>
+    <div class="container">
+        <a href="blog.html" class="btn-voltar">← Voltar ao Blog</a>
+
+        <div id="render-post">
+            <p style="text-align:center; padding:50px;">Carregando...</p>
+        </div>
     </div>
-</div>
 
-<script>
-    const URL_SB = 'https://mczmhvuxujvhrudqmpvg.supabase.co';
-    const KEY_SB = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1jem1odnV4dWp2aHJ1ZHFtcHZnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5MzgwMDksImV4cCI6MjA5MTUxNDAwOX0.vqNvzVRzpH9Otqb7DISpWXLw4b6eegdwzpaLBRJPwfY';
-    const _sb = supabase.createClient(URL_SB, KEY_SB);
+    <script>
+        const URL_SB = 'https://mczmhvuxujvhrudqmpvg.supabase.co';
+        const KEY_SB = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1jem1odnV4dWp2aHJ1ZHFtcHZnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5MzgwMDksImV4cCI6MjA5MTUxNDAwOX0.vqNvzVRzpH9Otqb7DISpWXLw4b6eegdwzpaLBRJPwfY';
 
-    async function carregarPost() {
-        const urlParams = new URLSearchParams(window.location.search);
-        const slug = urlParams.get('slug');
+        const _sb = supabase.createClient(URL_SB, KEY_SB);
 
-        // Se não houver slug, não tenta buscar
-        if (!slug) {
-            document.getElementById('render-post').innerHTML = "<h1 style='text-align:center'>Acesse através de um link válido.</h1>";
-            return;
-        }
+        async function carregarPost() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const slug = urlParams.get('slug');
 
-        try {
-            const { data: post, error } = await _sb
-                .from('artigos')
-                .select('*')
-                .eq('slug', slug)
-                .maybeSingle();
-
-            if (error || !post) {
-                document.getElementById('render-post').innerHTML = "<h1 style='text-align:center'>Post não encontrado no banco.</h1>";
+            if (!slug) {
+                document.getElementById('render-post').innerHTML =
+                    "<h1 style='text-align:center'>Acesse através de um link válido.</h1>";
                 return;
             }
 
-            document.title = post.titulo;
-            
-            document.getElementById('render-post').innerHTML = `
-                <div class="header-post">
-                    <span class="categoria">${post.categoria || 'Notícias'}</span>
-                    <h1>${post.titulo}</h1>
-                    <div class="meta">Postado em ${new Date(post.created_at).toLocaleDateString('pt-BR')}</div>
-                </div>
-                
-                ${post.capa_url ? `<img src="${post.capa_url}" class="capa" alt="Imagem">` : ''}
-                
-                <div class="conteudo">
-                    ${post.conteudo || 'Sem conteúdo.'}
-                </div>
-            `;
-        } catch (e) {
-            document.getElementById('render-post').innerHTML = "<h1>Erro de conexão.</h1>";
-        }
-    }
+            try {
+                const { data: post, error } = await _sb
+                    .from('artigos')
+                    .select('*')
+                    .eq('slug', slug)
+                    .maybeSingle();
 
-    // Roda a função assim que a janela carregar
-    window.onload = carregarPost;
-</script>
+                if (error || !post) {
+                    document.getElementById('render-post').innerHTML =
+                        "<h1 style='text-align:center'>Post não encontrado no banco.</h1>";
+                    return;
+                }
+
+                document.title = post.titulo;
+
+                document.getElementById('render-post').innerHTML = `
+                    <div class="header-post">
+                        <span class="categoria">${post.categoria || 'Notícias'}</span>
+                        <h1>${post.titulo}</h1>
+                        <div class="meta">
+                            Postado em ${new Date(post.created_at).toLocaleDateString('pt-BR')}
+                        </div>
+                    </div>
+
+                    ${post.capa_url ? `
+                        <div class="img-box">
+                            <img src="${post.capa_url}" class="capa" alt="Imagem do post">
+                        </div>
+                    ` : ''}
+
+                    <div class="conteudo">
+                        ${post.conteudo || 'Sem conteúdo.'}
+                    </div>
+                `;
+            } catch (e) {
+                document.getElementById('render-post').innerHTML =
+                    "<h1 style='text-align:center'>Erro de conexão.</h1>";
+                console.error(e);
+            }
+        }
+
+        window.onload = carregarPost;
+    </script>
+
 </body>
 </html>
