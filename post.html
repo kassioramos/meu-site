@@ -10,30 +10,50 @@
         :root { --bg: #0f172a; --card: #1e293b; --primary: #3b82f6; --text: #f8fafc; }
         body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; line-height: 1.8; }
         .container { max-width: 800px; margin: 0 auto; padding: 40px 20px; }
+        
+        .btn-voltar { color: var(--primary); text-decoration: none; font-weight: bold; display: inline-block; margin-bottom: 20px; transition: 0.3s; }
+        .btn-voltar:hover { opacity: 0.7; }
+
         .header-post { text-align: center; margin-bottom: 40px; }
-        .header-post h1 { font-size: 2.5rem; margin: 20px 0; line-height: 1.2; }
+        .header-post h1 { font-size: 2.5rem; margin: 20px 0; line-height: 1.2; color: #fff; }
         .meta { color: #94a3b8; font-size: 0.9rem; }
-        .categoria { background: var(--primary); padding: 4px 12px; border-radius: 20px; font-weight: bold; font-size: 0.75rem; }
+        .categoria { background: var(--primary); padding: 4px 12px; border-radius: 20px; font-weight: bold; font-size: 0.75rem; text-transform: uppercase; }
+
+        /* AJUSTE DA IMAGEM: AGORA ELA NÃO CORTA MAIS */
+        .area-capa { 
+            width: 100%; 
+            background-color: rgba(255,255,255,0.03); 
+            border-radius: 15px; 
+            margin-bottom: 40px; 
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
         .capa { 
-    width: 100%; 
-    height: 300px; /* Ou a altura que você desejar */
-    object-fit: contain; /* ALTERE DE 'cover' PARA 'contain' */
-    background-color: #0f172a; /* Adiciona um fundo escuro caso a imagem seja menor que a caixa */
-    border-radius: 15px; 
-    margin-bottom: 40px; 
-    border: 1px solid rgba(255,255,255,0.1); 
-}
-        .conteudo { font-size: 1.15rem; color: #cbd5e1; white-space: pre-wrap; }
-        .btn-voltar { color: var(--primary); text-decoration: none; font-weight: bold; display: block; margin-bottom: 20px; }
-    
+            max-width: 100%; 
+            height: auto; 
+            display: block;
+            object-fit: contain; /* Garante que a imagem inteira apareça */
+        }
+
+        .conteudo { 
+            font-size: 1.15rem; 
+            color: #cbd5e1; 
+            white-space: pre-wrap; 
+            word-wrap: break-word;
+        }
+
+        .loader { text-align: center; padding: 50px; color: var(--primary); font-weight: bold; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <a href="blog.html" class="btn-voltar">← Voltar ao Blog</a>
+    
     <div id="render-post">
-        <p style="text-align: center;">Carregando artigo...</p>
+        <div class="loader">Carregando artigo...</div>
     </div>
 </div>
 
@@ -46,34 +66,56 @@
         const urlParams = new URLSearchParams(window.location.search);
         const slug = urlParams.get('slug');
 
+        if (!slug) {
+            document.getElementById('render-post').innerHTML = "<h1 style='text-align:center'>Link inválido.</h1>";
+            return;
+        }
+
+        // Busca com tratamento de erro
         const { data: post, error } = await _sb
             .from('artigos')
             .select('*')
             .eq('slug', slug)
-            .single();
+            .maybeSingle(); // maybeSingle é mais seguro que single()
 
-        if (error || !post) {
-            document.getElementById('render-post').innerHTML = "<h1>Post não encontrado.</h1>";
+        if (error) {
+            console.error("Erro Supabase:", error);
+            document.getElementById('render-post').innerHTML = "<h1 style='text-align:center'>Erro de conexão.</h1>";
             return;
         }
 
-        document.title = post.titulo;
+        if (!post) {
+            document.getElementById('render-post').innerHTML = "<h1 style='text-align:center'>Post não encontrado.</h1>";
+            return;
+        }
+
+        document.title = post.titulo + " - Concursos MA Pro";
+        
         document.getElementById('render-post').innerHTML = `
             <div class="header-post">
-                <span class="categoria">${post.categoria}</span>
+                <span class="categoria">${post.categoria || 'Geral'}</span>
                 <h1>${post.titulo}</h1>
                 <div class="meta">Postado em ${new Date(post.created_at).toLocaleDateString('pt-BR')}</div>
             </div>
             
-            ${post.capa_url ? `<img src="${post.capa_url}" class="capa">` : ''}
+            ${post.capa_url ? `
+                <div class="area-capa">
+                    <img src="${post.capa_url}" class="capa" alt="Capa da notícia">
+                </div>
+            ` : ''}
             
-            <div class="conteudo">
-                ${post.conteudo}
+            <div class="conteudo">${post.conteudo}</div>
+
+            <div style="margin-top: 60px; padding-top: 30px; border-top: 1px solid rgba(255,255,255,0.1); text-align: center;">
+                <a href="blog.html" style="background: var(--primary); color: white; padding: 12px 25px; border-radius: 8px; text-decoration: none; font-weight: bold;">
+                    ← Voltar para a lista
+                </a>
             </div>
         `;
     }
 
-    carregarPost();
+    // Garante que o script rode após carregar a página
+    window.onload = carregarPost;
 </script>
 </body>
 </html>
