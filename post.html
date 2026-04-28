@@ -11,52 +11,32 @@
         body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; line-height: 1.8; }
         .container { max-width: 800px; margin: 0 auto; padding: 40px 20px; }
         
-        .btn-voltar { color: var(--primary); text-decoration: none; font-weight: bold; display: inline-block; margin-bottom: 20px; transition: 0.3s; }
-        .btn-voltar:hover { opacity: 0.7; }
-
         .header-post { text-align: center; margin-bottom: 40px; }
-        .header-post h1 { font-size: 2.5rem; margin: 20px 0; line-height: 1.2; color: #fff; }
+        .header-post h1 { font-size: 2.5rem; margin: 20px 0; line-height: 1.2; }
         .meta { color: #94a3b8; font-size: 0.9rem; }
         .categoria { background: var(--primary); padding: 4px 12px; border-radius: 20px; font-weight: bold; font-size: 0.75rem; text-transform: uppercase; }
-
-        /* AJUSTE DA IMAGEM: AGORA ELA NÃO CORTA MAIS */
-        .area-capa { 
+        
+        /* CORREÇÃO DEFINITIVA DA IMAGEM: SEM ALTURA FIXA = SEM CORTES */
+        .capa { 
             width: 100%; 
-            background-color: rgba(255,255,255,0.03); 
+            height: auto; 
+            display: block;
             border-radius: 15px; 
             margin-bottom: 40px; 
-            overflow: hidden;
-            display: flex;
-            justify-content: center;
             border: 1px solid rgba(255,255,255,0.1);
-/* Removemos a 'area-capa' antiga e simplificamos */
-.capa { 
-    width: 100%; 
-    height: auto; /* Deixa a altura ser definida pela própria imagem */
-    display: block;
-    border-radius: 15px; 
-    margin-bottom: 40px; 
-    border: 1px solid rgba(255,255,255,0.1);
-    /* Removemos o object-fit e o background-color fixo */
-}
-
-        .conteudo { 
-            font-size: 1.15rem; 
-            color: #cbd5e1; 
-            white-space: pre-wrap; 
-            word-wrap: break-word;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
         }
-
-        .loader { text-align: center; padding: 50px; color: var(--primary); font-weight: bold; }
+        
+        .conteudo { font-size: 1.15rem; color: #cbd5e1; white-space: pre-wrap; }
+        .btn-voltar { color: var(--primary); text-decoration: none; font-weight: bold; display: inline-block; margin-bottom: 20px; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <a href="blog.html" class="btn-voltar">← Voltar ao Blog</a>
-    
     <div id="render-post">
-        <div class="loader">Carregando artigo...</div>
+        <p style="text-align: center;">Carregando artigo...</p>
     </div>
 </div>
 
@@ -70,29 +50,23 @@
         const slug = urlParams.get('slug');
 
         if (!slug) {
-            document.getElementById('render-post').innerHTML = "<h1 style='text-align:center'>Link inválido.</h1>";
+            document.getElementById('render-post').innerHTML = "<h1>Post não identificado na URL.</h1>";
             return;
         }
 
-        // Busca com tratamento de erro
+        // Busca o post e garante que ele pegue os dados mesmo se a coluna for 'conteudo'
         const { data: post, error } = await _sb
             .from('artigos')
             .select('*')
             .eq('slug', slug)
-            .maybeSingle(); // maybeSingle é mais seguro que single()
+            .maybeSingle();
 
-        if (error) {
-            console.error("Erro Supabase:", error);
-            document.getElementById('render-post').innerHTML = "<h1 style='text-align:center'>Erro de conexão.</h1>";
+        if (error || !post) {
+            document.getElementById('render-post').innerHTML = "<h1>Post não encontrado. Verifique o slug no banco de dados.</h1>";
             return;
         }
 
-        if (!post) {
-            document.getElementById('render-post').innerHTML = "<h1 style='text-align:center'>Post não encontrado.</h1>";
-            return;
-        }
-
-        document.title = post.titulo + " - Concursos MA Pro";
+        document.title = post.titulo;
         
         document.getElementById('render-post').innerHTML = `
             <div class="header-post">
@@ -101,24 +75,21 @@
                 <div class="meta">Postado em ${new Date(post.created_at).toLocaleDateString('pt-BR')}</div>
             </div>
             
-            ${post.capa_url ? `
-                <div class="area-capa">
-                    <img src="${post.capa_url}" class="capa" alt="Capa da notícia">
-                </div>
-            ` : ''}
+            ${post.capa_url ? `<img src="${post.capa_url}" class="capa">` : ''}
             
-            <div class="conteudo">${post.conteudo}</div>
+            <div class="conteudo">
+                ${post.conteudo || post.texto || 'Conteúdo não encontrado.'}
+            </div>
 
-            <div style="margin-top: 60px; padding-top: 30px; border-top: 1px solid rgba(255,255,255,0.1); text-align: center;">
-                <a href="blog.html" style="background: var(--primary); color: white; padding: 12px 25px; border-radius: 8px; text-decoration: none; font-weight: bold;">
-                    ← Voltar para a lista
+            <div style="margin-top: 50px; text-align: center; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 30px;">
+                 <a href="blog.html" style="background: var(--primary); color: white; padding: 12px 25px; border-radius: 8px; text-decoration: none; font-weight: bold;">
+                    Voltar para a lista
                 </a>
             </div>
         `;
     }
 
-    // Garante que o script rode após carregar a página
-    window.onload = carregarPost;
+    carregarPost();
 </script>
 </body>
 </html>
