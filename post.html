@@ -29,13 +29,16 @@
             display: flex;
             justify-content: center;
             border: 1px solid rgba(255,255,255,0.1);
-        }
-        .capa { 
-            max-width: 100%; 
-            height: auto; 
-            display: block;
-            object-fit: contain; /* Garante que a imagem inteira apareça */
-        }
+/* Removemos a 'area-capa' antiga e simplificamos */
+.capa { 
+    width: 100%; 
+    height: auto; /* Deixa a altura ser definida pela própria imagem */
+    display: block;
+    border-radius: 15px; 
+    margin-bottom: 40px; 
+    border: 1px solid rgba(255,255,255,0.1);
+    /* Removemos o object-fit e o background-color fixo */
+}
 
         .conteudo { 
             font-size: 1.15rem; 
