@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Blog - Concursos Maranhão Pro</title>
+    <title>Concursos Maranhão Pro</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
@@ -11,20 +11,21 @@
         body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; line-height: 1.8; }
         .container { max-width: 800px; margin: 0 auto; padding: 40px 20px; }
         
+        /* CABEÇALHO */
         .header-post { text-align: center; margin-bottom: 40px; }
-        .header-post h1 { font-size: 2.5rem; margin: 20px 0; line-height: 1.2; }
+        .header-post h1 { font-size: 2.5rem; margin: 20px 0; line-height: 1.2; color: white; }
         .meta { color: #94a3b8; font-size: 0.9rem; }
         .categoria { background: var(--primary); padding: 4px 12px; border-radius: 20px; font-weight: bold; font-size: 0.75rem; text-transform: uppercase; }
         
-        /* CORREÇÃO DEFINITIVA DA IMAGEM: SEM ALTURA FIXA = SEM CORTES */
+        /* IMAGEM: SEM ALTURA FIXA = SEM CORTES */
         .capa { 
             width: 100%; 
-            height: auto; 
+            height: auto; /* Deixa a imagem definir a própria altura */
             display: block;
             border-radius: 15px; 
             margin-bottom: 40px; 
             border: 1px solid rgba(255,255,255,0.1);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
         
         .conteudo { font-size: 1.15rem; color: #cbd5e1; white-space: pre-wrap; }
@@ -36,7 +37,7 @@
 <div class="container">
     <a href="blog.html" class="btn-voltar">← Voltar ao Blog</a>
     <div id="render-post">
-        <p style="text-align: center;">Carregando artigo...</p>
+        <p style="text-align: center; padding: 50px;">Carregando...</p>
     </div>
 </div>
 
@@ -49,47 +50,46 @@
         const urlParams = new URLSearchParams(window.location.search);
         const slug = urlParams.get('slug');
 
+        // Se não houver slug, não tenta buscar
         if (!slug) {
-            document.getElementById('render-post').innerHTML = "<h1>Post não identificado na URL.</h1>";
+            document.getElementById('render-post').innerHTML = "<h1 style='text-align:center'>Acesse através de um link válido.</h1>";
             return;
         }
 
-        // Busca o post e garante que ele pegue os dados mesmo se a coluna for 'conteudo'
-        const { data: post, error } = await _sb
-            .from('artigos')
-            .select('*')
-            .eq('slug', slug)
-            .maybeSingle();
+        try {
+            const { data: post, error } = await _sb
+                .from('artigos')
+                .select('*')
+                .eq('slug', slug)
+                .maybeSingle();
 
-        if (error || !post) {
-            document.getElementById('render-post').innerHTML = "<h1>Post não encontrado. Verifique o slug no banco de dados.</h1>";
-            return;
+            if (error || !post) {
+                document.getElementById('render-post').innerHTML = "<h1 style='text-align:center'>Post não encontrado no banco.</h1>";
+                return;
+            }
+
+            document.title = post.titulo;
+            
+            document.getElementById('render-post').innerHTML = `
+                <div class="header-post">
+                    <span class="categoria">${post.categoria || 'Notícias'}</span>
+                    <h1>${post.titulo}</h1>
+                    <div class="meta">Postado em ${new Date(post.created_at).toLocaleDateString('pt-BR')}</div>
+                </div>
+                
+                ${post.capa_url ? `<img src="${post.capa_url}" class="capa" alt="Imagem">` : ''}
+                
+                <div class="conteudo">
+                    ${post.conteudo || 'Sem conteúdo.'}
+                </div>
+            `;
+        } catch (e) {
+            document.getElementById('render-post').innerHTML = "<h1>Erro de conexão.</h1>";
         }
-
-        document.title = post.titulo;
-        
-        document.getElementById('render-post').innerHTML = `
-            <div class="header-post">
-                <span class="categoria">${post.categoria || 'Geral'}</span>
-                <h1>${post.titulo}</h1>
-                <div class="meta">Postado em ${new Date(post.created_at).toLocaleDateString('pt-BR')}</div>
-            </div>
-            
-            ${post.capa_url ? `<img src="${post.capa_url}" class="capa">` : ''}
-            
-            <div class="conteudo">
-                ${post.conteudo || post.texto || 'Conteúdo não encontrado.'}
-            </div>
-
-            <div style="margin-top: 50px; text-align: center; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 30px;">
-                 <a href="blog.html" style="background: var(--primary); color: white; padding: 12px 25px; border-radius: 8px; text-decoration: none; font-weight: bold;">
-                    Voltar para a lista
-                </a>
-            </div>
-        `;
     }
 
-    carregarPost();
+    // Roda a função assim que a janela carregar
+    window.onload = carregarPost;
 </script>
 </body>
 </html>
