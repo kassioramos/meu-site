@@ -165,41 +165,59 @@
     }
 
 function renderizarConcurso(c) {
-        const container = document.getElementById('conteudo-dinamico');
-        document.title = `${c.orgao} - Concursos MA Pro`;
+    const container = document.getElementById('conteudo-dinamico');
+    document.title = `${c.orgao} - Concursos MA Pro`;
 
-        container.innerHTML = `
-            <div class="header-content">
-                <span class="status-tag">${c.status || 'Aberto'}</span>
-                <h1>${c.orgao}</h1>
-                <p>📍 ${c.cidade || 'Maranhão'} | 🏢 Banca: ${c.banca || 'A definir'}</p>
+    // Criamos o link dinâmico para a página de questões filtrando pela banca
+    // Assumindo que sua página de questões se chama 'questoes.html'
+    const linkQuestoesBanca = `questoes.html?banca=${encodeURIComponent(c.banca)}`;
+
+    container.innerHTML = `
+        <div class="header-content">
+            <span class="status-tag">${c.status || 'Aberto'}</span>
+            <h1>${c.orgao}</h1>
+            <p>📍 ${c.cidade || 'Maranhão'} | 🏢 Banca: ${c.banca || 'A definir'}</p>
+        </div>
+
+        <div class="grid-info">
+            <div class="info-item">
+                <label>Inscrições até</label>
+                <span>${fmtData(c.data_fim)}</span>
             </div>
-
-            <div class="grid-info">
-                <div class="info-item">
-                    <label>Inscrições até</label>
-                    <span>${fmtData(c.data_fim)}</span>
-                </div>
-                <div class="info-item">
-                    <label>Salário até</label>
-                    <span>${fmtMoeda(c.salario)}</span>
-                </div>
-                <div class="info-item">
-                    <label>Vagas</label>
-                    <span>${c.vagas || 'Ver edital'}</span>
-                </div>
+            <div class="info-item">
+                <label>Salário até</label>
+                <span>${fmtMoeda(c.salario)}</span>
             </div>
-
-            <div class="sobre-secao">
-                <h3>📋 Sobre o Certame</h3>
-                <p>${c.descricao || 'Confira os detalhes completos no edital oficial abaixo.'}</p>
+            <div class="info-item">
+                <label>Vagas</label>
+                <span>${c.vagas || 'Ver edital'}</span>
             </div>
+        </div>
 
-            ${c.link_edital ? `<a href="${c.link_edital}" target="_blank" class="btn-acao">LER EDITAL OFICIAL</a>` : ''}
-            ${c.link_inscricao ? `<a href="${c.link_inscricao}" target="_blank" class="btn-acao btn-inscricao">FAZER INSCRIÇÃO</a>` : ''}
-        `;
-    }
+        <div class="sobre-secao">
+            <h3>📋 Sobre o Certame</h3>
+            <p>${c.descricao || 'Confira os detalhes completos no edital oficial abaixo.'}</p>
+        </div>
 
+        ${c.link_edital ? `
+            <a href="${c.link_edital}" target="_blank" class="btn-acao">
+                📄 LER EDITAL OFICIAL
+            </a>
+        ` : ''}
+
+        ${c.banca ? `
+            <a href="${linkQuestoesBanca}" class="btn-acao btn-questoes">
+                📝 QUESTÕES DA BANCA ${c.banca.toUpperCase()}
+            </a>
+        ` : ''}
+
+        ${c.link_inscricao ? `
+            <a href="${c.link_inscricao}" target="_blank" class="btn-acao btn-inscricao">
+                🚀 FAZER INSCRIÇÃO
+            </a>
+        ` : ''}
+    `;
+}
 
 
     function renderizarQuestao(q) {
