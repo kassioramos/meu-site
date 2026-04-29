@@ -91,13 +91,28 @@
         }
         .btn-inscricao { background: #10b981; }
         .btn-questoes { background: #8b5cf6; }
+.btn-acao { 
+            display: block; 
+            width: 100%; 
+            text-align: center; 
+            background: var(--primary); 
+            color: white; 
+            padding: 16px; 
+            border-radius: 8px; 
+            text-decoration: none; 
+            font-weight: 700; 
+            margin-top: 15px; 
+            /* ADICIONE/AJUSTE ESTA LINHA ABAIXO */
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
         .btn-acao:hover {
-    opacity: 0.9;
-    filter: brightness(1.1);
-    /* Use apenas um transform. -2px dá um salto mais visível e elegante */
-    transform: translateY(-2px); 
-    /* Adicione um transition no seletor principal (.btn-acao) para esse movimento ser suave */
-}
+            opacity: 0.9;
+            filter: brightness(1.2);
+            /* Aumentado para -5px para o efeito ser perceptível */
+            transform: translateY(-5px); 
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4);
+        }
         .status-tag { background: #10b981; color: white; padding: 5px 15px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; }
 
         @media (max-width: 600px) {
