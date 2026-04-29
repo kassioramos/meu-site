@@ -41,7 +41,12 @@
             background: #0f172a; color: white; font-size: 1rem; box-sizing: border-box;
         }
         
-        textarea { height: 300px; resize: vertical; font-family: 'Courier New', Courier, monospace; line-height: 1.6; }
+        textarea { 
+    height: 300px; 
+    resize: vertical; 
+    font-family: 'Inter', sans-serif;
+    line-height: 1.8;
+}
         
         .btn-salvar { 
             background: var(--primary); color: white; border: none; padding: 15px 30px; 
@@ -248,7 +253,7 @@
             categoria: document.getElementById('categoria').value, // Envia o texto puro
             capa_url: document.getElementById('capa_url').value,
             resumo: document.getElementById('resumo').value,
-            conteudo: document.getElementById('conteudo').value,
+            conteudo: formatarConteudoAutomatico(document.getElementById('conteudo').value),
             created_at: new Date()
         };
 
@@ -300,6 +305,25 @@ function mostrarSecao(secao){
         titulo.innerText = '🗑️ Excluir Conteúdo';
         subtitulo.innerText = 'Removendo conteúdo do sistema';
     }
+}
+function formatarConteudoAutomatico(texto) {
+    return texto
+        .split('\n\n')
+        .map(bloco => {
+            bloco = bloco.trim();
+
+            if (bloco.startsWith('- ')) {
+                const itens = bloco.split('\n').map(i => `<li>${i.replace('- ', '')}</li>`).join('');
+                return `<ul>${itens}</ul>`;
+            }
+
+            if (bloco.length < 80) {
+                return `<h2>${bloco}</h2>`;
+            }
+
+            return `<p>${bloco}</p>`;
+        })
+        .join('');
 }
 async function salvarQuestao(){
     const dados = {
