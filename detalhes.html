@@ -168,7 +168,6 @@ function renderizarConcurso(c) {
     const container = document.getElementById('conteudo-dinamico');
     document.title = `${c.orgao} - Concursos MA Pro`;
 
-    // Define o link de questões baseado na banca
     const linkQuestoesBanca = c.banca ? `questoes.html?banca=${encodeURIComponent(c.banca)}` : '#';
 
     container.innerHTML = `
@@ -198,24 +197,24 @@ function renderizarConcurso(c) {
             <p>${c.descricao || 'Confira os detalhes completos no edital oficial abaixo.'}</p>
         </div>
 
-<div class="acoes-container" style="display: flex; flex-direction: column; gap: 12px; margin-top: 20px;">
-
+        <div class="acoes-container" style="display: flex; flex-direction: column; gap: 12px; margin-top: 20px;">
             ${c.link_edital ? `
-                    <a href="${c.link_edital}" target="_blank" class="btn-acao" style="background: #475569; margin-bottom: 10px;">
-                📄 LER EDITAL OFICIAL
+                <a href="${c.link_edital}" target="_blank" class="btn-acao" style="background: #475569;">
+                    📄 LER EDITAL OFICIAL
                 </a>
-` : ''}
+            ` : ''}
+
             ${c.banca ? `
-                <a href="questoes.html?banca=${encodeURIComponent(c.banca)}" class="btn-acao btn-questoes">
+                <a href="${linkQuestoesBanca}" class="btn-acao btn-questoes">
                     📝 QUESTÕES DA BANCA ${c.banca.toUpperCase()}
                 </a>
             ` : ''}
+
             ${c.link_inscricao ? `
                 <a href="${c.link_inscricao}" target="_blank" class="btn-acao btn-inscricao">
                     🚀 FAZER INSCRIÇÃO
                 </a>
             ` : ''}
-            
         </div>
     `;
 }
