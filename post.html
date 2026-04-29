@@ -32,8 +32,20 @@
         line-height: 1.8;
     }
 
+    /* Barra de Progresso */
+    #progress-bar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 4px;
+        background: var(--primary);
+        width: 0%;
+        z-index: 9999;
+        transition: width 0.1s ease;
+    }
+
     .container {
-        max-width: 850px; /* Largura ideal para leitura de artigos */
+        max-width: 850px;
         margin: 0 auto;
         padding: 40px 20px;
     }
@@ -99,17 +111,25 @@
     .capa {
         width: 100%;
         height: 100%;
-        object-fit: cover; /* Garante que a imagem preencha o box sem sobrar espaço */
+        object-fit: cover;
     }
 
-    /* --- CONTEÚDO DO ARTIGO (HIERARQUIA) --- */
+    /* --- CONTEÚDO --- */
     .conteudo {
         font-size: 1.2rem;
         color: var(--text-sub);
     }
 
-    .conteudo p {
-        margin-bottom: 25px;
+    .conteudo p { margin-bottom: 25px; }
+
+    /* Letra Capitular (Premium) */
+    .conteudo p:first-of-type::first-letter {
+        font-size: 3.5rem;
+        font-weight: 800;
+        float: left;
+        margin-right: 10px;
+        line-height: 1;
+        color: var(--primary);
     }
 
     .conteudo h2 {
@@ -118,7 +138,6 @@
         margin-top: 45px;
         margin-bottom: 20px;
         font-weight: 800;
-        line-height: 1.3;
     }
 
     .conteudo h3 {
@@ -126,7 +145,6 @@
         font-size: 1.6rem;
         margin-top: 35px;
         margin-bottom: 15px;
-        font-weight: 700;
     }
 
     .conteudo blockquote {
@@ -137,41 +155,21 @@
         margin: 40px 0;
         border-radius: 0 12px 12px 0;
         color: #f1f5f9;
-        font-size: 1.3rem;
     }
 
-    .conteudo ul {
-        margin: 25px 0;
-        padding-left: 25px;
-    }
+    .conteudo ul { margin: 25px 0; padding-left: 25px; }
+    .conteudo li { margin-bottom: 12px; }
 
-    .conteudo li {
-        margin-bottom: 12px;
-        position: relative;
-    }
-
-    /* --- RESPONSIVIDADE --- */
     @media(max-width: 768px) {
-        .container { padding: 20px; }
-        
-        .header-post h1 {
-            font-size: 2rem;
-        }
-
-        .img-box {
-            max-height: 280px;
-            margin-bottom: 30px;
-        }
-
-        .conteudo {
-            font-size: 1.1rem;
-        }
-
-        .conteudo h2 { font-size: 1.7rem; }
+        .header-post h1 { font-size: 2rem; }
+        .img-box { max-height: 280px; }
+        .conteudo { font-size: 1.1rem; }
     }
 </style>
 </head>
 <body>
+
+    <div id="progress-bar"></div>
 
     <div class="container">
         <a href="blog.html" class="btn-voltar">← Voltar ao Blog</a>
@@ -187,65 +185,84 @@
 
         const _sb = supabase.createClient(URL_SB, KEY_SB);
 
-// ESSA É A FUNÇÃO QUE DEVE ESTAR AQUI TAMBÉM
-    function formatarConteudoAutomatico(texto) {
-        if(!texto) return 'Sem conteúdo.';
-        return texto
-            .split('\n\n')
-            .map(bloco => {
-                bloco = bloco.trim();
-                if (bloco.startsWith('## ')) return `<h2>${bloco.replace('## ', '')}</h2>`;
-                if (bloco.startsWith('### ')) return `<h3>${bloco.replace('### ', '')}</h3>`;
-                if (bloco.startsWith('> ')) return `<blockquote>${bloco.replace('> ', '')}</blockquote>`;
-                if (bloco.startsWith('- ')) {
-                    const itens = bloco.split('\n').map(i => `<li>${i.replace('- ', '')}</li>`).join('');
-                    return `<ul>${itens}</ul>`;
-                }
-                return `<p>${bloco}</p>`;
-            }).join('');
-    }
-
-    async function carregarPost() {
-        const urlParams = new URLSearchParams(window.location.search);
-        const slug = urlParams.get('slug');
-
-        if (!slug) return;
-
-        try {
-            const { data: post, error } = await _sb
-                .from('artigos')
-                .select('*')
-                .eq('slug', slug)
-                .maybeSingle();
-
-            if (post) {
-                document.title = post.titulo;
-                
-                // A MÁGICA ACONTECE AQUI: formatarConteudoAutomatico(post.conteudo)
-                document.getElementById('render-post').innerHTML = `
-                    <div class="header-post">
-                        <span class="categoria">${post.categoria || 'Notícias'}</span>
-                        <h1>${post.titulo}</h1>
-                        <div class="meta">Postado em ${new Date(post.created_at).toLocaleDateString('pt-BR')}</div>
-                    </div>
-
-                    ${post.capa_url ? `
-                        <div class="img-box">
-                            <img src="${post.capa_url}" class="capa" alt="Capa">
-                        </div>
-                    ` : ''}
-
-                    <div class="conteudo">
-                        ${formatarConteudoAutomatico(post.conteudo)}
-                    </div>
-                `;
-            }
-        } catch (e) {
-            console.error(e);
+        function formatarConteudoAutomatico(texto) {
+            if(!texto) return 'Sem conteúdo.';
+            return texto
+                .split('\n\n')
+                .map(bloco => {
+                    bloco = bloco.trim();
+                    if (bloco.startsWith('## ')) return `<h2>${bloco.replace('## ', '')}</h2>`;
+                    if (bloco.startsWith('### ')) return `<h3>${bloco.replace('### ', '')}</h3>`;
+                    if (bloco.startsWith('> ')) return `<blockquote>${bloco.replace('> ', '')}</blockquote>`;
+                    if (bloco.startsWith('- ')) {
+                        const itens = bloco.split('\n').map(i => `<li>${i.replace('- ', '')}</li>`).join('');
+                        return `<ul>${itens}</ul>`;
+                    }
+                    return `<p>${bloco}</p>`;
+                }).join('');
         }
-    }
 
-    window.onload = carregarPost;
+        async function carregarPost() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const slug = urlParams.get('slug');
+
+            if (!slug) {
+                document.getElementById('render-post').innerHTML = '<p style="text-align:center;">Post não encontrado.</p>';
+                return;
+            }
+
+            try {
+                const { data: post, error } = await _sb
+                    .from('artigos')
+                    .select('*')
+                    .eq('slug', slug)
+                    .maybeSingle();
+
+                if (post) {
+                    document.title = post.titulo;
+                    
+                    document.getElementById('render-post').innerHTML = `
+                        <div class="header-post">
+                            <span class="categoria">${post.categoria || 'Notícias'}</span>
+                            <h1>${post.titulo}</h1>
+                            <div class="meta">Postado em ${new Date(post.created_at).toLocaleDateString('pt-BR')}</div>
+                        </div>
+
+                        ${post.capa_url ? `
+                            <div class="img-box">
+                                <img src="${post.capa_url}" class="capa" alt="Capa">
+                            </div>
+                        ` : ''}
+
+                        <div class="conteudo">
+                            ${formatarConteudoAutomatico(post.conteudo)}
+                        </div>
+
+                        <div style="margin-top: 60px; padding: 40px; background: var(--card); border-radius: 20px; border: 1px solid var(--primary); text-align: center;">
+                            <h4 style="margin-bottom: 10px; color: white; font-size: 1.5rem;">Gostou dessa análise?</h4>
+                            <p style="font-size: 1.1rem; margin-bottom: 25px; color: var(--text-sub);">Não perca nenhum edital do Maranhão. Entre no nosso grupo VIP de estudos.</p>
+                            <a href="#" style="background: var(--primary); color: white; text-decoration: none; padding: 12px 30px; border-radius: 10px; font-weight: bold; display: inline-block; transition: 0.3s;">Participar Agora →</a>
+                        </div>
+                    `;
+                } else {
+                    document.getElementById('render-post').innerHTML = '<p style="text-align:center;">Artigo não encontrado.</p>';
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        window.onload = carregarPost;
+
+        window.onscroll = () => {
+            const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            const scrolled = (winScroll / height) * 100;
+            const progressBar = document.getElementById("progress-bar");
+            if (progressBar) {
+                progressBar.style.width = scrolled + "%";
+            }
+        };
     </script>
 
 </body>
