@@ -8,133 +8,168 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-    <style>
-        :root {
-            --bg: #0f172a;
-            --card: #1e293b;
-            --primary: #3b82f6;
-            --text: #f8fafc;
-        }
+<style>
+    :root {
+        --bg: #0f172a;
+        --card: #1e293b;
+        --primary: #3b82f6;
+        --text-main: #f8fafc;
+        --text-sub: #cbd5e1;
+        --text-meta: #94a3b8;
+        --border: rgba(255, 255, 255, 0.1);
+    }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
 
-        body {
-            font-family: 'Inter', sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            line-height: 1.8;
-        }
+    body {
+        font-family: 'Inter', sans-serif;
+        background: var(--bg);
+        color: var(--text-main);
+        line-height: 1.8;
+    }
 
-        .container {
-            max-width: 950px;
-            margin: 0 auto;
-            padding: 40px 20px;
-        }
+    .container {
+        max-width: 850px; /* Largura ideal para leitura de artigos */
+        margin: 0 auto;
+        padding: 40px 20px;
+    }
 
-        .btn-voltar {
-            color: var(--primary);
-            text-decoration: none;
-            font-weight: bold;
-            display: inline-block;
-            margin-bottom: 20px;
-        }
+    .btn-voltar {
+        color: var(--primary);
+        text-decoration: none;
+        font-weight: bold;
+        display: inline-block;
+        margin-bottom: 25px;
+        transition: 0.3s;
+    }
 
-        /* CABEÇALHO */
-        .header-post {
-            text-align: center;
-            margin-bottom: 40px;
-        }
+    .btn-voltar:hover {
+        transform: translateX(-5px);
+    }
 
+    /* --- CABEÇALHO DO POST --- */
+    .header-post {
+        text-align: center;
+        margin-bottom: 40px;
+    }
+
+    .categoria {
+        background: var(--primary);
+        color: white;
+        padding: 6px 16px;
+        border-radius: 20px;
+        font-weight: 800;
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .header-post h1 {
+        font-size: 2.8rem;
+        margin: 20px 0;
+        line-height: 1.1;
+        color: white;
+        font-weight: 800;
+    }
+
+    .meta {
+        color: var(--text-meta);
+        font-size: 0.95rem;
+    }
+
+    /* --- IMAGEM DE CAPA --- */
+    .img-box {
+        width: 100%;
+        max-height: 480px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        overflow: hidden;
+        border-radius: 16px;
+        margin-bottom: 50px;
+        background: #111827;
+        border: 1px solid var(--border);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+    }
+
+    .capa {
+        width: 100%;
+        height: 100%;
+        object-fit: cover; /* Garante que a imagem preencha o box sem sobrar espaço */
+    }
+
+    /* --- CONTEÚDO DO ARTIGO (HIERARQUIA) --- */
+    .conteudo {
+        font-size: 1.2rem;
+        color: var(--text-sub);
+    }
+
+    .conteudo p {
+        margin-bottom: 25px;
+    }
+
+    .conteudo h2 {
+        color: var(--primary);
+        font-size: 2rem;
+        margin-top: 45px;
+        margin-bottom: 20px;
+        font-weight: 800;
+        line-height: 1.3;
+    }
+
+    .conteudo h3 {
+        color: white;
+        font-size: 1.6rem;
+        margin-top: 35px;
+        margin-bottom: 15px;
+        font-weight: 700;
+    }
+
+    .conteudo blockquote {
+        border-left: 5px solid var(--primary);
+        padding: 25px;
+        background: rgba(59, 130, 246, 0.08);
+        font-style: italic;
+        margin: 40px 0;
+        border-radius: 0 12px 12px 0;
+        color: #f1f5f9;
+        font-size: 1.3rem;
+    }
+
+    .conteudo ul {
+        margin: 25px 0;
+        padding-left: 25px;
+    }
+
+    .conteudo li {
+        margin-bottom: 12px;
+        position: relative;
+    }
+
+    /* --- RESPONSIVIDADE --- */
+    @media(max-width: 768px) {
+        .container { padding: 20px; }
+        
         .header-post h1 {
-            font-size: 2.5rem;
-            margin: 20px 0;
-            line-height: 1.2;
-            color: white;
+            font-size: 2rem;
         }
 
-        .meta {
-            color: #94a3b8;
-            font-size: 0.9rem;
-        }
-
-        .categoria {
-            background: var(--primary);
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-weight: bold;
-            font-size: 0.75rem;
-            text-transform: uppercase;
-        }
-
-        /* CAIXA DA IMAGEM */
         .img-box {
-            width: 100%;
-            max-height: 500px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            overflow: hidden;
-            border-radius: 15px;
-            margin-bottom: 40px;
-            background: #111827;
-            border: 1px solid rgba(255,255,255,0.1);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            max-height: 280px;
+            margin-bottom: 30px;
         }
 
-        /* IMAGEM */
-        .capa {
-            max-width: 100%;
-            max-height: 100%;
-            width: auto;
-            height: auto;
-            object-fit: contain;
-            display: block;
-        }
-
-        /* CONTEÚDO */
         .conteudo {
-            font-size: 1.15rem;
-            color: #cbd5e1;
-            white-space: pre-wrap;
+            font-size: 1.1rem;
         }
 
-        /* RESPONSIVO */
-        @media(max-width: 768px) {
-            .header-post h1 {
-                font-size: 2rem;
-            }
-
-            .img-box {
-                max-height: 300px;
-            }
-
-.conteudo{
-    font-family:'Merriweather', serif;
-    font-size:1.2rem;
-    line-height:2;
-}
-.conteudo p {
-    margin-bottom: 24px;
-}
-.conteudo h2 {
-    color: #3b82f6;
-    font-size: 2rem;
-    margin-top: 40px;
-    margin-bottom: 20px;
-    line-height: 1.3;
-}
-.conteudo h3 {
-    color: white;
-    font-size: 1.5rem;
-    margin-top: 30px;
-    margin-bottom: 15px;
-}
-        }
-    </style>
+        .conteudo h2 { font-size: 1.7rem; }
+    }
+</style>
 </head>
 <body>
 
@@ -152,58 +187,65 @@
 
         const _sb = supabase.createClient(URL_SB, KEY_SB);
 
-        async function carregarPost() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const slug = urlParams.get('slug');
-
-            if (!slug) {
-                document.getElementById('render-post').innerHTML =
-                    "<h1 style='text-align:center'>Acesse através de um link válido.</h1>";
-                return;
-            }
-
-            try {
-                const { data: post, error } = await _sb
-                    .from('artigos')
-                    .select('*')
-                    .eq('slug', slug)
-                    .maybeSingle();
-
-                if (error || !post) {
-                    document.getElementById('render-post').innerHTML =
-                        "<h1 style='text-align:center'>Post não encontrado no banco.</h1>";
-                    return;
+// ESSA É A FUNÇÃO QUE DEVE ESTAR AQUI TAMBÉM
+    function formatarConteudoAutomatico(texto) {
+        if(!texto) return 'Sem conteúdo.';
+        return texto
+            .split('\n\n')
+            .map(bloco => {
+                bloco = bloco.trim();
+                if (bloco.startsWith('## ')) return `<h2>${bloco.replace('## ', '')}</h2>`;
+                if (bloco.startsWith('### ')) return `<h3>${bloco.replace('### ', '')}</h3>`;
+                if (bloco.startsWith('> ')) return `<blockquote>${bloco.replace('> ', '')}</blockquote>`;
+                if (bloco.startsWith('- ')) {
+                    const itens = bloco.split('\n').map(i => `<li>${i.replace('- ', '')}</li>`).join('');
+                    return `<ul>${itens}</ul>`;
                 }
+                return `<p>${bloco}</p>`;
+            }).join('');
+    }
 
+    async function carregarPost() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const slug = urlParams.get('slug');
+
+        if (!slug) return;
+
+        try {
+            const { data: post, error } = await _sb
+                .from('artigos')
+                .select('*')
+                .eq('slug', slug)
+                .maybeSingle();
+
+            if (post) {
                 document.title = post.titulo;
-
+                
+                // A MÁGICA ACONTECE AQUI: formatarConteudoAutomatico(post.conteudo)
                 document.getElementById('render-post').innerHTML = `
                     <div class="header-post">
                         <span class="categoria">${post.categoria || 'Notícias'}</span>
                         <h1>${post.titulo}</h1>
-                        <div class="meta">
-                            Postado em ${new Date(post.created_at).toLocaleDateString('pt-BR')}
-                        </div>
+                        <div class="meta">Postado em ${new Date(post.created_at).toLocaleDateString('pt-BR')}</div>
                     </div>
 
                     ${post.capa_url ? `
                         <div class="img-box">
-                            <img src="${post.capa_url}" class="capa" alt="Imagem do post">
+                            <img src="${post.capa_url}" class="capa" alt="Capa">
                         </div>
                     ` : ''}
 
                     <div class="conteudo">
-                        ${post.conteudo || 'Sem conteúdo.'}
+                        ${formatarConteudoAutomatico(post.conteudo)}
                     </div>
                 `;
-            } catch (e) {
-                document.getElementById('render-post').innerHTML =
-                    "<h1 style='text-align:center'>Erro de conexão.</h1>";
-                console.error(e);
             }
+        } catch (e) {
+            console.error(e);
         }
+    }
 
-        window.onload = carregarPost;
+    window.onload = carregarPost;
     </script>
 
 </body>

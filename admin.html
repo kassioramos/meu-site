@@ -311,48 +311,40 @@ function formatarConteudoAutomatico(texto) {
         .split('\n\n')
         .map(bloco => {
             bloco = bloco.trim();
+            if (!bloco) return '';
 
+            // 1. Títulos de Seção (Ex: ## Título)
+            if (bloco.startsWith('## ')) {
+                return `<h2 style="color: var(--primary); margin-top: 30px; font-weight: 800;">${bloco.replace('## ', '').trim()}</h2>`;
+            }
+
+            // 2. Subtítulos ou Destaques (Ex: ### Subtítulo)
+            if (bloco.startsWith('### ')) {
+                return `<h3 style="color: var(--text-main); margin-top: 20px; border-bottom: 1px solid var(--border); padding-bottom: 5px;">${bloco.replace('### ', '').trim()}</h3>`;
+            }
+
+            // 3. Citações Profissionais (Ex: > Frase de impacto)
+            if (bloco.startsWith('> ')) {
+                return `
+                    <blockquote style="border-left: 4px solid var(--primary); padding: 15px 20px; background: rgba(59, 130, 246, 0.1); font-style: italic; margin: 25px 0; border-radius: 0 8px 8px 0; color: #f1f5f9;">
+                        ${bloco.replace('> ', '').trim()}
+                    </blockquote>`;
+            }
+
+            // 4. Listas com Bullets (Ex: - Item)
             if (bloco.startsWith('- ')) {
                 const itens = bloco
                     .split('\n')
-                    .map(i => `<li>${i.replace('- ', '').trim()}</li>`)
+                    .map(i => `<li style="margin-bottom: 8px;">${i.replace('- ', '').trim()}</li>`)
                     .join('');
-                return `<ul>${itens}</ul>`;
+                return `<ul style="padding-left: 20px; color: #cbd5e1;">${itens}</ul>`;
             }
 
-            if (bloco.startsWith('##')) {
-                return `<h2>${bloco.replace('##', '').trim()}</h2>`;
-            }
-
-            return `<p>${bloco}</p>`;
+            // 5. Parágrafos comuns com espaçamento melhorado
+            return `<p style="margin-bottom: 1.5rem; line-height: 1.8; color: #cbd5e1;">${bloco}</p>`;
         })
         .join('');
 }
-async function salvarQuestao(){
-    const dados = {
-        disciplina: document.getElementById('disciplina').value,
-        banca: document.getElementById('banca').value,
-        enunciado: document.getElementById('enunciadoQuestao').value,
-        opcoes: {
-            a: document.getElementById('altA').value,
-            b: document.getElementById('altB').value,
-            c: document.getElementById('altC').value,
-            d: document.getElementById('altD').value
-        },
-        alternativa_correta: document.getElementById('correta').value,
-        comentario_professor: document.getElementById('comentario').value,
-        created_at: new Date()
-    };
-
-    const { error } = await _supabase.from('questoes').insert([dados]);
-
-    if(error){
-        alert('Erro ao salvar questão: ' + error.message);
-    } else {
-        alert('Questão salva com sucesso!');
-    }
-}
-
 async function salvarConcurso(){
     const dados = {
         orgao: document.getElementById('orgao').value || null,
