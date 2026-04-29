@@ -313,13 +313,17 @@ function formatarConteudoAutomatico(texto) {
             bloco = bloco.trim();
 
             if (bloco.startsWith('- ')) {
-                const itens = bloco.split('\n').map(i => `<li>${i.replace('- ', '')}</li>`).join('');
+                const itens = bloco
+                    .split('\n')
+                    .map(i => `<li>${i.replace('- ', '').trim()}</li>`)
+                    .join('');
                 return `<ul>${itens}</ul>`;
             }
 
             if (bloco.startsWith('##')) {
-                return `<h2>${bloco.replace('##','')}</h2>`;
+                return `<h2>${bloco.replace('##', '').trim()}</h2>`;
             }
+
             return `<p>${bloco}</p>`;
         })
         .join('');
