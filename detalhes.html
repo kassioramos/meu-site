@@ -91,9 +91,13 @@
         }
         .btn-inscricao { background: #10b981; }
         .btn-questoes { background: #8b5cf6; }
-        .btn-acao:hover { opacity: 0.9; transform: translateY(-2px); filter: brightness(1.1);
-    transform: translateY(-1px);}
-
+        .btn-acao:hover {
+    opacity: 0.9;
+    filter: brightness(1.1);
+    /* Use apenas um transform. -2px dá um salto mais visível e elegante */
+    transform: translateY(-2px); 
+    /* Adicione um transition no seletor principal (.btn-acao) para esse movimento ser suave */
+}
         .status-tag { background: #10b981; color: white; padding: 5px 15px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; }
 
         @media (max-width: 600px) {
