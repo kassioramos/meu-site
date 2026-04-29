@@ -200,21 +200,16 @@ function renderizarConcurso(c) {
 
 <div class="acoes-container" style="display: flex; flex-direction: column; gap: 12px; margin-top: 20px;">
             
-            /* BOTÃO DO EDITAL - Só aparece se 'link_edital' estiver preenchido no Supabase */
             ${c.link_edital ? `
                 <a href="${c.link_edital}" target="_blank" class="btn-acao" style="background: #475569;">
                     📄 LER EDITAL OFICIAL
                 </a>
             ` : ''}
-
-            /* BOTÃO DE QUESTÕES */
             ${c.banca ? `
                 <a href="questoes.html?banca=${encodeURIComponent(c.banca)}" class="btn-acao btn-questoes">
                     📝 QUESTÕES DA BANCA ${c.banca.toUpperCase()}
                 </a>
             ` : ''}
-
-            /* BOTÃO DE INSCRIÇÃO */
             ${c.link_inscricao ? `
                 <a href="${c.link_inscricao}" target="_blank" class="btn-acao btn-inscricao">
                     🚀 FAZER INSCRIÇÃO
