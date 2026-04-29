@@ -317,10 +317,9 @@ function formatarConteudoAutomatico(texto) {
                 return `<ul>${itens}</ul>`;
             }
 
-            if (bloco.length < 80) {
-                return `<h2>${bloco}</h2>`;
+            if (bloco.startsWith('##')) {
+                return `<h2>${bloco.replace('##','')}</h2>`;
             }
-
             return `<p>${bloco}</p>`;
         })
         .join('');
