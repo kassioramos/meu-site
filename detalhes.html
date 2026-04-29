@@ -168,9 +168,8 @@ function renderizarConcurso(c) {
     const container = document.getElementById('conteudo-dinamico');
     document.title = `${c.orgao} - Concursos MA Pro`;
 
-    // Criamos o link dinâmico para a página de questões filtrando pela banca
-    // Assumindo que sua página de questões se chama 'questoes.html'
-    const linkQuestoesBanca = `questoes.html?banca=${encodeURIComponent(c.banca)}`;
+    // Define o link de questões baseado na banca
+    const linkQuestoesBanca = c.banca ? `questoes.html?banca=${encodeURIComponent(c.banca)}` : '#';
 
     container.innerHTML = `
         <div class="header-content">
@@ -199,23 +198,25 @@ function renderizarConcurso(c) {
             <p>${c.descricao || 'Confira os detalhes completos no edital oficial abaixo.'}</p>
         </div>
 
-        ${c.link_edital ? `
-            <a href="${c.link_edital}" target="_blank" class="btn-acao">
-                📄 LER EDITAL OFICIAL
-            </a>
-        ` : ''}
+        <div class="acoes-container" style="display: flex; flex-direction: column; gap: 10px;">
+            ${c.link_edital ? `
+                <a href="${c.link_edital}" target="_blank" class="btn-acao">
+                    📄 LER EDITAL OFICIAL
+                </a>
+            ` : ''}
 
-        ${c.banca ? `
-            <a href="${linkQuestoesBanca}" class="btn-acao btn-questoes">
-                📝 QUESTÕES DA BANCA ${c.banca.toUpperCase()}
-            </a>
-        ` : ''}
+            ${c.banca ? `
+                <a href="${linkQuestoesBanca}" class="btn-acao btn-questoes">
+                    📝 QUESTÕES DA BANCA ${c.banca.toUpperCase()}
+                </a>
+            ` : ''}
 
-        ${c.link_inscricao ? `
-            <a href="${c.link_inscricao}" target="_blank" class="btn-acao btn-inscricao">
-                🚀 FAZER INSCRIÇÃO
-            </a>
-        ` : ''}
+            ${c.link_inscricao ? `
+                <a href="${c.link_inscricao}" target="_blank" class="btn-acao btn-inscricao">
+                    🚀 FAZER INSCRIÇÃO
+                </a>
+            ` : ''}
+        </div>
     `;
 }
 
