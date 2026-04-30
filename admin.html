@@ -132,17 +132,19 @@
             <button type="submit" class="btn-salvar" id="btnPublicar">Publicar Artigo Agora</button>
             <div id="statusMsg" class="mensagem"></div>
         </form>
-        <div id="formQuestao" class="secao-admin">
+<div id="formQuestao" class="secao-admin">
     <h2>❓ Nova Questão</h2>
     <input id="disciplina" placeholder="Disciplina"><br><br>
     <input id="banca" placeholder="Banca"><br><br>
     <textarea id="enunciadoQuestao" placeholder="Enunciado"></textarea><br><br>
+    
     <input id="altA" placeholder="Alternativa A"><br><br>
     <input id="altB" placeholder="Alternativa B"><br><br>
     <input id="altC" placeholder="Alternativa C"><br><br>
     <input id="altD" placeholder="Alternativa D"><br><br>
-    <input id="altE" placeholder="Alternativa E"><br><br>
-    <input id="correta" placeholder="Alternativa correta (a,b,c,d)"><br><br>
+    <input id="altE" placeholder="Alternativa E"><br><br> <!-- Verifique se esta linha está exatamente assim -->
+    
+    <input id="correta" placeholder="Alternativa correta (a,b,c,d,e)"><br><br>
     <textarea id="comentario" placeholder="Comentário do professor"></textarea><br><br>
     <button class="btn-salvar" onclick="salvarQuestao()">Salvar Questão</button>
 </div>
