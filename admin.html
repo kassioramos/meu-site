@@ -372,6 +372,43 @@ async function salvarConcurso(){
         alert('Concurso salvo com sucesso!');
     }
 }
+async function salvarQuestao() {
+    // Coleta os dados dos inputs do formulário de questões
+    const dados = {
+        disciplina: document.getElementById('disciplina').value,
+        banca: document.getElementById('banca').value,
+        enunciado: document.getElementById('enunciadoQuestao').value,
+        alternativa_a: document.getElementById('altA').value,
+        alternativa_b: document.getElementById('altB').value,
+        alternativa_c: document.getElementById('altC').value,
+        alternativa_d: document.getElementById('altD').value,
+        alternativa_e: document.getElementById('altE').value,
+        resposta_correta: document.getElementById('correta').value.toLowerCase(),
+        comentario_professor: document.getElementById('comentario').value,
+        created_at: new Date()
+    };
+
+    // Tenta inserir na tabela 'questoes' do Supabase
+    const { error } = await _supabase.from('questoes').insert([dados]);
+
+    if (error) {
+        alert('❌ Erro ao salvar questão: ' + error.message);
+        console.error(error);
+    } else {
+        alert('✅ Questão cadastrada com sucesso!');
+        // Limpa os campos após o sucesso
+        document.getElementById('disciplina').value = '';
+        document.getElementById('banca').value = '';
+        document.getElementById('enunciadoQuestao').value = '';
+        document.getElementById('altA').value = '';
+        document.getElementById('altB').value = '';
+        document.getElementById('altC').value = '';
+        document.getElementById('altD').value = '';
+        document.getElementById('altE').value = '';
+        document.getElementById('correta').value = '';
+        document.getElementById('comentario').value = '';
+    }
+}
 
 async function excluirItem(){
     const tabela = tipoExcluir.value;
