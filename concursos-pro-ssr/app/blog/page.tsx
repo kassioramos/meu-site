@@ -1,12 +1,13 @@
 'use client'
 
 import { useEffect, useState, Suspense } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, useRouter } from 'next/navigation' // Importado useRouter
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 
 function BlogContent() {
   const searchParams = useSearchParams()
+  const router = useRouter() // Instanciado o roteador
   const [artigosCache, setArtigosCache] = useState<any[]>([])
   const [artigosFiltrados, setArtigosFiltrados] = useState<any[]>([])
   const [categoriaAtiva, setCategoriaAtiva] = useState('todos')
@@ -21,6 +22,7 @@ function BlogContent() {
     border: 'rgba(255,255,255,0.1)',
   }
 
+  // Carregamento inicial e sincronização com a URL
   useEffect(() => {
     async function carregarBlog() {
       try {
@@ -44,13 +46,14 @@ function BlogContent() {
     carregarBlog()
   }, [searchParams])
 
+  // Lógica de filtro corrigida para comparação exata
   const executarFiltro = (cat: string, listaBase: any[]) => {
     setCategoriaAtiva(cat)
     if (cat === 'todos') {
       setArtigosFiltrados(listaBase)
     } else {
       const filtrados = listaBase.filter(a =>
-        a.categoria?.toLowerCase().includes(cat.toLowerCase())
+        a.categoria?.trim().toLowerCase() === cat.toLowerCase()
       )
       setArtigosFiltrados(filtrados)
     }
@@ -67,13 +70,15 @@ function BlogContent() {
           </Link>
         </nav>
 
-        {/* Header Centralizado */}
+        {/* Header Dinâmico baseado na categoria ativa */}
         <header style={{ textAlign: 'center', marginBottom: '40px' }}>
-          <h1 style={{ color: styles.primary, fontSize: '2.5rem', fontWeight: '800', marginBottom: '10px' }}>Notícias & Dicas</h1>
+          <h1 style={{ color: styles.primary, fontSize: '2.5rem', fontWeight: '800', marginBottom: '10px' }}>
+            {categoriaAtiva === 'todos' ? 'Notícias & Dicas' : `Categoria: ${categoriaAtiva}`}
+          </h1>
           <p style={{ color: styles.textSub, fontSize: '1rem', fontWeight: '500' }}>Tudo o que você precisa para vencer nos concursos.</p>
         </header>
 
-        {/* Filtros Estilo Pill */}
+        {/* Filtros Estilo Pill com atualização de URL */}
         <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginBottom: '40px', flexWrap: 'wrap' }}>
           {[
             { id: 'todos', label: '📚 Tudo' },
@@ -85,7 +90,10 @@ function BlogContent() {
           ].map((cat) => (
             <button
               key={cat.id}
-              onClick={() => executarFiltro(cat.id, artigosCache)}
+              onClick={() => {
+                executarFiltro(cat.id, artigosCache);
+                router.push(`/blog?cat=${cat.id}`, { scroll: false }); // Atualiza a URL sem scroll
+              }}
               style={{
                 background: categoriaAtiva === cat.id ? styles.primary : '#1e293b',
                 border: 'none',
@@ -111,7 +119,7 @@ function BlogContent() {
           {carregando ? (
             <p style={{ textAlign: 'center', color: styles.textSub }}>Carregando conteúdo...</p>
           ) : artigosFiltrados.length === 0 ? (
-            <p style={{ textAlign: 'center', color: styles.textSub }}>Nenhum post encontrado.</p>
+            <p style={{ textAlign: 'center', color: styles.textSub }}>Nenhum post encontrado para esta categoria.</p>
           ) : (
             artigosFiltrados.map((post) => (
               <Link 
