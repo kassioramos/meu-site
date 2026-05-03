@@ -15,13 +15,14 @@ import {
 } from 'chart.js'
 import { Bar, Doughnut } from 'react-chartjs-2'
 
-// Registro obrigatório do Chart.js
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement)
 
 export default function Home() {
   const [concursos, setConcursos] = useState<any[]>([])
   const [busca, setBusca] = useState("")
   const [temaClaro, setTemaClaro] = useState(false)
+  // ESTADO DA CATEGORIA: Controla qual filtro de botão está ativo
+  const [categoriaAtiva, setCategoriaAtiva] = useState("Tudo")
 
   useEffect(() => {
     async function carregar() {
@@ -32,12 +33,20 @@ export default function Home() {
     carregar()
   }, [])
 
-  const filtrados = concursos.filter(c =>
-    (c.orgao || "").toLowerCase().includes(busca.toLowerCase()) ||
-    (c.cidade || "").toLowerCase().includes(busca.toLowerCase())
-  )
+  // LÓGICA DE FILTRO CORRIGIDA: Filtra por texto E por categoria simultaneamente
+  const filtrados = concursos.filter(c => {
+    const matchesBusca = 
+      (c.orgao || "").toLowerCase().includes(busca.toLowerCase()) ||
+      (c.cidade || "").toLowerCase().includes(busca.toLowerCase());
+    
+    const matchesCategoria = 
+      categoriaAtiva === "Tudo" || 
+      (c.categoria || "").toLowerCase() === categoriaAtiva.toLowerCase();
 
-  // Cálculos de Estatísticas
+    return matchesBusca && matchesCategoria;
+  })
+
+  // Estatísticas baseadas nos itens filtrados (opcional: pode ser baseado na lista original 'concursos')
   const salarios = concursos.map(c => Number(c.salario_max) || 0).filter(s => s > 0)
   const mediaSalarial = salarios.length ? salarios.reduce((a, b) => a + b, 0) / salarios.length : 0
   const maiorSalario = salarios.length ? Math.max(...salarios) : 0
@@ -89,7 +98,6 @@ export default function Home() {
       fontFamily: "'Inter', sans-serif"
     }}>
       
-      {/* Botão de Tema */}
       <button 
         onClick={() => setTemaClaro(!temaClaro)}
         style={{ position: "fixed", top: "20px", right: "20px", zIndex: 1000, background: "#3b82f6", border: "none", borderRadius: "50%", width: "45px", height: "45px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
@@ -97,7 +105,6 @@ export default function Home() {
         {temaClaro ? "🌙" : "☀️"}
       </button>
 
-      {/* Header com Gradiente */}
       <header style={{
         padding: "60px 20px 40px",
         textAlign: "center",
@@ -120,30 +127,39 @@ export default function Home() {
             }}
           />
           
-          {/* Botões de Filtro/Navegação */}
-          <div style={{ display: "flex", gap: "10px", justifyContent: "center", flexWrap: "wrap" }}>
+          <div style={{ display: "flex", gap: "10px", justifyContent: "center", flexWrap: "wrap", marginBottom: "20px" }}>
             <Link href="/blog" style={{ background: "rgba(59, 130, 246, 0.1)", color: "#3b82f6", border: "1px solid #3b82f6", padding: "8px 20px", borderRadius: "20px", textDecoration: "none", fontSize: "0.85rem", display: "flex", alignItems: "center", gap: "5px" }}>
               <span>📄</span> Blog
             </Link>
             <Link href="/questoes" style={{ background: "rgba(139, 92, 246, 0.1)", color: "#8b5cf6", border: "1px solid #8b5cf6", padding: "8px 20px", borderRadius: "20px", textDecoration: "none", fontSize: "0.85rem", display: "flex", alignItems: "center", gap: "5px" }}>
               <span>📝</span> Questões
             </Link>
-            <button style={{ background: "#ef4444", color: "#fff", border: "none", padding: "8px 20px", borderRadius: "20px", fontWeight: "600", fontSize: "0.85rem", cursor: "pointer" }}>
-              📥 Lista PDF
-            </button>
           </div>
           
+          {/* BOTÕES DE FILTRO POR CATEGORIA */}
           <div style={{ display: "flex", gap: "8px", justifyContent: "center", marginTop: "15px", flexWrap: "wrap" }}>
-             {['Notícias', 'UEMA', 'ENEM', 'Dicas'].map(cat => (
-               <button key={cat} style={{ background: "transparent", color: "#94a3b8", border: "1px solid #475569", padding: "5px 15px", borderRadius: "20px", fontSize: "0.75rem", cursor: "pointer" }}>
-                 {cat}
-               </button>
-             ))}
+              {['Tudo', 'Notícias', 'UEMA', 'ENEM', 'Dicas', 'Dev'].map(cat => (
+                <button 
+                  key={cat} 
+                  onClick={() => setCategoriaAtiva(cat)}
+                  style={{ 
+                    background: categoriaAtiva === cat ? "#3b82f6" : "transparent", 
+                    color: categoriaAtiva === cat ? "#fff" : "#94a3b8", 
+                    border: "1px solid #475569", 
+                    padding: "5px 15px", 
+                    borderRadius: "20px", 
+                    fontSize: "0.75rem", 
+                    cursor: "pointer",
+                    transition: "0.2s"
+                  }}
+                >
+                  {cat}
+                </button>
+              ))}
           </div>
         </div>
       </header>
 
-      {/* Seção de Estatísticas */}
       <section style={{ maxWidth: "1100px", margin: "0 auto", padding: "20px" }}>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px", marginBottom: "25px" }}>
           <div style={{ background: temaClaro ? "#fff" : "rgba(255,255,255,0.05)", padding: "25px", borderRadius: "12px", textAlign: "center", border: temaClaro ? "1px solid #e2e8f0" : "1px solid rgba(255,255,255,0.1)" }}>
@@ -156,7 +172,6 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Gráficos */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(350px, 1fr))", gap: "20px", marginBottom: "40px" }}>
           <div style={{ background: temaClaro ? "#fff" : "rgba(255,255,255,0.05)", padding: "20px", borderRadius: "12px", border: temaClaro ? "1px solid #e2e8f0" : "1px solid rgba(255,255,255,0.1)" }}>
              <h4 style={{ fontSize: "0.9rem", textAlign: "center", marginBottom: "20px" }}>📊 Vagas por Cidade</h4>
@@ -170,9 +185,8 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Grid de Cards de Concursos */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: "25px" }}>
-          {filtrados.map((c) => (
+          {filtrados.length > 0 ? filtrados.map((c) => (
             <div key={c.id} style={{
               background: temaClaro ? "#fff" : "rgba(255,255,255,0.05)",
               padding: "24px", borderRadius: "12px",
@@ -180,7 +194,9 @@ export default function Home() {
               display: "flex", flexDirection: "column", transition: "0.2s"
             }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "15px" }}>
-                <span style={{ background: "#3b82f6", color: "#fff", padding: "3px 10px", borderRadius: "5px", fontSize: "0.7rem", fontWeight: "700" }}>{c.cidade?.toUpperCase() || "MA"}</span>
+                <span style={{ background: "#3b82f6", color: "#fff", padding: "3px 10px", borderRadius: "5px", fontSize: "0.7rem", fontWeight: "700" }}>
+                  {(c.categoria || c.cidade || "MA").toUpperCase()}
+                </span>
                 <button style={{ background: "none", border: "none", color: "#ffca28", fontSize: "1.2rem", cursor: "pointer" }}>☆</button>
               </div>
               
@@ -198,7 +214,9 @@ export default function Home() {
                 </button>
               </Link>
             </div>
-          ))}
+          )) : (
+            <p style={{ textAlign: 'center', gridColumn: '1/-1', color: '#94a3b8' }}>Nenhum item encontrado nesta categoria.</p>
+          )}
         </div>
       </section>
     </main>
