@@ -1,0 +1,12 @@
+# Ambiente Virtual Python
+venv/
+__pycache__/
+
+# Dependências e Build do Next.js
+concursos-pro-ssr/node_modules/
+concursos-pro-ssr/.next/
+
+# Segurança e chaves (Supabase/Banco de Dados)
+.env
+.env.local
+.env.development.local

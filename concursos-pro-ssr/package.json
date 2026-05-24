@@ -12,11 +12,11 @@
     "@supabase/supabase-js": "^2.45.4",
     "autoprefixer": "^10.4.20",
     "chart.js": "^4.4.4",
-    "next": "15.0.3",
+    "next": "^16.2.4",
     "postcss": "^8.4.47",
-    "react": "19.0.0-rc-66854b9a-20241106",
+    "react": "^19.2.5",
     "react-chartjs-2": "^5.2.0",
-    "react-dom": "19.0.0-rc-66854b9a-20241106"
+    "react-dom": "^19.2.5"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.0.0",

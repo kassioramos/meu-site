@@ -1,222 +1,117 @@
-'use client'
-
-import { useEffect, useState } from "react"
-import { supabase } from "@/lib/supabase"
 import Link from "next/link"
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend,
-  ArcElement,
-} from 'chart.js'
-import { Bar, Doughnut } from 'react-chartjs-2'
+import { supabaseServer } from "@/lib/supabaseServer"
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement)
+import BuscaConcursos from "@/components/BuscaConcursos"
 
-export default function Home() {
-  const [concursos, setConcursos] = useState<any[]>([])
-  const [busca, setBusca] = useState("")
-  const [temaClaro, setTemaClaro] = useState(false)
-  // ESTADO DA CATEGORIA: Controla qual filtro de botão está ativo
-  const [categoriaAtiva, setCategoriaAtiva] = useState("Tudo")
+export const revalidate = 60
 
-  useEffect(() => {
-    async function carregar() {
-      const { data, error } = await supabase.from('concursos').select('*')
-      if (error) console.error(error)
-      else setConcursos(data || [])
-    }
-    carregar()
-  }, [])
+export const metadata = {
+  title: "Concursos Maranhão 2026",
+  description: "Veja os concursos abertos no Maranhão com salários atualizados",
+  keywords: ["concursos 2026", "concursos Maranhão", "editais MA"]
+}
 
-  // LÓGICA DE FILTRO CORRIGIDA: Filtra por texto E por categoria simultaneamente
-  const filtrados = concursos.filter(c => {
-    const matchesBusca = 
-      (c.orgao || "").toLowerCase().includes(busca.toLowerCase()) ||
-      (c.cidade || "").toLowerCase().includes(busca.toLowerCase());
-    
-    const matchesCategoria = 
-      categoriaAtiva === "Tudo" || 
-      (c.categoria || "").toLowerCase() === categoriaAtiva.toLowerCase();
+export default async function Home() {
+  // 1. Busca os dados diretamente no servidor
+const { data: concursos, error } = await supabaseServer
+  .from('concursos')
+  .select('id, orgao, cidade, banca, salario_max, categoria')
 
-    return matchesBusca && matchesCategoria;
-  })
+if (error) {
+  console.error("Erro ao carregar concursos:", error)
+  return (
+    <div className="text-center p-10 text-red-400">
+      Erro ao carregar concursos 😢
+    </div>
+  )
+}
 
-  // Estatísticas baseadas nos itens filtrados (opcional: pode ser baseado na lista original 'concursos')
-  const salarios = concursos.map(c => Number(c.salario_max) || 0).filter(s => s > 0)
+const lista = (concursos || []).map(c => ({
+  ...c,
+  salario: !isNaN(Number(c.salario_max)) ? Number(c.salario_max) : 0
+}))
+
+  // Lógica de estatísticas (agora feita no servidor)
+const salarios = lista
+  .map(c => c.salario)
+  .filter(s => s > 0)
   const mediaSalarial = salarios.length ? salarios.reduce((a, b) => a + b, 0) / salarios.length : 0
   const maiorSalario = salarios.length ? Math.max(...salarios) : 0
 
   const formatarMoeda = (valor: number) => 
     valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 
-  // Dados dos Gráficos
-  const cidadesMap: any = {}
-  concursos.forEach(c => { const n = c.cidade || "MA"; cidadesMap[n] = (cidadesMap[n] || 0) + 1 })
-  const top5Cidades = Object.entries(cidadesMap).sort((a: any, b: any) => b[1] - a[1]).slice(0, 5)
-
-  const chartColor = temaClaro ? '#1e293b' : '#ffffff'
-
-  const dataBarra = {
-    labels: top5Cidades.map(x => x[0]),
-    datasets: [{ label: 'Editais', data: top5Cidades.map(x => x[1]), backgroundColor: '#3b82f6', borderRadius: 4 }]
-  }
-
-  const dataPizza = {
-    labels: ['Educação', 'Saúde', 'Outros'],
-    datasets: [{
-      data: [
-        concursos.filter(c => c.orgao?.toLowerCase().includes('educ')).length,
-        concursos.filter(c => c.orgao?.toLowerCase().includes('saud')).length,
-        concursos.filter(c => !c.orgao?.toLowerCase().includes('educ') && !c.orgao?.toLowerCase().includes('saud')).length
-      ],
-      backgroundColor: ['#60a5fa', '#34d399', '#94a3b8'],
-      borderWidth: 0
-    }]
-  }
-
-  const chartOptions: any = {
-    indexAxis: 'y' as const,
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: { legend: { display: false } },
-    scales: { 
-      x: { grid: { display: false }, ticks: { color: chartColor } }, 
-      y: { grid: { display: false }, ticks: { color: chartColor } } 
-    }
-  }
-
   return (
-    <main style={{ 
-      background: temaClaro ? "#f8fafc" : "#0f172a", 
-      color: temaClaro ? "#1e293b" : "white", 
-      minHeight: "100vh",
-      fontFamily: "'Inter', sans-serif"
-    }}>
+    <main className="min-h-screen bg-[#0f172a] text-white font-sans">
       
-      <button 
-        onClick={() => setTemaClaro(!temaClaro)}
-        style={{ position: "fixed", top: "20px", right: "20px", zIndex: 1000, background: "#3b82f6", border: "none", borderRadius: "50%", width: "45px", height: "45px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
-      >
-        {temaClaro ? "🌙" : "☀️"}
-      </button>
-
-      <header style={{
-        padding: "60px 20px 40px",
-        textAlign: "center",
-        background: temaClaro 
-          ? "linear-gradient(180deg, #e2e8f0 0%, #f8fafc 100%)" 
-          : "linear-gradient(180deg, #1e293b 0%, #0f172a 100%)"
-      }}>
-        <h1 style={{ fontSize: "2rem", fontWeight: "700", marginBottom: "10px" }}>Concursos Maranhão Pro</h1>
-        <div style={{ color: "#94a3b8", marginBottom: "25px" }}>{concursos.length} editais carregados</div>
-
-        <div style={{ maxWidth: "600px", margin: "0 auto" }}>
-          <input
-            type="text"
-            placeholder="Pesquisar editais..."
-            value={busca}
-            onChange={(e) => setBusca(e.target.value)}
-            style={{ 
-              width: "100%", padding: "12px 20px", borderRadius: "8px", border: "none", 
-              marginBottom: "20px", color: "#000", outline: "none", fontSize: "1rem" 
-            }}
-          />
-          
-          <div style={{ display: "flex", gap: "10px", justifyContent: "center", flexWrap: "wrap", marginBottom: "20px" }}>
-            <Link href="/blog" style={{ background: "rgba(59, 130, 246, 0.1)", color: "#3b82f6", border: "1px solid #3b82f6", padding: "8px 20px", borderRadius: "20px", textDecoration: "none", fontSize: "0.85rem", display: "flex", alignItems: "center", gap: "5px" }}>
-              <span>📄</span> Blog
-            </Link>
-            <Link href="/questoes" style={{ background: "rgba(139, 92, 246, 0.1)", color: "#8b5cf6", border: "1px solid #8b5cf6", padding: "8px 20px", borderRadius: "20px", textDecoration: "none", fontSize: "0.85rem", display: "flex", alignItems: "center", gap: "5px" }}>
-              <span>📝</span> Questões
-            </Link>
-          </div>
-          
-          {/* BOTÕES DE FILTRO POR CATEGORIA */}
-          <div style={{ display: "flex", gap: "8px", justifyContent: "center", marginTop: "15px", flexWrap: "wrap" }}>
-              {['Tudo', 'Notícias', 'UEMA', 'ENEM', 'Dicas', 'Dev'].map(cat => (
-                <button 
-                  key={cat} 
-                  onClick={() => setCategoriaAtiva(cat)}
-                  style={{ 
-                    background: categoriaAtiva === cat ? "#3b82f6" : "transparent", 
-                    color: categoriaAtiva === cat ? "#fff" : "#94a3b8", 
-                    border: "1px solid #475569", 
-                    padding: "5px 15px", 
-                    borderRadius: "20px", 
-                    fontSize: "0.75rem", 
-                    cursor: "pointer",
-                    transition: "0.2s"
-                  }}
-                >
-                  {cat}
-                </button>
-              ))}
-          </div>
+      <header className="py-16 px-5 text-center bg-gradient-to-b from-[#1e293b] to-[#0f172a]">
+        <h1 className="text-4xl font-bold mb-2">Concursos Maranhão Pro 2026</h1>
+        <div className="text-slate-400">{lista.length} editais disponíveis no estado</div>
+        
+        {/* Links Rápidos */}
+        <div className="flex gap-4 justify-center mt-6">
+          <Link href="/blog" className="bg-blue-500/10 text-blue-400 border border-blue-500 px-5 py-2 rounded-full text-sm hover:bg-blue-500 hover:text-white transition">
+            📄 Blog
+          </Link>
+          <Link href="/questoes" className="bg-purple-500/10 text-purple-400 border border-purple-500 px-5 py-2 rounded-full text-sm hover:bg-purple-500 hover:text-white transition">
+            📝 Questões
+          </Link>
         </div>
       </header>
 
-      <section style={{ maxWidth: "1100px", margin: "0 auto", padding: "20px" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px", marginBottom: "25px" }}>
-          <div style={{ background: temaClaro ? "#fff" : "rgba(255,255,255,0.05)", padding: "25px", borderRadius: "12px", textAlign: "center", border: temaClaro ? "1px solid #e2e8f0" : "1px solid rgba(255,255,255,0.1)" }}>
-            <span style={{ fontSize: "0.8rem", color: "#94a3b8", display: "block", marginBottom: "10px" }}>💰 Média Salarial</span>
-            <h3 style={{ margin: 0, fontSize: "1.4rem" }}>{formatarMoeda(mediaSalarial)}</h3>
+      <section className="max-w-6xl mx-auto p-5">
+        {/* Cards de Estatísticas */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-10">
+          <div className="bg-white/5 p-6 rounded-xl border border-white/10 text-center">
+            <span className="text-xs text-slate-400 block mb-2 uppercase tracking-wider">💰 Média Salarial</span>
+            <h3 className="text-2xl font-bold">{formatarMoeda(mediaSalarial)}</h3>
           </div>
-          <div style={{ background: temaClaro ? "#fff" : "rgba(255,255,255,0.05)", padding: "25px", borderRadius: "12px", textAlign: "center", border: temaClaro ? "1px solid #e2e8f0" : "1px solid rgba(255,255,255,0.1)" }}>
-            <span style={{ fontSize: "0.8rem", color: "#94a3b8", display: "block", marginBottom: "10px" }}>🏢 Maior Salário</span>
-            <h3 style={{ margin: 0, fontSize: "1.4rem" }}>{formatarMoeda(maiorSalario)}</h3>
-          </div>
-        </div>
-
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(350px, 1fr))", gap: "20px", marginBottom: "40px" }}>
-          <div style={{ background: temaClaro ? "#fff" : "rgba(255,255,255,0.05)", padding: "20px", borderRadius: "12px", border: temaClaro ? "1px solid #e2e8f0" : "1px solid rgba(255,255,255,0.1)" }}>
-             <h4 style={{ fontSize: "0.9rem", textAlign: "center", marginBottom: "20px" }}>📊 Vagas por Cidade</h4>
-             <div style={{ height: "250px" }}><Bar data={dataBarra} options={chartOptions} /></div>
-          </div>
-          <div style={{ background: temaClaro ? "#fff" : "rgba(255,255,255,0.05)", padding: "20px", borderRadius: "12px", border: temaClaro ? "1px solid #e2e8f0" : "1px solid rgba(255,255,255,0.1)" }}>
-             <h4 style={{ fontSize: "0.9rem", textAlign: "center", marginBottom: "20px" }}>🍩 Distribuição</h4>
-             <div style={{ height: "250px" }}>
-               <Doughnut data={dataPizza} options={{ ...chartOptions, indexAxis: 'x', plugins: { legend: { display: true, position: 'bottom', labels: { color: chartColor } } } }} />
-             </div>
+          <div className="bg-white/5 p-6 rounded-xl border border-white/10 text-center">
+            <span className="text-xs text-slate-400 block mb-2 uppercase tracking-wider">🏢 Maior Salário</span>
+            <h3 className="text-2xl font-bold">{formatarMoeda(maiorSalario)}</h3>
           </div>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: "25px" }}>
-          {filtrados.length > 0 ? filtrados.map((c) => (
-            <div key={c.id} style={{
-              background: temaClaro ? "#fff" : "rgba(255,255,255,0.05)",
-              padding: "24px", borderRadius: "12px",
-              border: temaClaro ? "1px solid #e2e8f0" : "1px solid rgba(255,255,255,0.1)",
-              display: "flex", flexDirection: "column", transition: "0.2s"
-            }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "15px" }}>
-                <span style={{ background: "#3b82f6", color: "#fff", padding: "3px 10px", borderRadius: "5px", fontSize: "0.7rem", fontWeight: "700" }}>
-                  {(c.categoria || c.cidade || "MA").toUpperCase()}
-                </span>
-                <button style={{ background: "none", border: "none", color: "#ffca28", fontSize: "1.2rem", cursor: "pointer" }}>☆</button>
-              </div>
-              
-              <h3 style={{ color: "#60a5fa", fontSize: "1rem", marginBottom: "15px", lineHeight: "1.4", minHeight: "2.8em" }}>{c.orgao}</h3>
-              
-              <div style={{ fontSize: "0.85rem", color: "#cbd5e1", display: "flex", flexDirection: "column", gap: "8px", flexGrow: 1 }}>
-                <p>📍 {c.cidade || "Maranhão"}</p>
-                <p>🏢 {c.banca || "A definir"}</p>
-                <p style={{ color: temaClaro ? "#1e293b" : "#fff", fontWeight: "700", marginTop: "10px", fontSize: "1rem" }}>💰 Até {formatarMoeda(Number(c.salario_max))}</p>
-              </div>
-              
-              <Link href={`/detalhes/${c.id}?tipo=concurso`} style={{ textDecoration: 'none' }}>
-                <button style={{ marginTop: "20px", width: "100%", background: "#3b82f6", color: "white", border: "none", padding: "12px", borderRadius: "8px", fontWeight: "bold", fontSize: "0.8rem", cursor: "pointer" }}>
-                  DETALHES
-                </button>
-              </Link>
-            </div>
-          )) : (
-            <p style={{ textAlign: 'center', gridColumn: '1/-1', color: '#94a3b8' }}>Nenhum item encontrado nesta categoria.</p>
+        {/* Grid de Concursos */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {lista.length === 0 && (
+        <div className="col-span-full text-center text-slate-400 mt-10">
+          Nenhum concurso encontrado no momento.
+        </div>
           )}
+          {lista.map((c) => {
+
+  return (
+    <div key={c.id} className="bg-white/5 p-6 rounded-xl border border-white/10 flex flex-col hover:border-blue-500/50 transition">
+      
+      <div className="flex justify-between items-center mb-4">
+        <span className="bg-blue-600 text-white px-3 py-1 rounded text-[10px] font-bold">
+          {(c.categoria || c.cidade || "MA").toUpperCase()}
+        </span>
+      </div>
+
+      <h3 className="text-blue-400 font-bold text-lg mb-4 leading-tight min-h-[3.5rem]">
+        {c.orgao}
+      </h3>
+      
+      <div className="text-sm text-slate-300 space-y-2 flex-grow">
+        <p>📍 {c.cidade || "Maranhão"}</p>
+        <p>🏢 {c.banca || "A definir"}</p>
+        <p className="text-white font-bold mt-4 text-base">
+        💰 {c.salario > 0 ? `Até ${formatarMoeda(c.salario)}` : "Salário não informado"}
+        </p>
+      </div>
+
+      <Link
+        href={`/detalhes/${c.id}?tipo=concurso`}
+        className="mt-6 w-full bg-blue-600 text-white py-3 rounded-lg font-bold text-sm text-center hover:bg-blue-700 transition"
+      >
+        VER DETALHES
+      </Link>
+
+    </div>
+  )
+})}
         </div>
       </section>
     </main>
