@@ -27,9 +27,6 @@
     { "source": "/concursos/:id", "destination": "/main.py" },
     { "source": "/artigos", "destination": "/main.py" },
     { "source": "/artigos/:path*", "destination": "/main.py" },
-    { "source": "/questoes", "destination": "/main.py" },
-
-    { "source": "/_next/:path*", "destination": "/concursos-pro-ssr/_next/:path*" },
-    { "source": "/(:path*)", "destination": "/concursos-pro-ssr/$1" }
+    { "source": "/questoes", "destination": "/main.py" }
   ]
 }
