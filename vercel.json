@@ -4,7 +4,10 @@
   "builds": [
     {
       "src": "concursos-pro-ssr/package.json",
-      "use": "@vercel/next"
+      "use": "@vercel/next",
+      "config": {
+        "installCommand": "npm install --legacy-peer-deps"
+      }
     },
     {
       "src": "main.py",
@@ -15,7 +18,6 @@
       "use": "@vercel/static"
     }
   ],
-  "installCommand": "npm install --legacy-peer-deps",
   "rewrites": [
     { "source": "/blog", "destination": "/blog.html" },
     { "source": "/simulados", "destination": "/simulados.html" },
