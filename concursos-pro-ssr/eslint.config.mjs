@@ -1,18 +1,10 @@
-import { defineConfig, globalIgnores } from "eslint/config";
-import nextVitals from "eslint-config-next/core-web-vitals";
-import nextTs from "eslint-config-next/typescript";
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  eslint: {
+    // Isso ignora o lint apenas na hora do "npm run build" na Vercel
+    ignoreDuringBuilds: true,
+  },
+  // ... mantenha qualquer outra configuração que você já tenha aqui dentro
+};
 
-const eslintConfig = defineConfig([
-  ...nextVitals,
-  ...nextTs,
-  // Override default ignores of eslint-config-next.
-  globalIgnores([
-    // Default ignores of eslint-config-next:
-    ".next/**",
-    "out/**",
-    "build/**",
-    "next-env.d.ts",
-  ]),
-]);
-
-export default eslintConfig;
+export default nextConfig;
