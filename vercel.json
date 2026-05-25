@@ -3,6 +3,10 @@
   "cleanUrls": true,
   "builds": [
     {
+      "src": "concursos-pro-ssr/package.json",
+      "use": "@vercel/next"
+    },
+    {
       "src": "main.py",
       "use": "@vercel/python"
     },
@@ -11,6 +15,7 @@
       "use": "@vercel/static"
     }
   ],
+  "installCommand": "npm install --legacy-peer-deps",
   "rewrites": [
     { "source": "/blog", "destination": "/blog.html" },
     { "source": "/simulados", "destination": "/simulados.html" },
