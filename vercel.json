@@ -31,5 +31,5 @@
 
     { "source": "/_next/:path*", "destination": "/concursos-pro-ssr/_next/:path*" },
     { "source": "/(:path*)", "destination": "/concursos-pro-ssr/$1" }
-  ]
+]
 }
