@@ -10,3 +10,5 @@ concursos-pro-ssr/.next/
 .env
 .env.local
 .env.development.local
+.vercel
+.env*
