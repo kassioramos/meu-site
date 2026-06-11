@@ -3,7 +3,7 @@
   "cleanUrls": true,
   "builds": [
     {
-      "src": "concursos-pro-ssr/next.config.ts",
+      "src": "concursos-pro-ssr/package.json",
       "use": "@vercel/next"
     },
     {
@@ -17,7 +17,6 @@
     { "source": "/concursos/:id", "destination": "/main.py" },
     { "source": "/artigos", "destination": "/main.py" },
     { "source": "/artigos/:path*", "destination": "/main.py" },
-    
     { "source": "/((?!sitemap\\.xml|concursos|artigos).*)" , "destination": "/concursos-pro-ssr/$1" }
   ]
 }
