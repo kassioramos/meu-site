@@ -1,23 +1,29 @@
 {
-  "version": 2,
-  "framework": "nextjs",
-  "rootDirectory": "concursos-pro-ssr",
-  "rewrites": [
-    {
-      "source": "/concursos",
-      "destination": "../main.py"
-    },
-    {
-      "source": "/sitemap.xml",
-      "destination": "../main.py"
-    },
-    {
-      "source": "/artigos",
-      "destination": "../main.py"
-    },
-    {
-      "source": "/questoes",
-      "destination": "../main.py"
-    }
-  ]
+  "name": "concursos-pro-ssr",
+  "version": "0.1.1",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.4",
+    "autoprefixer": "^10.4.20",
+    "chart.js": "^4.4.4",
+    "next": "^15.1.0",
+    "postcss": "^8.4.47",
+    "react": "^19.0.0",
+    "react-chartjs-2": "^5.2.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "eslint": "^9.x",
+    "eslint-config-next": "^15.1.0",
+    "typescript": "^5.x"
+  }
 }

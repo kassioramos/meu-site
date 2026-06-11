@@ -10,13 +10,36 @@
       "use": "@vercel/python"
     }
   ],
-  "rewrites": [
-    { "source": "/sitemap.xml", "destination": "/main.py" },
-    { "source": "/concursos", "destination": "/main.py" },
-    { "source": "/concursos/:id", "destination": "/main.py" },
-    { "source": "/artigos", "destination": "/main.py" },
-    { "source": "/artigos/:path*", "destination": "/main.py" },
-    { "source": "/questoes", "destination": "/main.py" },
-    { "source": "/(.*)", "destination": "/concursos-pro-ssr/$1" }
+  "routes": [
+    {
+      "src": "^/sitemap\\.xml$",
+      "dest": "/main.py",
+      "check": true
+    },
+    {
+      "src": "^/concursos$",
+      "dest": "/main.py",
+      "check": true
+    },
+    {
+      "src": "^/concursos/([^/]+?)$",
+      "dest": "/main.py?id=$1",
+      "check": true
+    },
+    {
+      "src": "^/artigos$",
+      "dest": "/main.py",
+      "check": true
+    },
+    {
+      "src": "^/questoes$",
+      "dest": "/main.py",
+      "check": true
+    },
+    {
+      "src": "^/(.*)$",
+      "dest": "/concursos-pro-ssr/$1",
+      "check": true
+    }
   ]
 }
