@@ -1,35 +1,20 @@
 {
-  "version": 2,
-  "builds": [
+  "rewrites": [
     {
-      "src": "concursos-pro-ssr/package.json",
-      "use": "@vercel/next"
+      "source": "/concursos",
+      "destination": "/api/main.py"
     },
     {
-      "src": "main.py",
-      "use": "@vercel/python"
-    }
-  ],
-  "routes": [
-    {
-      "src": "^/sitemap\\.xml$",
-      "dest": "/main.py"
+      "source": "/sitemap.xml",
+      "destination": "/api/main.py"
     },
     {
-      "src": "^/concursos$",
-      "dest": "/main.py"
+      "source": "/artigos",
+      "destination": "/api/main.py"
     },
     {
-      "src": "^/artigos$",
-      "dest": "/main.py"
-    },
-    {
-      "src": "^/questoes$",
-      "dest": "/main.py"
-    },
-    {
-      "src": "^/(.*)$",
-      "dest": "/concursos-pro-ssr/$1"
+      "source": "/questoes",
+      "destination": "/api/main.py"
     }
   ]
 }
