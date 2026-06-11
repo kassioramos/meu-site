@@ -1,23 +1,35 @@
 {
   "version": 2,
-  "framework": "nextjs",
-  "rootDirectory": "concursos-pro-ssr",
-  "rewrites": [
+  "builds": [
     {
-      "source": "/concursos",
-      "destination": "../main.py"
+      "src": "concursos-pro-ssr/package.json",
+      "use": "@vercel/next"
     },
     {
-      "source": "/sitemap.xml",
-      "destination": "../main.py"
+      "src": "main.py",
+      "use": "@vercel/python"
+    }
+  ],
+  "routes": [
+    {
+      "src": "^/sitemap\\.xml$",
+      "dest": "/main.py"
     },
     {
-      "source": "/artigos",
-      "destination": "../main.py"
+      "src": "^/concursos$",
+      "dest": "/main.py"
     },
     {
-      "source": "/questoes",
-      "destination": "../main.py"
+      "src": "^/artigos$",
+      "dest": "/main.py"
+    },
+    {
+      "src": "^/questoes$",
+      "dest": "/main.py"
+    },
+    {
+      "src": "^/(.*)$",
+      "dest": "/concursos-pro-ssr/$1"
     }
   ]
 }
