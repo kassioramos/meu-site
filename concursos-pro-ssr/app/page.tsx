@@ -12,19 +12,19 @@ export const metadata = {
 }
 
 export default async function Home() {
-  // 1. Busca os dados diretamente no servidor
-const { data: concursos, error } = await supabaseServer
-  .from('concursos')
-  .select('id, orgao, cidade, banca, salario_max, categoria')
+// 1. Busca os dados diretamente no servidor (Sem pedir a coluna 'categoria')
+  const { data: concursos, error } = await supabaseServer
+    .from('concursos')
+    .select('id, orgao, cidade, banca, salario_max') 
 
-if (error) {
-  console.error("Erro ao carregar concursos:", error)
-  return (
-    <div className="text-center p-10 text-red-400">
-      Erro ao carregar concursos 😢
-    </div>
-  )
-}
+  if (error) {
+    console.error("Erro ao carregar concursos:", error)
+    return (
+      <div className="text-center p-10 text-red-400">
+        Erro ao carregar concursos 😢
+      </div>
+    )
+  }
 
 const lista = (concursos || []).map(c => ({
   ...c,

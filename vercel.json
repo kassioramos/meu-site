@@ -1,20 +1,15 @@
 {
-  "rewrites": [
+  "version": 2,
+  "builds": [
     {
-      "source": "/concursos",
-      "destination": "/api/main.py"
-    },
+      "src": "concursos-pro-ssr/package.json",
+      "use": "@vercel/next"
+    }
+  ],
+  "routes": [
     {
-      "source": "/sitemap.xml",
-      "destination": "/api/main.py"
-    },
-    {
-      "source": "/artigos",
-      "destination": "/api/main.py"
-    },
-    {
-      "source": "/questoes",
-      "destination": "/api/main.py"
+      "src": "^/(.*)$",
+      "dest": "/concursos-pro-ssr/$1"
     }
   ]
 }
