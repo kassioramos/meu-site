@@ -86,7 +86,8 @@ const salarios = lista
       
       <div className="flex justify-between items-center mb-4">
         <span className="bg-blue-600 text-white px-3 py-1 rounded text-[10px] font-bold">
-          {(c.categoria || c.cidade || "MA").toUpperCase()}
+      
+          {(c.cidade || "MA").toUpperCase()}
         </span>
       </div>
 
