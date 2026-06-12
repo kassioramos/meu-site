@@ -1,10 +1,13 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   eslint: {
-    // Isso ignora o lint apenas na hora do "npm run build" na Vercel
+    // Ignora o lint durante o build na Vercel para não travar por avisos bobos
     ignoreDuringBuilds: true,
   },
-  // ... mantenha qualquer outra configuração que você já tenha aqui dentro
+  // O Turbopack (usado no Next 15) às vezes precisa que apontemos a raiz se houver subpastas
+  images: {
+    unoptimized: true, // Opcional: útil se você usa o plano gratuito da Vercel para imagens do Supabase
+  }
 };
 
 export default nextConfig;
