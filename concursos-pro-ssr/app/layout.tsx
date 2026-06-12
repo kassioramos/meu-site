@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Script from "next/script";
+import { GoogleAnalytics } from '@next/third-parties/google'; // 👈 1. IMPORTADO AQUI
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -14,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://meu-site-five-delta.vercel.app"), // ⚠️ depois troca pelo seu domínio
+  metadataBase: new URL("https://meu-site-five-delta.vercel.app"),
 
   title: {
     default: "Concursos Maranhão 2026 - Editais, Salários e Previsões",
@@ -43,7 +44,7 @@ export const metadata: Metadata = {
     siteName: "Concursos Maranhão Pro",
     images: [
       {
-        url: "/og.png", // depois você cria essa imagem
+        url: "/og.png",
         width: 1200,
         height: 630,
       },
@@ -56,7 +57,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Concursos Maranhão 2026",
     description:
-      "Veja editais abertos e previsões atualizadas.",
+      "Veja editais abertos e previsões updated.",
     images: ["/og.png"],
   },
 
@@ -72,25 +73,32 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-<html
-  lang="pt-BR"
-  className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
->
-  <body className="min-h-full flex flex-col bg-white text-black">
-    <Script
-  id="schema-site"
-  type="application/ld+json"
-  dangerouslySetInnerHTML={{
-    __html: JSON.stringify({
-      "@context": "https://schema.org",
-      "@type": "WebSite",
-      name: "Concursos Maranhão Pro",
-      url: "https://meu-site-five-delta.vercel.app",
-    }),
-  }}
-/>
-    {children}
-  </body>
-</html>
+    <html
+      lang="pt-BR"
+      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+    >
+      <body className="min-h-full flex flex-col bg-white text-black">
+        
+        <Script
+          id="schema-site"
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "WebSite",
+              name: "Concursos Maranhão Pro",
+              url: "https://meu-site-five-delta.vercel.app",
+            }),
+          }}
+        />
+
+        {children}
+
+        {/* 👈 2. ADICIONADO AQUI NO FINAL DO BODY */}
+        {/* Substitua o G-XXXXXXXXXX pela sua chave real do painel do Analytics */}
+        <GoogleAnalytics gaId="G-XXXXXXXXXX" /> 
+        
+      </body>
+    </html>
   );
 }
