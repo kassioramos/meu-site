@@ -109,3 +109,15 @@ export default function PostPage({ params }: { params: Promise<{ post: string }>
     </article>
   )
 }
+{/* 🎖️ Bloco de EEAT: Autoridade do Conteúdo */}
+<div className="mt-12 p-6 bg-slate-900 border border-slate-800 rounded-xl flex items-center gap-4">
+  <div className="w-16 h-16 rounded-full bg-blue-600 flex items-center justify-center text-xl font-bold text-white shadow-md">
+    KR
+  </div>
+  <div>
+    <h4 className="text-white font-bold text-base">Escrito por Kassio Ramos</h4>
+    <p className="text-slate-400 text-xs mt-1 leading-relaxed">
+      Desenvolvedor Full-Stack, idealizador do <strong>Concursos Maranhão Pro</strong> e especialista no mapeamento tecnológico de editais e conteúdos programáticos para vestibulares regionais (PAES UEMA) e concursos públicos no estado do Maranhão.
+    </p>
+  </div>
+</div>
