@@ -1,46 +1,66 @@
 import { supabase } from '@/lib/supabase'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import QuestaoInterativa from './QuestaoInterativa'
+import QuestaoInterativa from '@/app/questoes/[slug]/QuestaoInterativa'
+
+export const dynamic = 'force-dynamic'
+export const dynamicParams = true
 
 interface Props {
-  params: Promise<{ id: string }>
+  params: Promise<{ slug: string }>
 }
 
-// Isso substitui o "use client" para carregar os dados direto no Servidor
 export default async function QuestaoDetalhe({ params }: Props) {
-  const { id } = await params
+  const { slug } = await params
 
-  // Busca os dados diretamente no servidor antes da página renderizar
-  const { data: questao } = await supabase
-    .from('questoes')
-    .select('*')
-    .eq('id', id)
-    .single()
+  if (!slug) return notFound()
+
+  // Validação simples para ver se o slug enviado na URL é um UUID válido (formato do id)
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slug)
+
+  let query = supabase.from('questoes').select('*')
+
+  if (isUuid) {
+    query = query.eq('id', slug)
+  } else {
+    query = query.eq('slug', slug)
+  }
+
+  const { data: questao } = await query.maybeSingle()
 
   if (!questao) return notFound()
 
-  // Monta o JSON-LD perfeito que o Google vai ler instantaneamente
+  const listaOpcoes = questao.opcoes ? Object.entries(questao.opcoes) : []
+  
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Quiz",
     "name": `Simulado de ${questao.disciplina || 'Concurso'}`,
+    "description": questao.enunciado,
     "hasPart": {
       "@type": "Question",
       "name": questao.enunciado,
-      "suggestedAnswer": [
-        {
-          "@type": "Answer",
+      "text": questao.enunciado,
+      "suggestedAnswer": listaOpcoes.map(([letra, texto]: [string, any]) => ({
+        "@type": "Answer",
+        "position": letra.toUpperCase(),
+        "text": texto
+      })),
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "position": questao.alternativa_correta?.toUpperCase(),
+        "text": questao.opcoes ? (questao.opcoes as Record<string, any>)[questao.alternativa_correta] || '' : '',
+        "comment": {
+          "@type": "Comment",
           "text": questao.comentario_professor || "Confira o gabarito comentado oficial."
         }
-      ]
+      }
     }
   }
 
   return (
     <div style={{ backgroundColor: '#0b1120', minHeight: '100vh', color: 'white', padding: '40px 20px' }}>
       
-      {/* O Google encontra o script aqui logo no primeiro milissegundo */}
       <script 
         type="application/ld+json" 
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} 
@@ -52,15 +72,15 @@ export default async function QuestaoDetalhe({ params }: Props) {
           ← Voltar para a lista
         </Link>
 
-        {/* Header da Questão */}
         <div style={{ marginTop: '20px', marginBottom: '20px' }}>
-          <span style={{ background: '#10b981', color: 'white', padding: '4px 12px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 'bold' }}>
-            {questao.banca}
-          </span>
+          {questao.banca && (
+            <span style={{ background: '#10b981', color: 'white', padding: '4px 12px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 'bold' }}>
+              {questao.banca}
+            </span>
+          )}
           <h1 style={{ color: '#3b82f6', fontSize: '2rem', marginTop: '10px' }}>{questao.disciplina}</h1>
         </div>
 
-        {/* Bloco de Enunciado */}
         <div style={{ 
           background: '#1e293b', 
           padding: '25px', 
@@ -74,8 +94,7 @@ export default async function QuestaoDetalhe({ params }: Props) {
           <p style={{ lineHeight: '1.6', color: '#cbd5e1' }}>{questao.enunciado}</p>
         </div>
 
-        {/* Passa os dados da questão para o componente que gerencia os cliques */}
-        <QuestaoInterativa questao={questao} />
+        <QuestaoInterativa questao={questao as any} />
 
       </div>
     </div>
