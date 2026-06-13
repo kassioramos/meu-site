@@ -99,6 +99,7 @@ export default function RootLayout({
       
         <GoogleAnalytics gaId="G-HNMVXY4P0G" />
         
+        
       </body>
     </html>
   );
