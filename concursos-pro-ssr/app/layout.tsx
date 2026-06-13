@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Script from "next/script";
-import { GoogleAnalytics } from '@next/third-parties/google'; // 👈 1. IMPORTADO AQUI
+import { GoogleAnalytics } from '@next/third-parties/google';
 import Footer from '@/components/Footer';
 
 const geistSans = Geist({
@@ -16,7 +16,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://meu-site-five-delta.vercel.app"),
+  // 🎯 Atualizado para o seu domínio oficial novo
+  metadataBase: new URL("https://concursosmaranhaopro.vercel.app"),
 
   title: {
     default: "Concursos Maranhão 2026 - Editais, Salários e Previsões",
@@ -25,6 +26,11 @@ export const metadata: Metadata = {
 
   description:
     "Confira concursos abertos no Maranhão, salários atualizados, previsões de editais e banco de questões para estudar.",
+
+  // 🎯 A FORMA CORRETA DE ADICIONAR A VERIFICAÇÃO DO GOOGLE NO NEXT.JS:
+  verification: {
+    google: "0Z_754Cw5srRkVIMK3NOaLltkeMBk3HrY17mFIivPGg",
+  },
 
   keywords: [
     "concursos maranhão",
@@ -41,7 +47,7 @@ export const metadata: Metadata = {
     title: "Concursos Maranhão 2026",
     description:
       "Veja editais abertos, salários e previsões de concursos no Maranhão.",
-    url: "https://meu-site-five-delta.vercel.app",
+    url: "https://concursosmaranhaopro.vercel.app", // 🎯 Atualizado aqui também
     siteName: "Concursos Maranhão Pro",
     images: [
       {
@@ -78,7 +84,6 @@ export default function RootLayout({
       lang="pt-BR"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      {/* Mudamos bg-white para #0b1120 (ou a cor escura do seu app) para o fundo não quebrar */}
       <body style={{ backgroundColor: '#0b1120' }} className="min-h-full flex flex-col text-white">
         
         <Script
@@ -89,20 +94,17 @@ export default function RootLayout({
               "@context": "https://schema.org",
               "@type": "WebSite",
               name: "Concursos Maranhão Pro",
-              url: "https://meu-site-five-delta.vercel.app",
+              url: "https://concursosmaranhaopro.vercel.app", // 🎯 Atualizado aqui também
             }),
           }}
         />
 
-        {/* O main com flex-1 garante que o conteúdo empurre o Footer para o fim da tela */}
         <main className="flex-1">
           {children}
         </main>
 
-        {/* 📑 O SEU FOOTER ENTRA EXATAMENTE AQUI */}
         <Footer />
 
-        {/* Monitoramento do Google Analytics */}
         <GoogleAnalytics gaId="G-HNMVXY4P0G" />
         
       </body>
