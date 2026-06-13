@@ -17,8 +17,32 @@ export default async function ListagemQuestoes() {
     )
   }
 
+  // Cria o esquema ItemList para o Google mapear todas as questões da página
+  const jsonLdLista = {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    "name": "Lista de Questões de Concurso",
+    "description": "Simulados e questões interativas comentadas para concursos públicos.",
+    "itemListElement": questoes?.map((questao, index) => {
+      const parametroRota = questao.slug || questao.id
+      return {
+        "@type": "ListItem",
+        "position": index + 1,
+        "url": `https://meu-site-five-delta.vercel.app/questoes/${parametroRota}`,
+        "name": questao.enunciado ? questao.enunciado.substring(0, 80) + "..." : `Questão ${index + 1}`
+      }
+    }) || []
+  }
+
   return (
     <div style={{ backgroundColor: '#0b1120', minHeight: '100vh', color: 'white', padding: '40px 20px' }}>
+      
+      {/* Injeta os metadados estruturados para os robôs de busca */}
+      <script 
+        type="application/ld+json" 
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdLista) }} 
+      />
+
       <div style={{ maxWidth: '800px', margin: '0 auto' }}>
         <h1 style={{ color: '#3b82f6', fontSize: '2.5rem', marginBottom: '30px' }}>
           Questões Disponíveis
