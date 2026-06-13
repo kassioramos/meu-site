@@ -4,7 +4,7 @@ import { MetadataRoute } from "next"
 export const revalidate = 3600 // Atualiza o sitemap a cada 1 hora
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const URL_BASE = "https://concursosmaranhaopro.vercel.app" // Altere para a sua URL oficial de produção
+  const URL_BASE = "https://concursosmaranhaopro.vercel.app" 
 
   // 1. Rotas Estáticas Principais
   const rotasEstaticas = [
@@ -24,15 +24,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       lastModified: new Date(),
     }))
 
-    // 3. Buscar IDs das Questões para gerar as rotas dinâmicas dos simulados
+    // 3. Buscar Slugs/IDs das Questões (AJUSTADO PARA O ROBÔ NÃO SE PERDER)
     const { data: questoes } = await supabaseServer
       .from("questoes")
-      .select("id")
+      .select("id, slug") // 👈 Buscando o slug também
 
-    const rotasQuestoes = (questoes || []).map((q) => ({
-      url: `${URL_BASE}/questoes/${q.id}`,
-      lastModified: new Date(),
-    }))
+    const rotasQuestoes = (questoes || []).map((q) => {
+      // 🎯 Se a questão tiver slug, usa o slug. Se não tiver, usa o id.
+      const parametroRota = q.slug || q.id
+      
+      return {
+        url: `${URL_BASE}/questoes/${parametroRota}`,
+        lastModified: new Date(),
+      }
+    })
 
     // 4. Buscar Slugs dos Artigos do Blog
     const { data: artigos } = await supabaseServer
