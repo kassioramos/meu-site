@@ -1,139 +1,99 @@
-'use client'
+import { supabase } from '@/lib/supabase'
+import { notFound } from 'next/navigation'
+import QuestaoInterativa from './QuestaoInterativa'
 
-import { useState } from 'react'
+interface Props {
+  params: Promise<{ slug: string }>
+}
 
-export default function QuestaoInterativa({ questao }: { questao: any }) {
-  const [selecionada, setSelecionada] = useState<string | null>(null)
-  const [respondido, setRespondido] = useState(false)
+// 1. Geração Dinâmica de Metadados para SEO básico e Redes Sociais
+export async function generateMetadata({ params }: Props) {
+  const { slug } = await params
 
+  const { data: questao } = await supabase
+    .from('questoes')
+    .select('enunciado, disciplina')
+    .or(`slug.eq.${slug},id.eq.${slug}`)
+    .single()
+
+  if (!questao) return {}
+
+  const tituloCurto = questao.enunciado ? `${questao.enunciado.substring(0, 50)}...` : 'Questão'
+
+  return {
+    title: `Questão de ${questao.disciplina || 'Concurso'} | Concursos Maranhão Pro`,
+    description: `Resolva a questão: ${questao.enunciado?.substring(0, 150)}...`,
+  }
+}
+
+// 2. Página Principal da Rota
+export default async function QuestaoPage({ params }: Props) {
+  const { slug } = await params
+
+  // Busca a questão no Supabase aceitando tanto o ID antigo quanto o novo slug amigável
+  const { data: questao } = await supabase
+    .from('questoes')
+    .select('*')
+    .or(`slug.eq.${slug},id.eq.${slug}`)
+    .single()
+
+  if (!questao) return notFound()
+
+  // Prepara o Objeto de Dados Estruturados (Resultados Ricos do Google)
   const listaOpcoes = questao.opcoes ? Object.entries(questao.opcoes) : []
-  const acertou = selecionada === questao.alternativa_correta
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Quiz',
+    'name': `Questão de ${questao.disciplina || 'Concurso'}`,
+    'description': questao.enunciado,
+    'about': {
+      '@type': 'Thing',
+      'name': questao.disciplina
+    },
+    'hasPart': {
+      '@type': 'Question',
+      'name': questao.enunciado,
+      'text': questao.enunciado,
+      'suggestedAnswer': listaOpcoes.map(([letra, texto]: any) => ({
+        '@type': 'Answer',
+        'position': letra.toUpperCase(),
+        'text': texto,
+        'isBasedOnRecognizedAuthority': true
+      })),
+      'acceptedAnswer': {
+        '@type': 'Answer',
+        'position': questao.alternativa_correta?.toUpperCase(),
+        'text': questao.opcoes?.[questao.alternativa_correta] || '',
+        'comment': {
+          '@type': 'Comment',
+          'text': questao.comentario_professor || 'Gabarito oficial.'
+        }
+      }
+    }
+  }
 
   return (
-    <>
-      {/* Bloco de Alternativas */}
-      <div style={{ 
-        background: '#1e293b', 
-        padding: '25px', 
-        borderRadius: '10px', 
-        borderLeft: '5px solid #6366f1',
-        marginBottom: '20px' 
-      }}>
-        <h3 style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '1.1rem', marginBottom: '20px' }}>
-          <span>📝</span> Alternativas
-        </h3>
-        
-        <div style={{ display: 'grid', gap: '10px' }}>
-          {listaOpcoes.map(([letra, texto]: any) => {
-            const eACorreta = letra === questao.alternativa_correta
-            const eASelecionada = selecionada === letra
-            
-            let estiloBotao = {
-              width: '100%',
-              padding: '14px 20px',
-              borderRadius: '8px',
-              border: '1px solid #334155',
-              background: '#1e293b',
-              color: 'white',
-              textAlign: 'left' as const, // Mudado para 'left' para ficar padrão vestibular (letra na esquerda, texto corrido)
-              cursor: respondido ? 'default' : 'pointer',
-              fontSize: '0.95rem',
-              transition: 'all 0.2s ease',
-              display: 'flex',
-              gap: '10px',
-              alignItems: 'flex-start'
-            }
+    <main style={{ maxWidth: '800px', margin: '40px auto', padding: '0 20px', color: '#f8fafc' }}>
+      {/* Injeta o JSON-LD estruturado diretamente no cabeçalho da página para o Google ler */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
 
-            if (respondido) {
-              if (eACorreta) {
-                estiloBotao.background = '#10b981'
-                estiloBotao.border = '1px solid #10b981'
-              } else if (eASelecionada) {
-                estiloBotao.background = '#ef4444'
-                estiloBotao.border = '1px solid #ef4444'
-              }
-            } else if (eASelecionada) {
-              estiloBotao.border = '1px solid #3b82f6'
-              estiloBotao.background = '#334155'
-            }
-
-            // Tratamento preventivo: se o texto já começar com "a)", remove os caracteres repetidos
-            const textoFormatado = typeof texto === 'string' && texto.toLowerCase().startsWith(`${letra.toLowerCase()})`)
-              ? texto.substring(2).trim()
-              : texto;
-
-            return (
-              <button 
-                key={letra} 
-                disabled={respondido}
-                onClick={() => setSelecionada(letra)}
-                style={estiloBotao}
-              >
-                {/* Deixa a letra em negrito e com destaque */}
-                <span style={{ fontWeight: 'bold', color: eASelecionada || (respondido && eACorreta) ? 'white' : '#3b82f6' }}>
-                  {letra.toUpperCase()})
-                </span>
-                <span>{textoFormatado}</span>
-              </button>
-            )
-          })}
-        </div>
-
-        {!respondido && (
-          <button 
-            onClick={() => {
-              if (selecionada) setRespondido(true)
-            }}
-            style={{
-              marginTop: '20px',
-              width: '100%',
-              padding: '12px',
-              borderRadius: '8px',
-              background: '#3b82f6',
-              color: 'white',
-              border: 'none',
-              fontWeight: 'bold',
-              cursor: [{selecionada}][0].selecionada ? 'pointer' : 'not-allowed',
-              opacity: [{selecionada}][0].selecionada ? 1 : 0.5,
-              transition: 'opacity 0.2s'
-            }}
-          >
-            Confirmar Resposta
-          </button>
-        )}
+      {/* Cabeçalho da Questão */}
+      <div style={{ marginBottom: '20px', fontSize: '0.9rem', color: '#6366f1', fontWeight: 'bold' }}>
+        <span>📚 {questao.disciplina?.toUpperCase()}</span>
+        {questao.assunto && <span style={{ color: '#94a3b8' }}> • {questao.assunto}</span>}
+        {questao.banca && <span style={{ color: '#94a3b8' }}> • {questao.banca}</span>}
       </div>
 
-      {/* Bloco de Feedback (Resultado) */}
-      {respondido && (
-        <div style={{ 
-          background: '#1e293b', 
-          padding: '25px', 
-          borderRadius: '10px', 
-          borderLeft: `5px solid ${acertou ? '#10b981' : '#ef4444'}`,
-          animation: 'fadeIn 0.3s ease'
-        }}>
-          <h3 style={{ color: acertou ? '#10b981' : '#ef4444', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-            {acertou ? '✅ Resposta correta!' : '❌ Resposta errada!'}
-          </h3>
-          <p style={{ fontWeight: 'bold', marginBottom: '10px' }}>
-            Resposta correta: <span style={{ color: '#10b981' }}>{questao.alternativa_correta?.toUpperCase()}</span>
-          </p>
-          {questao.comentario_professor && (
-            <div style={{ marginTop: '15px', borderTop: '1px solid #334155', paddingTop: '15px' }}>
-              <h4 style={{ fontSize: '0.95rem', color: '#6366f1', marginBottom: '8px' }}>💡 Comentário do Professor:</h4>
-              <p style={{ color: '#94a3b8', fontSize: '0.95rem', lineHeight: '1.6', margin: 0 }}>
-                {questao.comentario_professor}
-              </p>
-            </div>
-          )}
-          <button 
-            onClick={() => { setRespondido(false); setSelecionada(null); }}
-            style={{ marginTop: '20px', background: 'transparent', border: '1px solid #475569', color: '#94a3b8', padding: '8px 15px', borderRadius: '5px', cursor: 'pointer' }}
-          >
-            Refazer Questão
-          </button>
-        </div>
-      )}
-    </>
+      {/* Enunciado */}
+      <h1 style={{ fontSize: '1.4rem', lineHeight: '1.6', fontWeight: '500', marginBottom: '30px' }}>
+        {questao.enunciado}
+      </h1>
+
+      {/* Invoca o componente dinâmico do cliente passando os dados buscados no servidor */}
+      <QuestaoInterativa questao={questao} />
+    </main>
   )
 }
