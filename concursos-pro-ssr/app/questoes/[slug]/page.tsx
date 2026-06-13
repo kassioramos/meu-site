@@ -2,7 +2,10 @@ import { supabase } from '@/lib/supabase'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import QuestaoInterativa from './QuestaoInterativa'
-import Footer from '@/components/Footer' // <-- Importação do Footer adicionada de volta
+import Footer from '@/components/Footer'
+
+// Força a página a rodar no servidor a cada requisição (evita o cache estático que gera 404)
+export const dynamic = 'force-dynamic'
 
 interface Props {
   params: Promise<{ slug: string }>
@@ -12,7 +15,6 @@ interface Props {
 export async function generateMetadata({ params }: Props) {
   const { slug } = await params
 
-  // Busca flexível: funciona se a URL tiver o ID ou o slug amigável
   const { data: questao } = await supabase
     .from('questoes')
     .select('enunciado, disciplina')
@@ -31,7 +33,7 @@ export async function generateMetadata({ params }: Props) {
 export default async function QuestaoDetalhe({ params }: Props) {
   const { slug } = await params
 
-  // Busca flexível: Garante que as questões antigas abram mesmo se o slug estiver nulo no banco
+  // Busca flexível: Aceita tanto o id antigo quanto o novo slug amigável
   const { data: questao } = await supabase
     .from('questoes')
     .select('*')
@@ -40,7 +42,6 @@ export default async function QuestaoDetalhe({ params }: Props) {
 
   if (!questao) return notFound()
 
-  // Prepara o Objeto Completo de Dados Estruturados para o Google detectar como Quiz válido
   const listaOpcoes = questao.opcoes ? Object.entries(questao.opcoes) : []
   const jsonLd = {
     "@context": "https://schema.org",
@@ -106,7 +107,6 @@ export default async function QuestaoDetalhe({ params }: Props) {
         </div>
       </div>
 
-      {/* O Footer montado fora do container da questão para ficar bonito no rodapé */}
       <Footer />
     </>
   )

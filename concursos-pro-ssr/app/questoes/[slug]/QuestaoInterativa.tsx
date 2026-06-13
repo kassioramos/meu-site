@@ -87,7 +87,7 @@ export default function QuestaoInterativa({ questao }: { questao: any }) {
         )}
       </div>
 
-      {/* Bloco de Feedback (Resultado) */}
+      {/* Bloco de Feedback */}
       {respondido && (
         <div style={{ 
           background: '#1e293b', 
