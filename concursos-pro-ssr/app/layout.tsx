@@ -78,7 +78,8 @@ export default function RootLayout({
       lang="pt-BR"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-white text-black">
+      {/* Mudamos bg-white para #0b1120 (ou a cor escura do seu app) para o fundo não quebrar */}
+      <body style={{ backgroundColor: '#0b1120' }} className="min-h-full flex flex-col text-white">
         
         <Script
           id="schema-site"
@@ -93,13 +94,16 @@ export default function RootLayout({
           }}
         />
 
-        {children}
+        {/* O main com flex-1 garante que o conteúdo empurre o Footer para o fim da tela */}
+        <main className="flex-1">
+          {children}
+        </main>
 
-        {/* 👈 2. ADICIONADO AQUI NO FINAL DO BODY */}
-        {/* Substitua o G-XXXXXXXXXX pela sua chave real do painel do Analytics */}
-      
+        {/* 📑 O SEU FOOTER ENTRA EXATAMENTE AQUI */}
+        <Footer />
+
+        {/* Monitoramento do Google Analytics */}
         <GoogleAnalytics gaId="G-HNMVXY4P0G" />
-        
         
       </body>
     </html>
