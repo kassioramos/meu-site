@@ -15,7 +15,6 @@ export default async function QuestaoDetalhe({ params }: Props) {
 
   if (!slug) return notFound()
 
-  // Validação simples para ver se o slug enviado na URL é um UUID válido (formato do id)
   const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slug)
 
   let query = supabase.from('questoes').select('*')
