@@ -96,7 +96,8 @@ export default function RootLayout({
 
         {/* 👈 2. ADICIONADO AQUI NO FINAL DO BODY */}
         {/* Substitua o G-XXXXXXXXXX pela sua chave real do painel do Analytics */}
-        <GoogleAnalytics gaId="G-XXXXXXXXXX" /> 
+      
+        <GoogleAnalytics gaId="G-HNMVXY4P0G" />
         
       </body>
     </html>
