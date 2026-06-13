@@ -1,6 +1,7 @@
 import { supabase } from '@/lib/supabase'
 import { notFound } from 'next/navigation'
 import QuestaoInterativa from './QuestaoInterativa'
+import Footer from '@/components/Footer' // <-- IMPORTAÇÃO DO FOOTER ADICIONADA AQUI
 
 interface Props {
   params: Promise<{ slug: string }>
@@ -73,27 +74,32 @@ export default async function QuestaoPage({ params }: Props) {
   }
 
   return (
-    <main style={{ maxWidth: '800px', margin: '40px auto', padding: '0 20px', color: '#f8fafc' }}>
-      {/* Injeta o JSON-LD estruturado diretamente no cabeçalho da página para o Google ler */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
+    <>
+      <main style={{ maxWidth: '800px', margin: '40px auto', padding: '0 20px', color: '#f8fafc' }}>
+        {/* Injeta o JSON-LD estruturado diretamente no cabeçalho da página para o Google ler */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
 
-      {/* Cabeçalho da Questão */}
-      <div style={{ marginBottom: '20px', fontSize: '0.9rem', color: '#6366f1', fontWeight: 'bold' }}>
-        <span>📚 {questao.disciplina?.toUpperCase()}</span>
-        {questao.assunto && <span style={{ color: '#94a3b8' }}> • {questao.assunto}</span>}
-        {questao.banca && <span style={{ color: '#94a3b8' }}> • {questao.banca}</span>}
-      </div>
+        {/* Cabeçalho da Questão */}
+        <div style={{ marginBottom: '20px', fontSize: '0.9rem', color: '#6366f1', fontWeight: 'bold' }}>
+          <span>📚 {questao.disciplina?.toUpperCase()}</span>
+          {questao.assunto && <span style={{ color: '#94a3b8' }}> • {questao.assunto}</span>}
+          {questao.banca && <span style={{ color: '#94a3b8' }}> • {questao.banca}</span>}
+        </div>
 
-      {/* Enunciado */}
-      <h1 style={{ fontSize: '1.4rem', lineHeight: '1.6', fontWeight: '500', marginBottom: '30px' }}>
-        {questao.enunciado}
-      </h1>
+        {/* Enunciado */}
+        <h1 style={{ fontSize: '1.4rem', lineHeight: '1.6', fontWeight: '500', marginBottom: '30px' }}>
+          {questao.enunciado}
+        </h1>
 
-      {/* Invoca o componente dinâmico do cliente passando os dados buscados no servidor */}
-      <QuestaoInterativa questao={questao} />
-    </main>
+        {/* Invoca o componente dinâmico do cliente passando os dados buscados no servidor */}
+        <QuestaoInterativa questao={questao} />
+      </main>
+
+      {/* O componente Footer injetado logo após o término do conteúdo principal */}
+      <Footer />
+    </>
   )
 }
