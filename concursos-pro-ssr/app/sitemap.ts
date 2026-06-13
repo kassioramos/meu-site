@@ -4,7 +4,7 @@ import { MetadataRoute } from "next"
 export const revalidate = 3600 // Atualiza o sitemap a cada 1 hora
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const URL_BASE = "https://concursosmaranhaopro.vercel.app" 
+  const URL_BASE = "https://meu-site-five-delta.vercel.app"; 
 
   // 1. Rotas Estáticas Principais
   const rotasEstaticas = [
