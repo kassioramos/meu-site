@@ -1,119 +1,112 @@
-'use client'
+import { supabase } from '@/lib/supabase'
+import { notFound } from 'next/navigation'
+import Link from 'next/link'
+import QuestaoInterativa from './QuestaoInterativa'
 
-import { useState } from 'react'
+// Força o Next.js a renderizar no servidor a cada requisição, 
+// buscando dados novos do Supabase sem salvar cache antigo com 404
+export const dynamic = 'force-dynamic'
+export const dynamicParams = true
 
-export default function QuestaoInterativa({ questao }: { questao: any }) {
-  const [selecionada, setSelecionada] = useState<string | null>(null)
-  const [respondido, setRespondido] = useState(false)
+interface Props {
+  params: Promise<{ slug: string }> // Corrigido de id para slug para bater com a pasta [slug]
+}
 
+export default async function QuestaoDetalhe({ params }: Props) {
+  const { slug } = await params
+
+  if (!slug) return notFound()
+
+  // Validação simples para ver se o slug enviado na URL é um UUID válido (formato do id)
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slug)
+
+  let query = supabase.from('questoes').select('*')
+
+  if (isUuid) {
+    // Se for UUID, busca diretamente na coluna id
+    query = query.eq('id', slug)
+  } else {
+    // Se for texto comum, busca na coluna slug
+    query = query.eq('slug', slug)
+  }
+
+  const { data: questao } = await query.maybeSingle()
+
+  // Se não encontrar nenhuma linha no Supabase, redireciona para a página 404
+  if (!questao) return notFound()
+
+  // Monta as opções dinamicamente para o JSON-LD estruturado
   const listaOpcoes = questao.opcoes ? Object.entries(questao.opcoes) : []
-  const acertou = selecionada === questao.alternativa_correta
+  
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Quiz",
+    "name": `Simulado de ${questao.disciplina || 'Concurso'}`,
+    "description": questao.enunciado,
+    "hasPart": {
+      "@type": "Question",
+      "name": questao.enunciado,
+      "text": questao.enunciado,
+      "suggestedAnswer": listaOpcoes.map(([letra, texto]: any) => ({
+        "@type": "Answer",
+        "position": letra.toUpperCase(),
+        "text": texto
+      })),
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "position": questao.alternativa_correta?.toUpperCase(),
+        "text": questao.opcoes?.[questao.alternativa_correta] || '',
+        "comment": {
+          "@type": "Comment",
+          "text": questao.comentario_professor || "Confira o gabarito comentado oficial."
+        }
+      }
+    }
+  }
 
   return (
-    <>
-      {/* Bloco de Alternativas */}
-      <div style={{ 
-        background: '#1e293b', 
-        padding: '25px', 
-        borderRadius: '10px', 
-        borderLeft: '5px solid #6366f1',
-        marginBottom: '20px' 
-      }}>
-        <h3 style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '1.1rem', marginBottom: '20px' }}>
-          <span>📝</span> Alternativas
-        </h3>
+    <div style={{ backgroundColor: '#0b1120', minHeight: '100vh', color: 'white', padding: '40px 20px' }}>
+      
+      {/* Dados estruturados que o validador do Google (Search Console) vai ler */}
+      <script 
+        type="application/ld+json" 
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} 
+      />
+
+      <div style={{ maxWidth: '750px', margin: '0 auto' }}>
         
-        <div style={{ display: 'grid', gap: '10px' }}>
-          {listaOpcoes.map(([letra, texto]: any) => {
-            const eACorreta = letra === questao.alternativa_correta
-            const eASelecionada = selecionada === letra
-            
-            let estiloBotao = {
-              width: '100%',
-              padding: '12px 20px',
-              borderRadius: '8px',
-              border: '1px solid #334155',
-              background: '#1e293b',
-              color: 'white',
-              textAlign: 'center' as const,
-              cursor: respondido ? 'default' : 'pointer',
-              fontSize: '0.95rem'
-            }
+        <Link href="/questoes" style={{ color: '#64748b', textDecoration: 'none', fontSize: '0.9rem' }}>
+          ← Voltar para a lista
+        </Link>
 
-            if (respondido) {
-              if (eACorreta) {
-                estiloBotao.background = '#10b981'
-                estiloBotao.border = '1px solid #10b981'
-              } else if (eASelecionada) {
-                estiloBotao.background = '#ef4444'
-                estiloBotao.border = '1px solid #ef4444'
-              }
-            } else if (eASelecionada) {
-              estiloBotao.border = '1px solid #3b82f6'
-              estiloBotao.background = '#334155'
-            }
-
-            return (
-              <button 
-                key={letra} 
-                disabled={respondido}
-                onClick={() => setSelecionada(letra)}
-                style={estiloBotao}
-              >
-                {letra.toUpperCase()}) {texto}
-              </button>
-            )
-          })}
+        {/* Header da Questão */}
+        <div style={{ marginTop: '20px', marginBottom: '20px' }}>
+          {questao.banca && (
+            <span style={{ background: '#10b981', color: 'white', padding: '4px 12px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 'bold' }}>
+              {questao.banca}
+            </span>
+          )}
+          <h1 style={{ color: '#3b82f6', fontSize: '2rem', marginTop: '10px' }}>{questao.disciplina}</h1>
         </div>
 
-        {!respondido && (
-          <button 
-            onClick={() => selecionada && setRespondido(true)}
-            style={{
-              marginTop: '20px',
-              width: '100%',
-              padding: '12px',
-              borderRadius: '8px',
-              background: '#3b82f6',
-              color: 'white',
-              border: 'none',
-              fontWeight: 'bold',
-              cursor: selecionada ? 'pointer' : 'not-allowed',
-              opacity: selecionada ? 1 : 0.5
-            }}
-          >
-            Confirmar Resposta
-          </button>
-        )}
-      </div>
-
-      {/* Bloco de Feedback */}
-      {respondido && (
+        {/* Bloco de Enunciado */}
         <div style={{ 
           background: '#1e293b', 
           padding: '25px', 
           borderRadius: '10px', 
-          borderLeft: `5px solid ${acertou ? '#10b981' : '#ef4444'}`,
+          borderLeft: '5px solid #3b82f6',
+          marginBottom: '20px' 
         }}>
-          <h3 style={{ color: acertou ? '#10b981' : '#ef4444', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-            {acertou ? '✅ Resposta correta!' : '❌ Resposta errada!'}
+          <h3 style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '1.1rem', marginBottom: '15px' }}>
+            <span>📘</span> Enunciado
           </h3>
-          <p style={{ fontWeight: 'bold', marginBottom: '10px' }}>
-            Resposta correta: <span style={{ color: '#10b981' }}>{questao.alternativa_correta?.toUpperCase()}</span>
-          </p>
-          {questao.comentario_professor && (
-            <p style={{ color: '#94a3b8', fontSize: '0.95rem', lineHeight: '1.5' }}>
-              {questao.comentario_professor}
-            </p>
-          )}
-          <button 
-            onClick={() => { setRespondido(false); setSelecionada(null); }}
-            style={{ marginTop: '20px', background: 'transparent', border: '1px solid #475569', color: '#94a3b8', padding: '8px 15px', borderRadius: '5px', cursor: 'pointer' }}
-          >
-            Refazer Questão
-          </button>
+          <p style={{ lineHeight: '1.6', color: '#cbd5e1' }}>{questao.enunciado}</p>
         </div>
-      )}
-    </>
+
+        {/* Componente Interativo de Escolha de Alternativas */}
+        <QuestaoInterativa questao={questao} />
+
+      </div>
+    </div>
   )
 }
