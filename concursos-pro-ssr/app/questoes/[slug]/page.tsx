@@ -1,16 +1,18 @@
 import { supabase } from '@/lib/supabase'
 import { notFound } from 'next/navigation'
+import Link from 'next/link'
 import QuestaoInterativa from './QuestaoInterativa'
-import Footer from '@/components/Footer' // <-- IMPORTAÇÃO DO FOOTER ADICIONADA AQUI
+import Footer from '@/components/Footer' // <-- Importação do Footer adicionada de volta
 
 interface Props {
   params: Promise<{ slug: string }>
 }
 
-// 1. Geração Dinâmica de Metadados para SEO básico e Redes Sociais
+// 1. Geração Dinâmica de Metadados para SEO e Resultados Ricos do Google
 export async function generateMetadata({ params }: Props) {
   const { slug } = await params
 
+  // Busca flexível: funciona se a URL tiver o ID ou o slug amigável
   const { data: questao } = await supabase
     .from('questoes')
     .select('enunciado, disciplina')
@@ -19,8 +21,6 @@ export async function generateMetadata({ params }: Props) {
 
   if (!questao) return {}
 
-  const tituloCurto = questao.enunciado ? `${questao.enunciado.substring(0, 50)}...` : 'Questão'
-
   return {
     title: `Questão de ${questao.disciplina || 'Concurso'} | Concursos Maranhão Pro`,
     description: `Resolva a questão: ${questao.enunciado?.substring(0, 150)}...`,
@@ -28,10 +28,10 @@ export async function generateMetadata({ params }: Props) {
 }
 
 // 2. Página Principal da Rota
-export default async function QuestaoPage({ params }: Props) {
+export default async function QuestaoDetalhe({ params }: Props) {
   const { slug } = await params
 
-  // Busca a questão no Supabase aceitando tanto o ID antigo quanto o novo slug amigável
+  // Busca flexível: Garante que as questões antigas abram mesmo se o slug estiver nulo no banco
   const { data: questao } = await supabase
     .from('questoes')
     .select('*')
@@ -40,34 +40,34 @@ export default async function QuestaoPage({ params }: Props) {
 
   if (!questao) return notFound()
 
-  // Prepara o Objeto de Dados Estruturados (Resultados Ricos do Google)
+  // Prepara o Objeto Completo de Dados Estruturados para o Google detectar como Quiz válido
   const listaOpcoes = questao.opcoes ? Object.entries(questao.opcoes) : []
   const jsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'Quiz',
-    'name': `Questão de ${questao.disciplina || 'Concurso'}`,
-    'description': questao.enunciado,
-    'about': {
-      '@type': 'Thing',
-      'name': questao.disciplina
+    "@context": "https://schema.org",
+    "@type": "Quiz",
+    "name": `Simulado de ${questao.disciplina || 'Concurso'}`,
+    "description": questao.enunciado,
+    "about": {
+      "@type": "Thing",
+      "name": questao.disciplina
     },
-    'hasPart': {
-      '@type': 'Question',
-      'name': questao.enunciado,
-      'text': questao.enunciado,
-      'suggestedAnswer': listaOpcoes.map(([letra, texto]: any) => ({
-        '@type': 'Answer',
-        'position': letra.toUpperCase(),
-        'text': texto,
-        'isBasedOnRecognizedAuthority': true
+    "hasPart": {
+      "@type": "Question",
+      "name": questao.enunciado,
+      "text": questao.enunciado,
+      "suggestedAnswer": listaOpcoes.map(([letra, texto]: any) => ({
+        "@type": "Answer",
+        "position": letra.toUpperCase(),
+        "text": texto,
+        "isBasedOnRecognizedAuthority": true
       })),
-      'acceptedAnswer': {
-        '@type': 'Answer',
-        'position': questao.alternativa_correta?.toUpperCase(),
-        'text': questao.opcoes?.[questao.alternativa_correta] || '',
-        'comment': {
-          '@type': 'Comment',
-          'text': questao.comentario_professor || 'Gabarito oficial.'
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "position": questao.alternativa_correta?.toUpperCase(),
+        "text": questao.opcoes?.[questao.alternativa_correta] || '',
+        "comment": {
+          "@type": "Comment",
+          "text": questao.comentario_professor || "Confira o gabarito comentado oficial."
         }
       }
     }
@@ -75,30 +75,38 @@ export default async function QuestaoPage({ params }: Props) {
 
   return (
     <>
-      <main style={{ maxWidth: '800px', margin: '40px auto', padding: '0 20px', color: '#f8fafc' }}>
-        {/* Injeta o JSON-LD estruturado diretamente no cabeçalho da página para o Google ler */}
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      <div style={{ backgroundColor: '#0b1120', minHeight: '100vh', color: 'white', padding: '40px 20px' }}>
+        <script 
+          type="application/ld+json" 
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} 
         />
 
-        {/* Cabeçalho da Questão */}
-        <div style={{ marginBottom: '20px', fontSize: '0.9rem', color: '#6366f1', fontWeight: 'bold' }}>
-          <span>📚 {questao.disciplina?.toUpperCase()}</span>
-          {questao.assunto && <span style={{ color: '#94a3b8' }}> • {questao.assunto}</span>}
-          {questao.banca && <span style={{ color: '#94a3b8' }}> • {questao.banca}</span>}
+        <div style={{ maxWidth: '750px', margin: '0 auto' }}>
+          <Link href="/questoes" style={{ color: '#64748b', textDecoration: 'none', fontSize: '0.9rem' }}>
+            ← Voltar para a lista
+          </Link>
+
+          <div style={{ marginTop: '20px', marginBottom: '20px' }}>
+            {questao.banca && (
+              <span style={{ background: '#10b981', color: 'white', padding: '4px 12px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 'bold' }}>
+                {questao.banca}
+              </span>
+            )}
+            <h1 style={{ color: '#3b82f6', fontSize: '2rem', marginTop: '10px' }}>{questao.disciplina}</h1>
+          </div>
+
+          <div style={{ background: '#1e293b', padding: '25px', borderRadius: '10px', borderLeft: '5px solid #3b82f6', marginBottom: '20px' }}>
+            <h3 style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '1.1rem', marginBottom: '15px' }}>
+              <span>📘</span> Enunciado
+            </h3>
+            <p style={{ lineHeight: '1.6', color: '#cbd5e1' }}>{questao.enunciado}</p>
+          </div>
+
+          <QuestaoInterativa questao={questao} />
         </div>
+      </div>
 
-        {/* Enunciado */}
-        <h1 style={{ fontSize: '1.4rem', lineHeight: '1.6', fontWeight: '500', marginBottom: '30px' }}>
-          {questao.enunciado}
-        </h1>
-
-        {/* Invoca o componente dinâmico do cliente passando os dados buscados no servidor */}
-        <QuestaoInterativa questao={questao} />
-      </main>
-
-      {/* O componente Footer injetado logo após o término do conteúdo principal */}
+      {/* O Footer montado fora do container da questão para ficar bonito no rodapé */}
       <Footer />
     </>
   )
