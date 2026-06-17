@@ -22,27 +22,47 @@ export default function AdminPage() {
   const [email, setEmail] = useState('')
   const [senha, setSenha] = useState('')
 
-  // Estado da Questão
+  // 1. FORMULÁRIO DE QUESTÃO COMPLETAMENTE ESTRUTURADO (JSONB)
   const [questao, setQuestao] = useState({
-    enunciado: '', alternativa_a: '', alternativa_b: '', alternativa_c: '',
-    alternativa_d: '', alternativa_e: '', alternativa_correta: 'A',
-    banca: '', disciplina: '', slug: ''
+    enunciado: '',
+    alternativa_a: '',
+    alternativa_b: '',
+    alternativa_c: '',
+    alternativa_d: '',
+    alternativa_e: '',
+    alternativa_correta: 'A',
+    banca: '',
+    disciplina: '', 
+    slug: ''
   })
 
-  // Estados para Artigo
+  // 2. FORMULÁRIO DE ARTIGO COMPLETAMENTE ESTRUTURADO
   const [artigo, setArtigo] = useState({
-    titulo: '', slug: '', categoria: 'Notícias', capa_url: '', resumo: '', conteudo: ''
+    titulo: '', 
+    slug: '', 
+    categoria: 'Notícias', 
+    capa_url: '', 
+    resumo: '', 
+    conteudo: ''
   })
 
-  // Estado para Concurso/Edital
+  // 3. FORMULÁRIO DE CONCURSO / EDITAL ESTRUTURADO
   const [concurso, setConcurso] = useState({
-    orgao: '', cidade: '', banca: '', status: 'Aberto',
-    periodo_inscricao: '', valor_inscricao: '', cargos: '',
-    salarios: '', escolaridade: '', data_prova: '',
-    descricao: '', link_oficial: ''
+    orgao: '', 
+    cidade: '', 
+    banca: '', 
+    status: 'Inscrições Abertas',
+    periodo_inscricao: '', 
+    valor_inscricao: '', 
+    cargos: '',
+    salarios: '', 
+    escolaridade: '', 
+    data_prova: '',
+    descricao: '', 
+    link_oficial: ''
   })
 
-  // Flags para controlar o "A definir"
+  // Flags para controlar o "A definir" sem dar erro de TypeScript
   const [aDefinir, setADefinir] = useState({
     periodo_inscricao: false,
     valor_inscricao: false,
@@ -60,7 +80,7 @@ export default function AdminPage() {
     text: '#f8fafc',
     border: 'rgba(255,255,255,0.1)',
     input: { width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', background: '#0f172a', color: 'white', marginBottom: '15px' },
-    rowCheck: { display: 'flex', alignItems: 'center', gap: '8px', marginTop: '-10px', marginBottom: '15px', fontSize: '0.85rem', color: '#a3e635' }
+    rowCheck: { display: 'flex', alignItems: 'center', gap: '8px', marginTop: '-10px', marginBottom: '15px', fontSize: '0.85rem', color: '#a3e635', cursor: 'pointer' }
   }
 
   useEffect(() => {
@@ -91,22 +111,18 @@ export default function AdminPage() {
     setUser(null)
   }
 
-  // BUSCA DADOS DO BANCO
   async function carregarDadosGerenciamento() {
-    // Busca artigos
     const { data: artigos } = await supabase.from('artigos').select('id, titulo, categoria').order('created_at', { ascending: false })
     if (artigos) setListaArtigos(artigos)
 
-    // Busca questões
     const { data: questoes } = await supabase.from('questoes').select('id, enunciado, banca, disciplina').order('created_at', { ascending: false })
     if (questoes) setListaQuestoes(questoes)
 
-    // Busca editais/concursos
-    const { data: concursos } = await supabase.from('concursos').select('id, orgao, cidade, status').order('created_at', { ascending: false })
+    const { data: concursos } = await supabase.from('concursos').select('id, orgao, city:cidade, status').order('created_at', { ascending: false })
     if (concursos) setListaConcursos(concursos)
   }
 
-  // FUNÇÕES DE EXCLUSÃO
+  // FUNÇÕES DE REMOÇÃO
   async function excluirArtigo(id: string, titulo: string) {
     if (!confirm(`Tem certeza que deseja apagar o artigo "${titulo}"?`)) return
     const { error } = await supabase.from('artigos').delete().eq('id', id)
@@ -130,9 +146,9 @@ export default function AdminPage() {
     return texto.normalize('NFD').replace(/[\u0300-\u036f]/g, "").toLowerCase().trim().replace(/[^a-z0-9 ]/g, '').replace(/\s+/g, '-')
   }
 
-const toggleADefinir = (campo: string) => {
+  // Tratamento dinâmico de chaves corrigido para o compilador do TypeScript
+  const toggleADefinir = (campo: string) => {
     setADefinir(prev => {
-      // Usamos 'as keyof typeof prev' para garantir ao TypeScript que a string é uma chave válida do objeto
       const chaveValida = campo as keyof typeof prev;
       const novoEstado = { ...prev, [chaveValida]: !prev[chaveValida] };
       
@@ -145,12 +161,13 @@ const toggleADefinir = (campo: string) => {
     });
   }
 
+  // ENVIO DOS FORMULÁRIOS
   async function salvarArtigo(e: React.FormEvent) {
     e.preventDefault()
     const { error } = await supabase.from('artigos').insert([{ ...artigo, created_at: new Date().toISOString() }])
     if (error) alert("Erro: " + error.message)
     else {
-      alert("✅ Artigo publicado!")
+      alert("✅ Artigo publicado com sucesso!")
       setArtigo({ titulo: '', slug: '', categoria: 'Notícias', capa_url: '', resumo: '', conteudo: '' })
     }
   }
@@ -158,14 +175,24 @@ const toggleADefinir = (campo: string) => {
   async function salvarQuestao(e: React.FormEvent) {
     e.preventDefault()
     const dadosParaEnviar = {
-      banca: questao.banca, disciplina: questao.disciplina, enunciado: questao.enunciado,
-      alternativa_correta: questao.alternativa_correta, alternativa_e: questao.alternativa_e || null, slug: questao.slug || null,
-      opcoes: { a: questao.alternativa_a, b: questao.alternativa_b, c: questao.alternativa_c, d: questao.alternativa_d, ...(questao.alternativa_e ? { e: questao.alternativa_e } : {}) }
+      banca: questao.banca,
+      disciplina: questao.disciplina,
+      enunciado: questao.enunciado,
+      alternativa_correta: questao.alternativa_correta,
+      alternativa_e: questao.alternativa_e || null,
+      slug: questao.slug || null,
+      opcoes: {
+        a: questao.alternativa_a,
+        b: questao.alternativa_b,
+        c: questao.alternativa_c,
+        d: questao.alternativa_d,
+        ...(questao.alternativa_e ? { e: questao.alternativa_e } : {})
+      }
     }
     const { error } = await supabase.from('questoes').insert([dadosParaEnviar])
-    if (error) alert("Erro: " + error.message)
+    if (error) alert("Erro ao salvar questão: " + error.message)
     else {
-      alert("✅ Questão cadastrada!")
+      alert("✅ Questão cadastrada com sucesso!")
       setQuestao({ enunciado: '', alternativa_a: '', alternativa_b: '', alternativa_c: '', alternativa_d: '', alternativa_e: '', alternativa_correta: 'A', banca: '', disciplina: '', slug: '' })
     }
   }
@@ -177,7 +204,7 @@ const toggleADefinir = (campo: string) => {
     else {
       alert("✅ Novo Edital cadastrado com sucesso!")
       setConcurso({
-        orgao: '', cidade: '', banca: '', status: 'Aberto', periodo_inscricao: '',
+        orgao: '', cidade: '', banca: '', status: 'Inscrições Abertas', periodo_inscricao: '',
         valor_inscricao: '', cargos: '', salarios: '', escolaridade: '', data_prova: '', descricao: '', link_oficial: ''
       })
       setADefinir({ periodo_inscricao: false, valor_inscricao: false, cargos: false, salarios: false, banca: false, escolaridade: false, data_prova: false })
@@ -206,7 +233,7 @@ const toggleADefinir = (campo: string) => {
     <div style={{ background: styles.bg, color: styles.text, minHeight: '100vh', padding: '20px' }}>
       <div style={{ maxWidth: '900px', margin: '0 auto', background: styles.card, padding: '30px', borderRadius: '12px', border: `1px solid ${styles.border}` }}>
         
-        {/* ABAS DO PAINEL SUPERIOR */}
+        {/* NAVEGAÇÃO DE SEÇÕES */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '30px', borderBottom: `1px solid ${styles.border}`, paddingBottom: '20px' }}>
           <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
             <button onClick={() => setSecaoAtiva('artigo')} style={{ background: secaoAtiva === 'artigo' ? '#3b82f6' : '#334155', color: '#fff', border: 'none', padding: '10px 16px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>📄 Novo Artigo</button>
@@ -217,29 +244,92 @@ const toggleADefinir = (campo: string) => {
           <button onClick={logout} style={{ background: '#ef4444', color: 'white', border: 'none', padding: '8px 16px', borderRadius: '6px', cursor: 'pointer' }}>Sair</button>
         </div>
 
-        {/* ABA: FORMULÁRIO DE ARTIGO */}
+        {/* SECÃO: NOVO ARTIGO COMPLETO */}
         {secaoAtiva === 'artigo' && (
           <form onSubmit={salvarArtigo}>
             <h1 style={{ marginBottom: '20px' }}>🚀 Novo Artigo</h1>
             <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Título</label>
             <input type="text" value={artigo.titulo} style={styles.input} onChange={e => setArtigo({...artigo, titulo: e.target.value, slug: gerarSlug(e.target.value)})} required />
+            
+            <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Slug (URL)</label>
+            <input type="text" value={artigo.slug} style={{ ...styles.input, opacity: 0.6 }} readOnly />
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+              <div>
+                <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Categoria</label>
+                <select style={styles.input} value={artigo.categoria} onChange={e => setArtigo({...artigo, categoria: e.target.value})}>
+                  <option value="Notícias">Notícias</option>
+                  <option value="Concursos">Concursos</option>
+                  <option value="Dicas de Estudo">Dicas de Estudo</option>
+                  <option value="Desenvolvimento">Desenvolvimento</option>
+                  <option value="UEMA">UEMA</option>
+                  <option value="ENEM">ENEM</option>
+                </select>
+              </div>
+              <div>
+                <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>URL da Capa</label>
+                <input type="text" value={artigo.capa_url} style={styles.input} onChange={e => setArtigo({...artigo, capa_url: e.target.value})} required />
+              </div>
+            </div>
+
+            <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Resumo</label>
+            <input type="text" value={artigo.resumo} style={styles.input} onChange={e => setArtigo({...artigo, resumo: e.target.value})} maxLength={200} required />
+
+            <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Conteúdo (HTML/Markdown)</label>
+            <textarea style={{ ...styles.input, height: '200px', resize: 'vertical' }} value={artigo.conteudo} onChange={e => setArtigo({...artigo, conteudo: e.target.value})} required />
+
             <button type="submit" style={{ background: styles.primary, color: 'white', border: 'none', padding: '15px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', width: '100%' }}>Publicar Artigo</button>
           </form>
         )}
 
-        {/* ABA: FORMULÁRIO DE QUESTÃO */}
+        {/* SEÇÃO: NOVA QUESTÃO COMPLETA */}
         {secaoAtiva === 'questao' && (
           <form onSubmit={salvarQuestao}>
             <h1 style={{ marginBottom: '20px' }}>❓ Cadastrar Nova Questão</h1>
-            <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Banca</label>
-            <input type="text" value={questao.banca} style={styles.input} onChange={e => setQuestao({...questao, banca: e.target.value})} required />
-            <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Enunciado</label>
-            <textarea style={{ ...styles.input, height: '100px' }} value={questao.enunciado} onChange={e => setQuestao({...questao, enunciado: e.target.value, slug: gerarSlug(e.target.value.substring(0,40))})} required />
-            <button type="submit" style={{ background: styles.primary, color: 'white', border: 'none', padding: '15px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', width: '100%' }}>Salvar Questão</button>
+            
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+              <div>
+                <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Banca</label>
+                <input type="text" placeholder="Ex: Cebraspe, FGV" value={questao.banca} style={styles.input} onChange={e => setQuestao({...questao, banca: e.target.value})} required />
+              </div>
+              <div>
+                <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Disciplina / Assunto</label>
+                <input type="text" placeholder="Ex: Português, Direito" value={questao.disciplina} style={styles.input} onChange={e => setQuestao({...questao, disciplina: e.target.value})} required />
+              </div>
+            </div>
+
+            <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Enunciado da Questão</label>
+            <textarea style={{ ...styles.input, height: '120px', resize: 'vertical' }} value={questao.enunciado} onChange={e => setQuestao({...questao, enunciado: e.target.value, slug: gerarSlug(e.target.value.substring(0, 40))})} required />
+
+            <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Alternativa A</label>
+            <input type="text" value={questao.alternativa_a} style={styles.input} onChange={e => setQuestao({...questao, alternativa_a: e.target.value})} required />
+
+            <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Alternativa B</label>
+            <input type="text" value={questao.alternativa_b} style={styles.input} onChange={e => setQuestao({...questao, alternativa_b: e.target.value})} required />
+
+            <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Alternativa C</label>
+            <input type="text" value={questao.alternativa_c} style={styles.input} onChange={e => setQuestao({...questao, alternativa_c: e.target.value})} required />
+
+            <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Alternativa D</label>
+            <input type="text" value={questao.alternativa_d} style={styles.input} onChange={e => setQuestao({...questao, alternativa_d: e.target.value})} required />
+
+            <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Alternativa E (Opcional)</label>
+            <input type="text" value={questao.alternativa_e} style={styles.input} onChange={e => setQuestao({...questao, alternativa_e: e.target.value})} />
+
+            <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Alternativa Correta</label>
+            <select style={styles.input} value={questao.alternativa_correta} onChange={e => setQuestao({...questao, alternativa_correta: e.target.value})}>
+              <option value="A">A</option>
+              <option value="B">B</option>
+              <option value="C">C</option>
+              <option value="D">D</option>
+              <option value="E">E</option>
+            </select>
+
+            <button type="submit" style={{ background: styles.primary, color: 'white', border: 'none', padding: '15px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', width: '100%' }}>Salvar Questão no Banco</button>
           </form>
         )}
 
-        {/* ABA: FORMULÁRIO DE EDITAL / CONCURSO */}
+        {/* SEÇÃO: NOVO EDITAL COMPLETO */}
         {secaoAtiva === 'concurso' && (
           <form onSubmit={salvarConcurso}>
             <h1 style={{ marginBottom: '20px' }}>🏛️ Cadastrar Novo Edital</h1>
@@ -335,7 +425,7 @@ const toggleADefinir = (campo: string) => {
           </form>
         )}
 
-        {/* ABA: RELAÇÃO DE EXCLUSÃO */}
+        {/* SEÇÃO: GERENCIAR / EXCLUIR CONTEÚDOS */}
         {secaoAtiva === 'gerenciar' && (
           <div>
             <h1 style={{ marginBottom: '25px' }}>🗑️ Gerenciar Conteúdos Existentes</h1>
@@ -348,21 +438,51 @@ const toggleADefinir = (campo: string) => {
                   <div key={c.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#0f172a', padding: '12px 15px', borderRadius: '8px', border: `1px solid ${styles.border}` }}>
                     <div>
                       <span style={{ fontWeight: 'bold', display: 'block' }}>{c.orgao}</span>
-                      <span style={{ fontSize: '0.75rem', color: '#3b82f6' }}>📍 {c.cidade} | {c.status}</span>
+                      <span style={{ fontSize: '0.75rem', color: '#3b82f6' }}>📍 {c.city || c.cidade} | {c.status}</span>
                     </div>
-                    <button onClick={() => excluirConcurso(c.id, c.orgao)} style={{ background: '#ef4444', border: 'none', color: 'white', padding: '8px 12px', borderRadius: '6px', cursor: 'pointer' }}>Apagar</button>
+                    <button onClick={() => excluirConcurso(c.id, c.orgao)} style={{ background: '#ef4444', border: 'none', color: 'white', padding: '8px 12px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>Apagar</button>
                   </div>
                 ))}
               </div>
             )}
 
             {/* ARTIGOS */}
-            <h2 style={{ fontSize: '1.2rem', color: '#3b82f6', marginBottom: '15px' }}>📄 Artigos</h2>
-            {/* ... o map do seu listaArtigos original pode continuar idêntico aqui ... */}
-            
+            <h2 style={{ fontSize: '1.2rem', color: '#3b82f6', marginBottom: '15px', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '5px' }}>📄 Artigos Publicados</h2>
+            {listaArtigos.length === 0 ? <p style={{ color: '#64748b', marginBottom: '30px' }}>Nenhum artigo encontrado.</p> : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '40px' }}>
+                {listaArtigos.map(art => (
+                  <div key={art.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#0f172a', padding: '12px 15px', borderRadius: '8px', border: `1px solid ${styles.border}` }}>
+                    <div>
+                      <span style={{ fontWeight: 'bold', display: 'block' }}>{art.titulo}</span>
+                      <span style={{ fontSize: '0.75rem', color: '#10b981' }}>{art.categoria}</span>
+                    </div>
+                    <button onClick={() => excluirArtigo(art.id, art.titulo)} style={{ background: '#ef4444', border: 'none', color: 'white', padding: '8px 12px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>Apagar</button>
+                  </div>
+                ))}
+              </div>
+            )}
+
             {/* QUESTÕES */}
-            <h2 style={{ fontSize: '1.2rem', color: '#e11d48', marginBottom: '15px' }}>❓ Questões</h2>
-            {/* ... o map do seu listaQuestoes original pode continuar idêntico aqui ... */}
+            <h2 style={{ fontSize: '1.2rem', color: '#e11d48', marginBottom: '15px', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '5px' }}>❓ Questões Cadastradas</h2>
+            {listaQuestoes.length === 0 ? <p style={{ color: '#64748b' }}>Nenhuma questão encontrada.</p> : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                {listaQuestoes.map(q => {
+                  const textoEnunciado = q.enunciado || 'Questão sem enunciado cadastrado'
+                  return (
+                    <div key={q.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#0f172a', padding: '12px 15px', borderRadius: '8px', border: `1px solid ${styles.border}` }}>
+                      <div style={{ flex: 1, marginRight: '15px' }}>
+                        <span style={{ fontSize: '0.9rem', display: 'block', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '550px' }}>{textoEnunciado}</span>
+                        <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
+                          <span style={{ fontSize: '0.7rem', color: '#94a3b8', background: '#334155', padding: '1px 6px', borderRadius: '4px' }}>{q.banca}</span>
+                          <span style={{ fontSize: '0.7rem', color: '#94a3b8', background: '#334155', padding: '1px 6px', borderRadius: '4px' }}>{q.disciplina}</span>
+                        </div>
+                      </div>
+                      <button onClick={() => excluirQuestao(q.id, textoEnunciado)} style={{ background: '#ef4444', border: 'none', color: 'white', padding: '8px 12px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>Apagar</button>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
           </div>
         )}
       </div>
