@@ -11,13 +11,17 @@ const supabase = createClient(URL_SB, KEY_SB)
 export default function AdminPage() {
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
-  const [secaoAtiva, setSecaoAtiva] = useState('artigo')
+  const [secaoAtiva, setSecaoAtiva] = useState('artigo') // 'artigo', 'questao' ou 'gerenciar'
   
+  // Estados para listagens de exclusão
+  const [listaArtigos, setListaArtigos] = useState<any[]>([])
+  const [listaQuestoes, setListaQuestoes] = useState<any[]>([])
+
   // Estados para Login
   const [email, setEmail] = useState('')
   const [senha, setSenha] = useState('')
 
-  // 1. ESTADO DA QUESTÃO ADAPTADO PARA O SEU BANCO (JSONB)
+  // Estado da Questão
   const [questao, setQuestao] = useState({
     enunciado: '',
     alternativa_a: '',
@@ -27,14 +31,14 @@ export default function AdminPage() {
     alternativa_e: '',
     alternativa_correta: 'A',
     banca: '',
-    disciplina: '', // Alterado de 'assunto' para 'disciplina' para casar com seu banco
+    disciplina: '', 
     slug: ''
   })
 
   // Estados para Artigo
-const [artigo, setArtigo] = useState({
-  titulo: '', slug: '', categoria: 'Notícias', capa_url: '', resumo: '', conteudo: ''
-})
+  const [artigo, setArtigo] = useState({
+    titulo: '', slug: '', categoria: 'Notícias', capa_url: '', resumo: '', conteudo: ''
+  })
 
   const styles = {
     bg: '#0f172a',
@@ -49,10 +53,17 @@ const [artigo, setArtigo] = useState({
     checkUser()
   }, [])
 
+  // Dispara a busca de dados quando o usuário entra na aba de gerenciamento
+  useEffect(() => {
+    if (user && secaoAtiva === 'gerenciar') {
+      carregarDadosGerenciamento()
+    }
+  }, [secaoAtiva, user])
+
   async function checkUser() {
     const { data: { user } } = await supabase.auth.getUser()
     setUser(user)
-    loading && setLoading(false)
+    setLoading(false)
   }
 
   async function handleLogin(e: React.FormEvent) {
@@ -65,6 +76,51 @@ const [artigo, setArtigo] = useState({
   const logout = async () => {
     await supabase.auth.signOut()
     setUser(null)
+  }
+
+  // BUSCA ARTIGOS E QUESTÕES PARA GERENCIAR
+  async function carregarDadosGerenciamento() {
+    // Busca artigos
+    const { data: artigos, error: errArt } = await supabase
+      .from('artigos')
+      .select('id, titulo, categoria')
+      .order('created_at', { ascending: false })
+    
+    if (!errArt && artigos) setListaArtigos(artigos)
+
+    // Busca questões
+    const { data: questoes, error: errQue } = await supabase
+      .from('questoes')
+      .select('id, enunciado, banca, disciplina')
+      .order('created_at', { ascending: false })
+    
+    if (!errQue && questoes) setListaQuestoes(questoes)
+  }
+
+  // FUNÇÕES DE EXCLUSÃO
+  async function excluirArtigo(id: string, titulo: string) {
+    if (!confirm(`Tem certeza que deseja apagar o artigo "${titulo}"?`)) return
+
+    const { error } = await supabase.from('artigos').delete().eq('id', id)
+    if (error) {
+      alert("Erro ao excluir artigo: " + error.message)
+    } else {
+      alert("🗑️ Artigo removido com sucesso!")
+      setListaArtigos(listaArtigos.filter(a => a.id !== id))
+    }
+  }
+
+  async function excluirQuestao(id: string, enunciado: string) {
+    const resumoEnunciado = enunciado.substring(0, 30) + '...'
+    if (!confirm(`Tem certeza que deseja apagar a questão: "${resumoEnunciado}"?`)) return
+
+    const { error } = await supabase.from('questoes').delete().eq('id', id)
+    if (error) {
+      alert("Erro ao excluir questão: " + error.message)
+    } else {
+      alert("🗑️ Questão removida com sucesso!")
+      setListaQuestoes(listaQuestoes.filter(q => q.id !== id))
+    }
   }
 
   // Gerador de Slug Automático para Artigos e Questões
@@ -83,7 +139,6 @@ const [artigo, setArtigo] = useState({
   }
 
   const atualizarEnunciadoQuestao = (val: string) => {
-    // Gera um slug baseado nos primeiros 40 caracteres do enunciado para não ficar gigante
     const trechoEnunciado = val.substring(0, 40)
     setQuestao({ ...questao, enunciado: val, slug: gerarSlug(trechoEnunciado) })
   }
@@ -94,29 +149,26 @@ const [artigo, setArtigo] = useState({
     if (error) alert("Erro: " + error.message)
     else {
       alert("✅ Artigo publicado!")
-      setArtigo({ titulo: '', slug: '', categoria: 'noticias', capa_url: '', resumo: '', conteudo: '' })
+      setArtigo({ titulo: '', slug: '', categoria: 'Notícias', capa_url: '', resumo: '', conteudo: '' })
     }
   }
 
-  // 2. FUNÇÃO ADAPTADA PARA MONTAR O JSONB E SALVAR CORRETAMENTE
   async function salvarQuestao(e: React.FormEvent) {
     e.preventDefault()
 
-    // Monta o objeto que o seu banco espera receber
     const dadosParaEnviar = {
       banca: questao.banca,
       disciplina: questao.disciplina,
       enunciado: questao.enunciado,
       alternativa_correta: questao.alternativa_correta,
-      alternativa_e: questao.alternativa_e || null, // Opcional no banco
+      alternativa_e: questao.alternativa_e || null, 
       slug: questao.slug || null,
-      // Transforma as alternativas no formato JSONB esperado pela coluna 'opcoes'
       opcoes: {
         a: questao.alternativa_a,
         b: questao.alternativa_b,
         c: questao.alternativa_c,
         d: questao.alternativa_d,
-        ...(questao.alternativa_e ? { e: questao.alternativa_e } : {}) // Só adiciona a 'E' se for preenchida
+        ...(questao.alternativa_e ? { e: questao.alternativa_e } : {}) 
       }
     }
 
@@ -158,14 +210,17 @@ const [artigo, setArtigo] = useState({
     <div style={{ background: styles.bg, color: styles.text, minHeight: '100vh', padding: '20px' }}>
       <div style={{ maxWidth: '900px', margin: '0 auto', background: styles.card, padding: '30px', borderRadius: '12px', border: `1px solid ${styles.border}` }}>
         
+        {/* ABAS DO PAINEL SUPERIOR */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '30px', borderBottom: `1px solid ${styles.border}`, paddingBottom: '20px' }}>
           <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-            <button onClick={() => setSecaoAtiva('artigo')} style={{ background: secaoAtiva === 'artigo' ? '#3b82f6' : '#334155', color: '#fff', border: 'none', padding: '10px 16px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>📄 Artigo</button>
-            <button onClick={() => setSecaoAtiva('questao')} style={{ background: secaoAtiva === 'questao' ? '#3b82f6' : '#334155', color: '#fff', border: 'none', padding: '10px 16px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>❓ Questão</button>
+            <button onClick={() => setSecaoAtiva('artigo')} style={{ background: secaoAtiva === 'artigo' ? '#3b82f6' : '#334155', color: '#fff', border: 'none', padding: '10px 16px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>📄 Novo Artigo</button>
+            <button onClick={() => setSecaoAtiva('questao')} style={{ background: secaoAtiva === 'questao' ? '#3b82f6' : '#334155', color: '#fff', border: 'none', padding: '10px 16px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>❓ Nova Questão</button>
+            <button onClick={() => setSecaoAtiva('gerenciar')} style={{ background: secaoAtiva === 'gerenciar' ? '#ef4444' : '#334155', color: '#fff', border: 'none', padding: '10px 16px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>🗑️ Gerenciar / Excluir</button>
           </div>
           <button onClick={logout} style={{ background: '#ef4444', color: 'white', border: 'none', padding: '8px 16px', borderRadius: '6px', cursor: 'pointer' }}>Sair</button>
         </div>
 
+        {/* ABA: FORMULÁRIO DE ARTIGO */}
         {secaoAtiva === 'artigo' && (
           <form onSubmit={salvarArtigo}>
             <h1 style={{ marginBottom: '20px' }}>🚀 Novo Artigo</h1>
@@ -176,21 +231,17 @@ const [artigo, setArtigo] = useState({
             <input type="text" value={artigo.slug} style={{ ...styles.input, opacity: 0.6 }} readOnly />
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-<div>
-  <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Categoria</label>
-  <select 
-    style={styles.input} 
-    value={artigo.categoria} 
-    onChange={e => setArtigo({...artigo, categoria: e.target.value})}
-  >
-    <option value="Notícias">Notícias</option>
-    <option value="Concursos">Concursos</option>
-    <option value="Dicas de Estudo">Dicas de Estudo</option>
-    <option value="Desenvolvimento">Desenvolvimento</option>
-    <option value="UEMA">UEMA</option>
-    <option value="ENEM">ENEM</option>
-  </select>
-</div>
+              <div>
+                <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Categoria</label>
+                <select style={styles.input} value={artigo.categoria} onChange={e => setArtigo({...artigo, categoria: e.target.value})}>
+                  <option value="Notícias">Notícias</option>
+                  <option value="Concursos">Concursos</option>
+                  <option value="Dicas de Estudo">Dicas de Estudo</option>
+                  <option value="Desenvolvimento">Desenvolvimento</option>
+                  <option value="UEMA">UEMA</option>
+                  <option value="ENEM">ENEM</option>
+                </select>
+              </div>
               <div>
                 <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>URL da Capa</label>
                 <input type="text" value={artigo.capa_url} style={styles.input} onChange={e => setArtigo({...artigo, capa_url: e.target.value})} required />
@@ -207,6 +258,7 @@ const [artigo, setArtigo] = useState({
           </form>
         )}
 
+        {/* ABA: FORMULÁRIO DE QUESTÃO */}
         {secaoAtiva === 'questao' && (
           <form onSubmit={salvarQuestao}>
             <h1 style={{ marginBottom: '20px' }}>❓ Cadastrar Nova Questão</h1>
@@ -241,11 +293,7 @@ const [artigo, setArtigo] = useState({
             <input type="text" value={questao.alternativa_e} style={styles.input} onChange={e => setQuestao({...questao, alternativa_e: e.target.value})} />
 
             <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Alternativa Correta</label>
-            <select 
-              style={styles.input} 
-              value={questao.alternativa_correta} 
-              onChange={e => setQuestao({...questao, alternativa_correta: e.target.value})}
-            >
+            <select style={styles.input} value={questao.alternativa_correta} onChange={e => setQuestao({...questao, alternativa_correta: e.target.value})}>
               <option value="A">A</option>
               <option value="B">B</option>
               <option value="C">C</option>
@@ -255,6 +303,54 @@ const [artigo, setArtigo] = useState({
 
             <button type="submit" style={{ background: styles.primary, color: 'white', border: 'none', padding: '15px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', width: '100%' }}>Salvar Questão no Banco</button>
           </form>
+        )}
+
+        {/* ABA: RELAÇÃO DE EXCLUSÃO */}
+        {secaoAtiva === 'gerenciar' && (
+          <div>
+            <h1 style={{ marginBottom: '25px' }}>🗑️ Gerenciar Conteúdos Existentes</h1>
+
+            {/* LISTAGEM DE ARTIGOS */}
+            <h2 style={{ fontSize: '1.2rem', color: '#3b82f6', marginBottom: '15px', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '5px' }}>📄 Artigos Publicados</h2>
+            {listaArtigos.length === 0 ? (
+              <p style={{ color: '#64748b', marginBottom: '30px', fontSize: '0.9rem' }}>Nenhum artigo encontrado.</p>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '40px' }}>
+                {listaArtigos.map(art => (
+                  <div key={art.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#0f172a', padding: '12px 15px', borderRadius: '8px', border: `1px solid ${styles.border}` }}>
+                    <div>
+                      <span style={{ fontWeight: 'bold', display: 'block', fontSize: '0.95rem' }}>{art.titulo}</span>
+                      <span style={{ fontSize: '0.75rem', color: '#10b981', background: 'rgba(16,185,129,0.1)', padding: '2px 8px', borderRadius: '4px', marginTop: '4px', display: 'inline-block' }}>{art.categoria}</span>
+                    </div>
+                    <button onClick={() => excluirArtigo(art.id, art.titulo)} style={{ background: '#ef4444', border: 'none', color: 'white', padding: '8px 12px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.85rem' }}>Apagar</button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* LISTAGEM DE QUESTÕES */}
+            <h2 style={{ fontSize: '1.2rem', color: '#10b981', marginBottom: '15px', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '5px' }}>❓ Questões Cadastradas</h2>
+            {listaQuestoes.length === 0 ? (
+              <p style={{ color: '#64748b', fontSize: '0.9rem' }}>Nenhuma questão encontrada.</p>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                {listaQuestoes.map(q => (
+                  <div key={q.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#0f172a', padding: '12px 15px', borderRadius: '8px', border: `1px solid ${styles.border}` }}>
+                    <div style={{ flex: 1, marginRight: '15px' }}>
+                      <span style={{ fontSize: '0.9rem', display: 'block', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '550px' }}>
+                        {q.enunciado}
+                      </span>
+                      <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
+                        <span style={{ fontSize: '0.7rem', color: '#94a3b8', background: '#334155', padding: '1px 6px', borderRadius: '4px' }}>{q.banca}</span>
+                        <span style={{ fontSize: '0.7rem', color: '#94a3b8', background: '#334155', padding: '1px 6px', borderRadius: '4px' }}>{q.disciplina}</span>
+                      </div>
+                    </div>
+                    <button onClick={() => excluirQuestao(q.id, q.enunciado)} style={{ background: '#ef4444', border: 'none', color: 'white', padding: '8px 12px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.85rem' }}>Apagar</button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         )}
 
       </div>
