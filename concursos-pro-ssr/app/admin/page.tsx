@@ -118,7 +118,7 @@ export default function AdminPage() {
     const { data: questoes } = await supabase.from('questoes').select('id, enunciado, banca, disciplina').order('created_at', { ascending: false })
     if (questoes) setListaQuestoes(questoes)
 
-    const { data: concursos } = await supabase.from('concursos').select('id, orgao, city:cidade, status').order('created_at', { ascending: false })
+    const { data: concursos } = await supabase.from('concursos').select('id, orgao,cidade, status').order('created_at', { ascending: false })
     if (concursos) setListaConcursos(concursos)
   }
 
@@ -458,7 +458,7 @@ export default function AdminPage() {
                   <div key={c.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#0f172a', padding: '12px 15px', borderRadius: '8px', border: `1px solid ${styles.border}` }}>
                     <div>
                       <span style={{ fontWeight: 'bold', display: 'block' }}>{c.orgao}</span>
-                      <span style={{ fontSize: '0.75rem', color: '#3b82f6' }}>📍 {c.city || c.cidade} | {c.status}</span>
+                      <span style={{ fontSize: '0.75rem', color: '#3b82f6' }}>📍 {c.cidade} | {c.status}</span>
                     </div>
                     <button onClick={() => excluirConcurso(c.id, c.orgao)} style={{ background: '#ef4444', border: 'none', color: 'white', padding: '8px 12px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>Apagar</button>
                   </div>
