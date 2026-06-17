@@ -3,9 +3,6 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@supabase/supabase-js'
 
-
-
-// Next.js puxa automaticamente do seu arquivo .env.local de forma segura
 const URL_SB = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const KEY_SB = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
@@ -15,39 +12,28 @@ export default function AdminPage() {
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [secaoAtiva, setSecaoAtiva] = useState('artigo')
-  const [questao, setQuestao] = useState({
-  enunciado: '',
-  alternativa_a: '',
-  alternativa_b: '',
-  alternativa_c: '',
-  alternativa_d: '',
-  alternativa_e: '',
-  correta: 'A',
-  banca: '',
-  assunto: '',
-  concurso: '' // Ex: PM-MA, TJ-MA
-})
-// 2. FUNÇÃO PARA SALVAR A QUESTÃO NO SUPABASE
-async function salvarQuestao(e: React.FormEvent) {
-  e.preventDefault()
-  const { error } = await supabase
-    .from('questoes') // Certifique-se de ter essa tabela no Supabase
-    .insert([questao])
-    
-  if (error) alert("Erro ao salvar questão: " + error.message)
-  else {
-    alert("✅ Questão cadastrada com sucesso!")
-    setQuestao({ enunciado: '', alternativa_a: '', alternativa_b: '', alternativa_c: '', alternativa_d: '', alternativa_e: '', correta: 'A', banca: '', assunto: '', concurso: '' })
-  }
-}
   
   // Estados para Login
   const [email, setEmail] = useState('')
   const [senha, setSenha] = useState('')
 
+  // 1. ESTADO DA QUESTÃO ADAPTADO PARA O SEU BANCO (JSONB)
+  const [questao, setQuestao] = useState({
+    enunciado: '',
+    alternativa_a: '',
+    alternativa_b: '',
+    alternativa_c: '',
+    alternativa_d: '',
+    alternativa_e: '',
+    alternativa_correta: 'A',
+    banca: '',
+    disciplina: '', // Alterado de 'assunto' para 'disciplina' para casar com seu banco
+    slug: ''
+  })
+
   // Estados para Artigo
   const [artigo, setArtigo] = useState({
-    titulo: '', slug: '', categoria: 'Notícias', capa_url: '', resumo: '', conteudo: ''
+    titulo: '', slug: '', categoria: 'noticias', capa_url: '', resumo: '', conteudo: ''
   })
 
   const styles = {
@@ -66,7 +52,7 @@ async function salvarQuestao(e: React.FormEvent) {
   async function checkUser() {
     const { data: { user } } = await supabase.auth.getUser()
     setUser(user)
-    setLoading(false)
+    loading && setLoading(false)
   }
 
   async function handleLogin(e: React.FormEvent) {
@@ -81,11 +67,25 @@ async function salvarQuestao(e: React.FormEvent) {
     setUser(null)
   }
 
-  // Gerador de Slug Automático
-  const atualizarTitulo = (val: string) => {
-    const limpo = val.normalize('NFD').replace(/[\u0300-\u036f]/g, "")
-    const slug = limpo.toLowerCase().trim().replace(/[^a-z0-9 ]/g, '').replace(/\s+/g, '-')
-    setArtigo({ ...artigo, titulo: val, slug })
+  // Gerador de Slug Automático para Artigos e Questões
+  const gerarSlug = (texto: string) => {
+    return texto
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9 ]/g, '')
+      .replace(/\s+/g, '-')
+  }
+
+  const atualizarTituloArtigo = (val: string) => {
+    setArtigo({ ...artigo, titulo: val, slug: gerarSlug(val) })
+  }
+
+  const atualizarEnunciadoQuestao = (val: string) => {
+    // Gera um slug baseado nos primeiros 40 caracteres do enunciado para não ficar gigante
+    const trechoEnunciado = val.substring(0, 40)
+    setQuestao({ ...questao, enunciado: val, slug: gerarSlug(trechoEnunciado) })
   }
 
   async function salvarArtigo(e: React.FormEvent) {
@@ -94,7 +94,45 @@ async function salvarQuestao(e: React.FormEvent) {
     if (error) alert("Erro: " + error.message)
     else {
       alert("✅ Artigo publicado!")
-      setArtigo({ titulo: '', slug: '', categoria: 'Notícias', capa_url: '', resumo: '', conteudo: '' })
+      setArtigo({ titulo: '', slug: '', categoria: 'noticias', capa_url: '', resumo: '', conteudo: '' })
+    }
+  }
+
+  // 2. FUNÇÃO ADAPTADA PARA MONTAR O JSONB E SALVAR CORRETAMENTE
+  async function salvarQuestao(e: React.FormEvent) {
+    e.preventDefault()
+
+    // Monta o objeto que o seu banco espera receber
+    const dadosParaEnviar = {
+      banca: questao.banca,
+      disciplina: questao.disciplina,
+      enunciado: questao.enunciado,
+      alternativa_correta: questao.alternativa_correta,
+      alternativa_e: questao.alternativa_e || null, // Opcional no banco
+      slug: questao.slug || null,
+      // Transforma as alternativas no formato JSONB esperado pela coluna 'opcoes'
+      opcoes: {
+        a: questao.alternativa_a,
+        b: questao.alternativa_b,
+        c: questao.alternativa_c,
+        d: questao.alternativa_d,
+        ...(questao.alternativa_e ? { e: questao.alternativa_e } : {}) // Só adiciona a 'E' se for preenchida
+      }
+    }
+
+    const { error } = await supabase
+      .from('questoes')
+      .insert([dadosParaEnviar])
+        
+    if (error) {
+      alert("Erro ao salvar questão: " + error.message)
+    } else {
+      alert("✅ Questão cadastrada com sucesso!")
+      setQuestao({ 
+        enunciado: '', alternativa_a: '', alternativa_b: '', alternativa_c: '', 
+        alternativa_d: '', alternativa_e: '', alternativa_correta: 'A', 
+        banca: '', disciplina: '', slug: '' 
+      })
     }
   }
 
@@ -124,7 +162,6 @@ async function salvarQuestao(e: React.FormEvent) {
           <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
             <button onClick={() => setSecaoAtiva('artigo')} style={{ background: secaoAtiva === 'artigo' ? '#3b82f6' : '#334155', color: '#fff', border: 'none', padding: '10px 16px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>📄 Artigo</button>
             <button onClick={() => setSecaoAtiva('questao')} style={{ background: secaoAtiva === 'questao' ? '#3b82f6' : '#334155', color: '#fff', border: 'none', padding: '10px 16px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>❓ Questão</button>
-            <button onClick={() => setSecaoAtiva('excluir')} style={{ background: secaoAtiva === 'excluir' ? '#ef4444' : '#334155', color: '#fff', border: 'none', padding: '10px 16px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>🗑️ Excluir</button>
           </div>
           <button onClick={logout} style={{ background: '#ef4444', color: 'white', border: 'none', padding: '8px 16px', borderRadius: '6px', cursor: 'pointer' }}>Sair</button>
         </div>
@@ -133,7 +170,7 @@ async function salvarQuestao(e: React.FormEvent) {
           <form onSubmit={salvarArtigo}>
             <h1 style={{ marginBottom: '20px' }}>🚀 Novo Artigo</h1>
             <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Título</label>
-            <input type="text" value={artigo.titulo} style={styles.input} onChange={e => atualizarTitulo(e.target.value)} required />
+            <input type="text" value={artigo.titulo} style={styles.input} onChange={e => atualizarTituloArtigo(e.target.value)} required />
             
             <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Slug (URL)</label>
             <input type="text" value={artigo.slug} style={{ ...styles.input, opacity: 0.6 }} readOnly />
@@ -142,9 +179,8 @@ async function salvarQuestao(e: React.FormEvent) {
               <div>
                 <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Categoria</label>
                 <select style={styles.input} value={artigo.categoria} onChange={e => setArtigo({...artigo, categoria: e.target.value})}>
-                  <option value="noticias">Notícias (Vai para o Blog)</option>
-                  <option value="dicas">Dicas de Estudo (Vai para Página de Dicas)</option>
-                  <option value="dev">Dev (Vai para Página de Desenvolvimento pessoal)</option>
+                  <option value="noticias">Notícias</option>
+                  <option value="dicas">Dicas de Estudo</option>
                   <option value="uema">UEMA</option>
                   <option value="enem">ENEM</option>
                 </select>
@@ -166,58 +202,54 @@ async function salvarQuestao(e: React.FormEvent) {
         )}
 
         {secaoAtiva === 'questao' && (
-  <form onSubmit={salvarQuestao}>
-    <h1 style={{ marginBottom: '20px' }}>❓ Cadastrar Nova Questão</h1>
-    
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '15px' }}>
-      <div>
-        <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Banca</label>
-        <input type="text" placeholder="Ex: Cebraspe, FGV" value={questao.banca} style={styles.input} onChange={e => setQuestao({...questao, banca: e.target.value})} required />
-      </div>
-      <div>
-        <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Assunto</label>
-        <input type="text" placeholder="Ex: Crase, Sintaxe" value={questao.assunto} style={styles.input} onChange={e => setQuestao({...questao, assunto: e.target.value})} required />
-      </div>
-      <div>
-        <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Concurso</label>
-        <input type="text" placeholder="Ex: TJ-MA 2026" value={questao.concurso} style={styles.input} onChange={e => setQuestao({...questao, concurso: e.target.value})} />
-      </div>
-    </div>
+          <form onSubmit={salvarQuestao}>
+            <h1 style={{ marginBottom: '20px' }}>❓ Cadastrar Nova Questão</h1>
+            
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+              <div>
+                <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Banca</label>
+                <input type="text" placeholder="Ex: Cebraspe, FGV" value={questao.banca} style={styles.input} onChange={e => setQuestao({...questao, banca: e.target.value})} required />
+              </div>
+              <div>
+                <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Disciplina / Assunto</label>
+                <input type="text" placeholder="Ex: Português, Direito" value={questao.disciplina} style={styles.input} onChange={e => setQuestao({...questao, disciplina: e.target.value})} required />
+              </div>
+            </div>
 
-    <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Enunciado da Questão</label>
-    <textarea style={{ ...styles.input, height: '120px', resize: 'vertical' }} value={questao.enunciado} onChange={e => setQuestao({...questao, enunciado: e.target.value})} required />
+            <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Enunciado da Questão</label>
+            <textarea style={{ ...styles.input, height: '120px', resize: 'vertical' }} value={questao.enunciado} onChange={e => atualizarEnunciadoQuestao(e.target.value)} required />
 
-    <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Alternativa A</label>
-    <input type="text" value={questao.alternativa_a} style={styles.input} onChange={e => setQuestao({...questao, alternativa_a: e.target.value})} required />
+            <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Alternativa A</label>
+            <input type="text" value={questao.alternativa_a} style={styles.input} onChange={e => setQuestao({...questao, alternativa_a: e.target.value})} required />
 
-    <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Alternativa B</label>
-    <input type="text" value={questao.alternativa_b} style={styles.input} onChange={e => setQuestao({...questao, alternativa_b: e.target.value})} required />
+            <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Alternativa B</label>
+            <input type="text" value={questao.alternativa_b} style={styles.input} onChange={e => setQuestao({...questao, alternativa_b: e.target.value})} required />
 
-    <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Alternativa C</label>
-    <input type="text" value={questao.alternativa_c} style={styles.input} onChange={e => setQuestao({...questao, alternativa_c: e.target.value})} required />
+            <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Alternativa C</label>
+            <input type="text" value={questao.alternativa_c} style={styles.input} onChange={e => setQuestao({...questao, alternativa_c: e.target.value})} required />
 
-    <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Alternativa D</label>
-    <input type="text" value={questao.alternativa_d} style={styles.input} onChange={e => setQuestao({...questao, alternativa_d: e.target.value})} required />
+            <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Alternativa D</label>
+            <input type="text" value={questao.alternativa_d} style={styles.input} onChange={e => setQuestao({...questao, alternativa_d: e.target.value})} required />
 
-    <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Alternativa E (Opcional)</label>
-    <input type="text" value={questao.alternativa_e} style={styles.input} onChange={e => setQuestao({...questao, alternativa_e: e.target.value})} />
+            <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Alternativa E (Opcional)</label>
+            <input type="text" value={questao.alternativa_e} style={styles.input} onChange={e => setQuestao({...questao, alternativa_e: e.target.value})} />
 
-<label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Alternativa Correta</label>
-<select 
-  style={styles.input} 
-  value={questao.correta} 
-  onChange={e => setQuestao({...questao, correta: e.target.value})}
->
-  <option value="A">A</option>
-  <option value="B">B</option>
-  <option value="C">C</option>
-  <option value="D">D</option>
-  <option value="E">E</option>
-</select>
+            <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Alternativa Correta</label>
+            <select 
+              style={styles.input} 
+              value={questao.alternativa_correta} 
+              onChange={e => setQuestao({...questao, alternativa_correta: e.target.value})}
+            >
+              <option value="A">A</option>
+              <option value="B">B</option>
+              <option value="C">C</option>
+              <option value="D">D</option>
+              <option value="E">E</option>
+            </select>
 
-    <button type="submit" style={{ background: styles.primary, color: 'white', border: 'none', padding: '15px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', width: '100%' }}>Salvar Questão no Banco</button>
-  </form>
-)}
+            <button type="submit" style={{ background: styles.primary, color: 'white', border: 'none', padding: '15px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', width: '100%' }}>Salvar Questão no Banco</button>
+          </form>
+        )}
 
       </div>
     </div>
