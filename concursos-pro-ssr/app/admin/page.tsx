@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@supabase/supabase-js'
 
+
+
 // Next.js puxa automaticamente do seu arquivo .env.local de forma segura
 const URL_SB = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const KEY_SB = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -13,6 +15,31 @@ export default function AdminPage() {
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [secaoAtiva, setSecaoAtiva] = useState('artigo')
+  const [questao, setQuestao] = useState({
+  enunciado: '',
+  alternativa_a: '',
+  alternativa_b: '',
+  alternativa_c: '',
+  alternativa_d: '',
+  alternativa_e: '',
+  correta: 'A',
+  banca: '',
+  assunto: '',
+  concurso: '' // Ex: PM-MA, TJ-MA
+})
+// 2. FUNÇÃO PARA SALVAR A QUESTÃO NO SUPABASE
+async function salvarQuestao(e: React.FormEvent) {
+  e.preventDefault()
+  const { error } = await supabase
+    .from('questoes') // Certifique-se de ter essa tabela no Supabase
+    .insert([questao])
+    
+  if (error) alert("Erro ao salvar questão: " + error.message)
+  else {
+    alert("✅ Questão cadastrada com sucesso!")
+    setQuestao({ enunciado: '', alternativa_a: '', alternativa_b: '', alternativa_c: '', alternativa_d: '', alternativa_e: '', correta: 'A', banca: '', assunto: '', concurso: '' })
+  }
+}
   
   // Estados para Login
   const [email, setEmail] = useState('')
@@ -115,9 +142,10 @@ export default function AdminPage() {
               <div>
                 <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Categoria</label>
                 <select style={styles.input} value={artigo.categoria} onChange={e => setArtigo({...artigo, categoria: e.target.value})}>
-                  <option value="Notícias">Notícias</option>
-                  <option value="UEMA">UEMA</option>
-                  <option value="ENEM">ENEM</option>
+                  <option value="noticias">Notícias (Vai para o Blog)</option>
+                  <option value="dicas">Dicas de Estudo (Vai para Página de Dicas)</option>
+                  <option value="uema">UEMA</option>
+                  <option value="enem">ENEM</option>
                 </select>
               </div>
               <div>
@@ -137,11 +165,57 @@ export default function AdminPage() {
         )}
 
         {secaoAtiva === 'questao' && (
-          <div style={{ textAlign: 'center', padding: '40px' }}>
-             <h2 style={{ color: '#94a3b8' }}>Formulário de questões pronto para implementar...</h2>
-             {/* Você pode seguir a mesma lógica do formulário acima para as questões */}
-          </div>
-        )}
+  <form onSubmit={salvarQuestao}>
+    <h1 style={{ marginBottom: '20px' }}>❓ Cadastrar Nova Questão</h1>
+    
+    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '15px' }}>
+      <div>
+        <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Banca</label>
+        <input type="text" placeholder="Ex: Cebraspe, FGV" value={questao.banca} style={styles.input} onChange={e => setQuestao({...questao, banca: e.target.value})} required />
+      </div>
+      <div>
+        <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Assunto</label>
+        <input type="text" placeholder="Ex: Crase, Sintaxe" value={questao.assunto} style={styles.input} onChange={e => setQuestao({...questao, assunto: e.target.value})} required />
+      </div>
+      <div>
+        <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Concurso</label>
+        <input type="text" placeholder="Ex: TJ-MA 2026" value={questao.concurso} style={styles.input} onChange={e => setQuestao({...questao, concurso: e.target.value})} />
+      </div>
+    </div>
+
+    <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Enunciado da Questão</label>
+    <textarea style={{ ...styles.input, height: '120px', resize: 'vertical' }} value={questao.enunciado} onChange={e => setQuestao({...questao, enunciado: e.target.value})} required />
+
+    <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Alternativa A</label>
+    <input type="text" value={questao.alternativa_a} style={styles.input} onChange={e => setQuestao({...questao, alternativa_a: e.target.value})} required />
+
+    <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Alternativa B</label>
+    <input type="text" value={questao.alternativa_b} style={styles.input} onChange={e => setQuestao({...questao, alternativa_b: e.target.value})} required />
+
+    <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Alternativa C</label>
+    <input type="text" value={questao.alternativa_c} style={styles.input} onChange={e => setQuestao({...questao, alternativa_c: e.target.value})} required />
+
+    <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Alternativa D</label>
+    <input type="text" value={questao.alternativa_d} style={styles.input} onChange={e => setQuestao({...questao, alternativa_d: e.target.value})} required />
+
+    <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Alternativa E (Opcional)</label>
+    <input type="text" value={questao.alternativa_e} style={styles.input} onChange={e => setQuestao({...questao, alternativa_e: e.target.value})} />
+
+    <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Alternativa Correta</label>
+<select 
+  style={styles.input} 
+  value={artigo.categoria} 
+  onChange={e => setArtigo({...artigo, categoria: e.target.value})}
+>
+  <option value="noticias">Notícias</option>
+  <option value="dicas">Dicas de Estudo</option>
+  <option value="uema">UEMA</option>
+  <option value="enem">ENEM</option>
+</select>
+
+    <button type="submit" style={{ background: styles.primary, color: 'white', border: 'none', padding: '15px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', width: '100%' }}>Salvar Questão no Banco</button>
+  </form>
+)}
 
       </div>
     </div>
