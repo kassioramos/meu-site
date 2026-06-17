@@ -3,8 +3,6 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@supabase/supabase-js'
 
-'use client'
-
 // Next.js puxa automaticamente do seu arquivo .env.local de forma segura
 const URL_SB = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const KEY_SB = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
