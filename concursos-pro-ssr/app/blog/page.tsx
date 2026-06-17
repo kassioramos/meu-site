@@ -82,6 +82,7 @@ function BlogContent() {
             { id: 'todos', label: '📚 Tudo' },
             { id: 'noticias', label: '📰 Notícias' },
             { id: 'dicas', label: '💡 Dicas' },
+            { id: 'dev', label: '💻 Dev' },
             { id: 'uema', label: '🏹 UEMA' },
             { id: 'enem', label: '🎓 ENEM' }
           ].map((cat) => (

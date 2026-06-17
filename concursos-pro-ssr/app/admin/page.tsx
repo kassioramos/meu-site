@@ -180,7 +180,9 @@ export default function AdminPage() {
                 <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Categoria</label>
                 <select style={styles.input} value={artigo.categoria} onChange={e => setArtigo({...artigo, categoria: e.target.value})}>
                   <option value="noticias">Notícias</option>
+                  <option value="noticias">Notícias</option>
                   <option value="dicas">Dicas de Estudo</option>
+                  <option value="dev">Desenvolvimento Pessoal</option>
                   <option value="uema">UEMA</option>
                   <option value="enem">ENEM</option>
                 </select>
