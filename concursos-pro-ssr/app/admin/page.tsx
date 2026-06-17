@@ -144,6 +144,7 @@ async function salvarQuestao(e: React.FormEvent) {
                 <select style={styles.input} value={artigo.categoria} onChange={e => setArtigo({...artigo, categoria: e.target.value})}>
                   <option value="noticias">Notícias (Vai para o Blog)</option>
                   <option value="dicas">Dicas de Estudo (Vai para Página de Dicas)</option>
+                  <option value="dev">Dev (Vai para Página de Desenvolvimento pessoal)</option>
                   <option value="uema">UEMA</option>
                   <option value="enem">ENEM</option>
                 </select>
@@ -201,16 +202,17 @@ async function salvarQuestao(e: React.FormEvent) {
     <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Alternativa E (Opcional)</label>
     <input type="text" value={questao.alternativa_e} style={styles.input} onChange={e => setQuestao({...questao, alternativa_e: e.target.value})} />
 
-    <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Alternativa Correta</label>
+<label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Alternativa Correta</label>
 <select 
   style={styles.input} 
-  value={artigo.categoria} 
-  onChange={e => setArtigo({...artigo, categoria: e.target.value})}
+  value={questao.correta} 
+  onChange={e => setQuestao({...questao, correta: e.target.value})}
 >
-  <option value="noticias">Notícias</option>
-  <option value="dicas">Dicas de Estudo</option>
-  <option value="uema">UEMA</option>
-  <option value="enem">ENEM</option>
+  <option value="A">A</option>
+  <option value="B">B</option>
+  <option value="C">C</option>
+  <option value="D">D</option>
+  <option value="E">E</option>
 </select>
 
     <button type="submit" style={{ background: styles.primary, color: 'white', border: 'none', padding: '15px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', width: '100%' }}>Salvar Questão no Banco</button>
