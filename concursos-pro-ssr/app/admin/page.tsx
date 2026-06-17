@@ -132,7 +132,7 @@ export default function AdminPage() {
 
     const { data: concursos, error: errConcursos } = await supabase
       .from('concursos')
-      .select('*') // Buscando tudo para quando for alimentar a edição ter os dados completos
+      .select('*')
       .order('id', { ascending: false })
 
     if (errConcursos) {
@@ -144,24 +144,43 @@ export default function AdminPage() {
     }
   }
 
-  // FUNÇÕES DE REMOÇÃO
-  async function excluirArtigo(id: string, titulo: string) {
+  // FUNÇÕES DE REMOÇÃO ATUALIZADAS E TRATADAS
+  async function excluirArtigo(id: any, titulo: string) {
     if (!confirm(`Tem certeza que deseja apagar o artigo "${titulo}"?`)) return
     const { error } = await supabase.from('artigos').delete().eq('id', id)
-    if (!error) setListaArtigos(listaArtigos.filter(a => a.id !== id))
+    if (error) {
+      alert("Erro ao deletar artigo do banco: " + error.message)
+    } else {
+      setListaArtigos(prev => prev.filter(a => a.id !== id))
+    }
   }
 
-  async function excluirQuestao(id: string, enunciado: string) {
+  async function excluirQuestao(id: any, enunciado: string) {
     if (!confirm(`Tem certeza que deseja apagar a questão selecionada?`)) return
     const { error } = await supabase.from('questoes').delete().eq('id', id)
-    if (!error) setListaQuestoes(listaQuestoes.filter(q => q.id !== id))
+    if (error) {
+      alert("Erro ao deletar questão do banco: " + error.message)
+    } else {
+      setListaQuestoes(prev => prev.filter(q => q.id !== id))
+    }
   }
 
   async function excluirConcurso(id: any, orgao: string) {
     if (!confirm(`Tem certeza que deseja apagar o edital do órgão: "${orgao}"?`)) return
-    const { error } = await supabase.from('concursos').delete().eq('id', id)
-    if (error) alert("Erro ao excluir: " + error.message)
-    else setListaConcursos(listaConcursos.filter(c => c.id !== id))
+    
+    // Garantindo que o ID passe como número se o banco usar bigint/int
+    const idBusca = typeof id === 'string' && !isNaN(Number(id)) ? Number(id) : id
+
+    const { error } = await supabase.from('concursos').delete().eq('id', idBusca)
+    
+    if (error) {
+      console.error("Erro retornado pelo Supabase na exclusão:", error)
+      alert("Erro ao excluir do banco de dados: " + error.message)
+    } else {
+      // Atualiza o estado usando callback seguro para evitar problemas de concorrência
+      setListaConcursos(prev => prev.filter(c => c.id !== id))
+      alert("Edital removido com sucesso!")
+    }
   }
 
   const gerarSlug = (texto: string) => {
@@ -187,7 +206,6 @@ export default function AdminPage() {
     setIdEditalEmEdicao(item.id)
     setIsEditando(true)
     
-    // Alimenta o formulário do edital com os dados antigos vindos do banco
     setConcurso({
       orgao: item.orgao || '',
       cidade: item.cidade || '',
@@ -203,7 +221,6 @@ export default function AdminPage() {
       link_oficial: item.link_oficial || ''
     })
 
-    // Seta os checkboxes com base no conteúdo atual do banco
     setADefinir({
       banca: item.banca === 'A definir',
       periodo_inscricao: item.periodo_inscricao === 'A definir',
@@ -214,11 +231,9 @@ export default function AdminPage() {
       data_prova: item.data_prova === 'A definir'
     })
 
-    // Redireciona o usuário visualmente para a aba do formulário
     setSecaoAtiva('concurso')
   }
 
-  // CANCELAR MODO EDIÇÃO
   function cancelarEdicao() {
     setIsEditando(false)
     setIdEditalEmEdicao(null)
@@ -229,7 +244,6 @@ export default function AdminPage() {
     setADefinir({ periodo_inscricao: false, valor_inscricao: false, cargos: false, salarios: false, banca: false, escolaridade: false, data_prova: false })
   }
 
-  // ENVIO DOS FORMULÁRIOS
   async function salvarArtigo(e: React.FormEvent) {
     e.preventDefault()
     const { error } = await supabase.from('artigos').insert([{ ...artigo, created_at: new Date().toISOString() }])
@@ -286,21 +300,20 @@ export default function AdminPage() {
     }
 
     if (isEditando) {
-      // Executa o UPDATE caso esteja no modo edição
+      const idBusca = typeof idEditalEmEdicao === 'string' && !isNaN(Number(idEditalEmEdicao)) ? Number(idEditalEmEdicao) : idEditalEmEdicao
       const { error } = await supabase
         .from('concursos')
         .update(dadosConcurso)
-        .eq('id', idEditalEmEdicao)
+        .eq('id', idBusca)
 
       if (error) {
         alert("Erro ao atualizar edital: " + error.message)
       } else {
-        alert("✅ Edital atualizado com sucesso!")
+        alert("✅ Edital updated com sucesso!")
         cancelarEdicao()
-        setSecaoAtiva('gerenciar') // Devolve o usuário para a lista após editar
+        setSecaoAtiva('gerenciar')
       }
     } else {
-      // Executa o INSERT tradicional se for novo
       const { error } = await supabase.from('concursos').insert([dadosConcurso])
       if (error) alert("Erro ao salvar edital: " + error.message)
       else {
@@ -528,7 +541,6 @@ export default function AdminPage() {
             <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Resumo / Descrição Completa</label>
             <textarea style={{ ...styles.input, height: '120px' }} placeholder="Insira detalhes adicionais sobre as vagas do edital..." value={concurso.sobre_concurso} onChange={e => setConcurso({...concurso, sobre_concurso: e.target.value})} required />
 
-            {/* BOTÕES DINÂMICOS DEPENDENDO DO MODO */}
             <div style={{ display: 'flex', gap: '12px' }}>
               {isEditando && (
                 <button type="button" onClick={cancelarEdicao} style={{ background: '#64748b', color: 'white', border: 'none', padding: '15px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', flex: 1 }}>
@@ -578,37 +590,36 @@ export default function AdminPage() {
                   <div key={art.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#0f172a', padding: '12px 15px', borderRadius: '8px', border: `1px solid ${styles.border}` }}>
                     <div>
                       <span style={{ fontWeight: 'bold', display: 'block' }}>{art.titulo}</span>
-                      <span style={{ fontSize: '0.75rem', color: '#10b981' }}>{art.categoria}</span>
+                      <span style={{ fontSize: '0.75rem', color: '#10b981' }}>📁 {art.categoria}</span>
                     </div>
-                    <button onClick={() => excluirArtigo(art.id, art.titulo)} style={{ background: '#ef4444', border: 'none', color: 'white', padding: '8px 12px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>Apagar</button>
+                    <button onClick={() => excluirArtigo(art.id, art.titulo)} style={{ background: '#ef4444', border: 'none', color: 'white', padding: '8px 12px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>
+                      Apagar
+                    </button>
                   </div>
                 ))}
               </div>
             )}
 
             {/* QUESTÕES */}
-            <h2 style={{ fontSize: '1.2rem', color: '#e11d48', marginBottom: '15px', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '5px' }}>❓ Questões Cadastradas</h2>
+            <h2 style={{ fontSize: '1.2rem', color: '#a3e635', marginBottom: '15px', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '5px' }}>❓ Banco de Questões</h2>
             {listaQuestoes.length === 0 ? <p style={{ color: '#64748b' }}>Nenhuma questão encontrada.</p> : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                {listaQuestoes.map(q => {
-                  const textoEnunciado = q.enunciado || 'Questão sem enunciado cadastrado'
-                  return (
-                    <div key={q.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#0f172a', padding: '12px 15px', borderRadius: '8px', border: `1px solid ${styles.border}` }}>
-                      <div style={{ flex: 1, marginRight: '15px' }}>
-                        <span style={{ fontSize: '0.9rem', display: 'block', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '550px' }}>{textoEnunciado}</span>
-                        <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
-                          <span style={{ fontSize: '0.7rem', color: '#94a3b8', background: '#334155', padding: '1px 6px', borderRadius: '4px' }}>{q.banca}</span>
-                          <span style={{ fontSize: '0.7rem', color: '#94a3b8', background: '#334155', padding: '1px 6px', borderRadius: '4px' }}>{q.disciplina}</span>
-                        </div>
-                      </div>
-                      <button onClick={() => excluirQuestao(q.id, textoEnunciado)} style={{ background: '#ef4444', border: 'none', color: 'white', padding: '8px 12px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>Apagar</button>
+                {listaQuestoes.map(q => (
+                  <div key={q.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#0f172a', padding: '12px 15px', borderRadius: '8px', border: `1px solid ${styles.border}` }}>
+                    <div style={{ maxWidth: '75%' }}>
+                      <span style={{ fontWeight: 'bold', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{q.enunciado}</span>
+                      <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>✏️ {q.banca} | {q.disciplina}</span>
                     </div>
-                  )
-                })}
+                    <button onClick={() => excluirQuestao(q.id, q.enunciado)} style={{ background: '#ef4444', border: 'none', color: 'white', padding: '8px 12px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>
+                      Apagar
+                    </button>
+                  </div>
+                ))}
               </div>
             )}
           </div>
         )}
+
       </div>
     </div>
   )
