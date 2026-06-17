@@ -1,212 +1,491 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { useParams, useSearchParams, useRouter } from 'next/navigation'
-import { supabase } from '@/lib/supabase'
+import { useState, useEffect } from 'react'
+import { createClient } from '@supabase/supabase-js'
 
-export default function DetalhesPage() {
-  const params = useParams()
-  const searchParams = useSearchParams()
-  const router = useRouter()
-  
-  const [dados, setDados] = useState<any>(null)
+const URL_SB = process.env.NEXT_PUBLIC_SUPABASE_URL!
+const KEY_SB = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+
+const supabase = createClient(URL_SB, KEY_SB)
+
+export default function AdminPage() {
+  const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
-  const [respostaMarcada, setRespostaMarcada] = useState<string | null>(null)
+  const [secaoAtiva, setSecaoAtiva] = useState('artigo') // 'artigo', 'questao', 'concurso' ou 'gerenciar'
+  
+  // Estados para listagens de exclusão
+  const [listaArtigos, setListaArtigos] = useState<any[]>([])
+  const [listaQuestoes, setListaQuestoes] = useState<any[]>([])
+  const [listaConcursos, setListaConcursos] = useState<any[]>([])
 
-  const id = params.id 
-  const tipo = searchParams.get('tipo') || 'concurso'
+  // Estados para Login
+  const [email, setEmail] = useState('')
+  const [senha, setSenha] = useState('')
+
+  // 1. FORMULÁRIO DE QUESTÃO COMPLETAMENTE ESTRUTURADO (JSONB)
+  const [questao, setQuestao] = useState({
+    enunciado: '',
+    alternativa_a: '',
+    alternativa_b: '',
+    alternativa_c: '',
+    alternativa_d: '',
+    alternativa_e: '',
+    alternativa_correta: 'A',
+    banca: '',
+    disciplina: '', 
+    slug: ''
+  })
+
+  // 2. FORMULÁRIO DE ARTIGO COMPLETAMENTE ESTRUTURADO
+  const [artigo, setArtigo] = useState({
+    titulo: '', 
+    slug: '', 
+    categoria: 'Notícias', 
+    capa_url: '', 
+    resumo: '', 
+    conteudo: ''
+  })
+
+  // 3. FORMULÁRIO DE CONCURSO / EDITAL ESTRUTURADO
+  const [concurso, setConcurso] = useState({
+    orgao: '', 
+    cidade: '', 
+    banca: '', 
+    status: 'Inscrições Abertas',
+    periodo_inscricao: '', 
+    valor_inscricao: '', 
+    cargos: '',
+    salarios: '', 
+    escolaridade: '', 
+    data_prova: '',
+    descricao: '', 
+    link_oficial: ''
+  })
+
+  // Flags para controlar o "A definir" sem dar erro de TypeScript
+  const [aDefinir, setADefinir] = useState({
+    periodo_inscricao: false,
+    valor_inscricao: false,
+    cargos: false,
+    salarios: false,
+    banca: false,
+    escolaridade: false,
+    data_prova: false
+  })
+
+  const styles = {
+    bg: '#0f172a',
+    card: '#1e293b',
+    primary: '#10b981',
+    text: '#f8fafc',
+    border: 'rgba(255,255,255,0.1)',
+    input: { width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', background: '#0f172a', color: 'white', marginBottom: '15px' },
+    rowCheck: { display: 'flex', alignItems: 'center', gap: '8px', marginTop: '-10px', marginBottom: '15px', fontSize: '0.85rem', color: '#a3e635', cursor: 'pointer' }
+  }
 
   useEffect(() => {
-    if (!id || id === 'id') {
-      setLoading(false)
-      return
+    checkUser()
+  }, [])
+
+  useEffect(() => {
+    if (user && secaoAtiva === 'gerenciar') {
+      carregarDadosGerenciamento()
     }
+  }, [secaoAtiva, user])
 
-    async function carregarConteudo() {
-      setLoading(true)
-      try {
-        let query;
-        
-        if (tipo === 'concurso') {
-          query = supabase.from('concursos')
-            .select('*')
-            .eq('id', Number(id)) 
-            .single()
-        } else if (tipo === 'questao') {
-          query = supabase.from('questoes')
-            .select('*')
-            .eq('id', id) 
-            .single()
-        }
+  async function checkUser() {
+    const { data: { user } } = await supabase.auth.getUser()
+    setUser(user)
+    setLoading(false)
+  }
 
-        const { data, error } = await query!
-        
-        if (error || !data) throw error
-        setDados(data)
-      } catch (err) {
-        console.error("Erro ao carregar do Supabase:", err)
-        setDados(null)
-      } finally {
-        setLoading(false)
+  async function handleLogin(e: React.FormEvent) {
+    e.preventDefault()
+    const { error } = await supabase.auth.signInWithPassword({ email, password: senha })
+    if (error) alert("Erro: " + error.message)
+    else checkUser()
+  }
+
+  const logout = async () => {
+    await supabase.auth.signOut()
+    setUser(null)
+  }
+
+  async function carregarDadosGerenciamento() {
+    const { data: artigos } = await supabase.from('artigos').select('id, titulo, categoria').order('created_at', { ascending: false })
+    if (artigos) setListaArtigos(artigos)
+
+    const { data: questoes } = await supabase.from('questoes').select('id, enunciado, banca, disciplina').order('created_at', { ascending: false })
+    if (questoes) setListaQuestoes(questoes)
+
+    const { data: concursos } = await supabase.from('concursos').select('id, orgao, city:cidade, status').order('created_at', { ascending: false })
+    if (concursos) setListaConcursos(concursos)
+  }
+
+  // FUNÇÕES DE REMOÇÃO
+  async function excluirArtigo(id: string, titulo: string) {
+    if (!confirm(`Tem certeza que deseja apagar o artigo "${titulo}"?`)) return
+    const { error } = await supabase.from('artigos').delete().eq('id', id)
+    if (!error) setListaArtigos(listaArtigos.filter(a => a.id !== id))
+  }
+
+  async function excluirQuestao(id: string, enunciado: string) {
+    if (!confirm(`Tem certeza que deseja apagar a questão selecionada?`)) return
+    const { error } = await supabase.from('questoes').delete().eq('id', id)
+    if (!error) setListaQuestoes(listaQuestoes.filter(q => q.id !== id))
+  }
+
+  async function excluirConcurso(id: any, orgao: string) {
+    if (!confirm(`Tem certeza que deseja apagar o edital do órgão: "${orgao}"?`)) return
+    const { error } = await supabase.from('concursos').delete().eq('id', id)
+    if (error) alert("Erro ao excluir: " + error.message)
+    else setListaConcursos(listaConcursos.filter(c => c.id !== id))
+  }
+
+  const gerarSlug = (texto: string) => {
+    return texto.normalize('NFD').replace(/[\u0300-\u036f]/g, "").toLowerCase().trim().replace(/[^a-z0-9 ]/g, '').replace(/\s+/g, '-')
+  }
+
+  // Tratamento dinâmico de chaves corrigido para o compilador do TypeScript
+  const toggleADefinir = (campo: string) => {
+    setADefinir(prev => {
+      const chaveValida = campo as keyof typeof prev;
+      const novoEstado = { ...prev, [chaveValida]: !prev[chaveValida] };
+      
+      if (novoEstado[chaveValida]) {
+        setConcurso(c => ({ ...c, [campo]: 'A definir' }));
+      } else {
+        setConcurso(c => ({ ...c, [campo]: '' }));
+      }
+      return novoEstado;
+    });
+  }
+
+  // ENVIO DOS FORMULÁRIOS
+  async function salvarArtigo(e: React.FormEvent) {
+    e.preventDefault()
+    const { error } = await supabase.from('artigos').insert([{ ...artigo, created_at: new Date().toISOString() }])
+    if (error) alert("Erro: " + error.message)
+    else {
+      alert("✅ Artigo publicado com sucesso!")
+      setArtigo({ titulo: '', slug: '', categoria: 'Notícias', capa_url: '', resumo: '', conteudo: '' })
+    }
+  }
+
+  async function salvarQuestao(e: React.FormEvent) {
+    e.preventDefault()
+    const dadosParaEnviar = {
+      banca: questao.banca,
+      disciplina: questao.disciplina,
+      enunciado: questao.enunciado,
+      alternativa_correta: questao.alternativa_correta,
+      alternativa_e: questao.alternativa_e || null,
+      slug: questao.slug || null,
+      opcoes: {
+        a: questao.alternativa_a,
+        b: questao.alternativa_b,
+        c: questao.alternativa_c,
+        d: questao.alternativa_d,
+        ...(questao.alternativa_e ? { e: questao.alternativa_e } : {})
       }
     }
+    const { error } = await supabase.from('questoes').insert([dadosParaEnviar])
+    if (error) alert("Erro ao salvar questão: " + error.message)
+    else {
+      alert("✅ Questão cadastrada com sucesso!")
+      setQuestao({ enunciado: '', alternativa_a: '', alternativa_b: '', alternativa_c: '', alternativa_d: '', alternativa_e: '', alternativa_correta: 'A', banca: '', disciplina: '', slug: '' })
+    }
+  }
 
-    carregarConteudo()
-  }, [id, tipo])
+  async function salvarConcurso(e: React.FormEvent) {
+    e.preventDefault()
+    const { error } = await supabase.from('concursos').insert([concurso])
+    if (error) alert("Erro ao salvar edital: " + error.message)
+    else {
+      alert("✅ Novo Edital cadastrado com sucesso!")
+      setConcurso({
+        orgao: '', cidade: '', banca: '', status: 'Inscrições Abertas', periodo_inscricao: '',
+        valor_inscricao: '', cargos: '', salarios: '', escolaridade: '', data_prova: '', descricao: '', link_oficial: ''
+      })
+      setADefinir({ periodo_inscricao: false, valor_inscricao: false, cargos: false, salarios: false, banca: false, escolaridade: false, data_prova: false })
+    }
+  }
 
-  if (loading) return (
-    <div className="min-h-screen bg-[#0f172a] flex items-center justify-center text-white font-bold">
-      <div className="animate-pulse">Buscando informações...</div>
-    </div>
-  )
-  
-  if (!dados) return (
-    <div className="min-h-screen bg-[#0f172a] p-10 text-white text-center flex flex-col items-center justify-center">
-      <p className="text-6xl mb-6">❌</p>
-      <h2 className="text-2xl font-bold">Ops! Conteúdo não encontrado.</h2>
-      <p className="text-slate-400 mt-2">Não encontramos dados para o ID: <span className="text-yellow-400 font-mono">{id}</span></p>
-      <button 
-        onClick={() => router.push('/')} 
-        className="mt-8 bg-blue-600 px-8 py-3 rounded-xl font-bold hover:bg-blue-500 hover:scale-105 transition-all shadow-lg"
-      >
-        Voltar ao Início
-      </button>
-    </div>
-  )
+  if (loading) return <div style={{ color: 'white', textAlign: 'center', marginTop: '50px' }}>Carregando...</div>
 
-  const renderConcurso = () => (
-    <>
-      <div className="mb-8">
-        <span className="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
-          {dados.status || 'Aberto'}
-        </span>
-        <h1 className="text-4xl font-extrabold mt-4 text-white leading-tight">{dados.orgao}</h1>
-        <p className="text-slate-400 mt-2 flex items-center gap-2 text-lg">
-          <span>📍 {dados.cidade}</span>
-          <span className="text-slate-600">|</span>
-          <span>🏢 Banca: {dados.banca}</span>
-        </p>
-      </div>
-
-      {/* Grid de Informações Técnicas Expandido com 6 Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
-        <div className="bg-slate-800/40 p-5 rounded-2xl border border-white/5 hover:border-blue-500/30 transition-colors">
-          <p className="text-xs text-slate-500 uppercase font-black tracking-widest mb-1">💰 Salários / Remuneração</p>
-          <p className="text-xl font-bold text-emerald-400">
-            {dados.salarios || (dados.salario_max ? `R$ ${Number(dados.salario_max).toLocaleString('pt-BR')}` : 'A definir')}
-          </p>
-        </div>
-        <div className="bg-slate-800/40 p-5 rounded-2xl border border-white/5 hover:border-blue-500/30 transition-colors">
-          <p className="text-xs text-slate-500 uppercase font-black tracking-widest mb-1">📅 Data da Prova</p>
-          <p className="text-xl font-bold text-slate-200">{dados.data_prova || 'A definir'}</p>
-        </div>
-        <div className="bg-slate-800/40 p-5 rounded-2xl border border-white/5 hover:border-blue-500/30 transition-colors">
-          <p className="text-xs text-slate-500 uppercase font-black tracking-widest mb-1">📝 Período de Inscrição</p>
-          <p className="text-xl font-bold text-blue-400">{dados.periodo_inscricao || 'A definir'}</p>
-        </div>
-        <div className="bg-slate-800/40 p-5 rounded-2xl border border-white/5 hover:border-blue-500/30 transition-colors">
-          <p className="text-xs text-slate-500 uppercase font-black tracking-widest mb-1">💳 Taxa de Inscrição</p>
-          <p className="text-xl font-bold text-yellow-400">{dados.valor_inscricao || 'A definir'}</p>
-        </div>
-        <div className="bg-slate-800/40 p-5 rounded-2xl border border-white/5 hover:border-blue-500/30 transition-colors">
-          <p className="text-xs text-slate-500 uppercase font-black tracking-widest mb-1">💼 Cargos Disponíveis</p>
-          <p className="text-xl font-bold text-purple-400 truncate" title={dados.cargos}>{dados.cargos || 'A definir'}</p>
-        </div>
-        <div className="bg-slate-800/40 p-5 rounded-2xl border border-white/5 hover:border-blue-500/30 transition-colors">
-          <p className="text-xs text-slate-500 uppercase font-black tracking-widest mb-1">🎓 Escolaridade</p>
-          <p className="text-xl font-bold text-orange-400">{dados.escolaridade || 'A definir'}</p>
-        </div>
-      </div>
-
-      <div className="space-y-4">
-        <h3 className="text-xl font-bold text-blue-400 flex items-center gap-2">
-          <span className="w-8 h-1 bg-blue-500 rounded-full"></span>
-          Descrição do Certame
-        </h3>
-        <div className="bg-slate-800/20 p-6 rounded-2xl border border-white/5">
-          <p className="text-slate-300 leading-relaxed whitespace-pre-line text-lg">
-            {dados.descricao || `Informações completas sobre o concurso do órgão ${dados.orgao} no estado do Maranhão.`}
-          </p>
-        </div>
-      </div>
-
-      <a 
-        href={dados.link_oficial} 
-        target="_blank" 
-        rel="noopener noreferrer"
-        className="mt-12 block w-full bg-blue-600 text-white text-center py-5 rounded-2xl font-black text-lg hover:bg-blue-500 hover:-translate-y-1 transition-all shadow-[0_10px_20px_-10px_rgba(59,130,246,0.5)]"
-      >
-        ACESSAR PÁGINA DO EDITAL
-      </a>
-    </>
-  )
-
-  const renderQuestao = () => {
-    const opcoes = typeof dados.opcoes === 'string' ? JSON.parse(dados.opcoes) : dados.opcoes
+  if (!user) {
     return (
-      <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-        <div className="mb-8">
-          <span className="bg-violet-500/20 text-violet-400 border border-violet-500/30 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
-            Banca: {dados.banca}
-          </span>
-          <h1 className="text-3xl font-extrabold mt-4 text-blue-400">{dados.disciplina}</h1>
-        </div>
-
-        <div className="bg-slate-800/40 p-8 rounded-2xl border-l-8 border-blue-500 mb-10 shadow-inner">
-          <p className="text-slate-100 text-xl leading-relaxed italic">"{dados.enunciado}"</p>
-        </div>
-
-        <div className="grid gap-4">
-          {Object.entries(opcoes).map(([letra, texto]: any) => {
-            const isCorreta = letra === dados.alternativa_correta
-            const isSelecionada = letra === respostaMarcada
-            
-            let stateClasses = 'bg-slate-800/60 border-white/5 hover:border-blue-500/50 hover:bg-slate-700/60'
-            
-            if (respostaMarcada) {
-              if (isCorreta) stateClasses = 'bg-emerald-500/20 border-emerald-500 text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.2)]'
-              else if (isSelecionada) stateClasses = 'bg-red-500/20 border-red-500 text-red-400'
-              else stateClasses = 'opacity-50 border-white/5'
-            }
-
-            return (
-              <button
-                key={letra}
-                disabled={!!respostaMarcada}
-                onClick={() => setRespostaMarcada(letra)}
-                className={`w-full text-left p-5 rounded-xl border-2 transition-all duration-300 flex items-start gap-4 group ${stateClasses}`}
-              >
-                <span className={`flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center font-black ${isSelecionada ? 'bg-current text-slate-900' : 'bg-slate-700 text-slate-300'}`}>
-                  {letra.toUpperCase()}
-                </span>
-                <span className="text-lg font-medium pt-0.5">{texto}</span>
-              </button>
-            )
-          })}
-        </div>
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: styles.bg }}>
+        <section style={{ maxWidth: '400px', width: '90%', background: styles.card, padding: '30px', borderRadius: '12px', border: `1px solid ${styles.border}`, textAlign: 'center' }}>
+          <form onSubmit={handleLogin}>
+            <h2 style={{ marginBottom: '10px', color: 'white' }}>🔒 Painel do Mestre</h2>
+            <p style={{ color: '#94a3b8', marginBottom: '25px' }}>Kassio, entre para gerenciar o conteúdo</p>
+            <input type="email" placeholder="Seu e-mail" required style={styles.input} onChange={e => setEmail(e.target.value)} />
+            <input type="password" placeholder="Sua senha" required style={styles.input} onChange={e => setSenha(e.target.value)} />
+            <button type="submit" style={{ background: styles.primary, color: 'white', border: 'none', padding: '15px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', width: '100%' }}>Acessar Sistema</button>
+          </form>
+        </section>
       </div>
     )
   }
 
   return (
-    <main className="min-h-screen bg-[#0f172a] p-4 md:p-8 text-white selection:bg-blue-500/30">
-      <div className="max-w-4xl mx-auto">
-        <button 
-          onClick={() => router.back()} 
-          className="group text-slate-400 mb-8 hover:text-blue-400 flex items-center gap-2 font-bold transition-colors"
-        >
-          <span className="group-hover:-translate-x-1 transition-transform">←</span> 
-          Voltar para a lista
-        </button>
+    <div style={{ background: styles.bg, color: styles.text, minHeight: '100vh', padding: '20px' }}>
+      <div style={{ maxWidth: '900px', margin: '0 auto', background: styles.card, padding: '30px', borderRadius: '12px', border: `1px solid ${styles.border}` }}>
         
-        <article className="bg-[#1e293b]/50 backdrop-blur-sm rounded-3xl p-6 md:p-12 border border-white/5 shadow-2xl relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/5 rounded-full blur-3xl -mr-32 -mt-32"></div>
-          
-          <div className="relative z-10">
-            {tipo === 'concurso' ? renderConcurso() : renderQuestao()}
+        {/* NAVEGAÇÃO DE SEÇÕES */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '30px', borderBottom: `1px solid ${styles.border}`, paddingBottom: '20px' }}>
+          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+            <button onClick={() => setSecaoAtiva('artigo')} style={{ background: secaoAtiva === 'artigo' ? '#3b82f6' : '#334155', color: '#fff', border: 'none', padding: '10px 16px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>📄 Novo Artigo</button>
+            <button onClick={() => setSecaoAtiva('questao')} style={{ background: secaoAtiva === 'questao' ? '#3b82f6' : '#334155', color: '#fff', border: 'none', padding: '10px 16px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>❓ Nova Questão</button>
+            <button onClick={() => setSecaoAtiva('concurso')} style={{ background: secaoAtiva === 'concurso' ? '#10b981' : '#334155', color: '#fff', border: 'none', padding: '10px 16px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>🏛️ Novo Edital</button>
+            <button onClick={() => setSecaoAtiva('gerenciar')} style={{ background: secaoAtiva === 'gerenciar' ? '#ef4444' : '#334155', color: '#fff', border: 'none', padding: '10px 16px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>🗑️ Gerenciar / Excluir</button>
           </div>
-        </article>
+          <button onClick={logout} style={{ background: '#ef4444', color: 'white', border: 'none', padding: '8px 16px', borderRadius: '6px', cursor: 'pointer' }}>Sair</button>
+        </div>
+
+        {/* SECÃO: NOVO ARTIGO COMPLETO */}
+        {secaoAtiva === 'artigo' && (
+          <form onSubmit={salvarArtigo}>
+            <h1 style={{ marginBottom: '20px' }}>🚀 Novo Artigo</h1>
+            <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Título</label>
+            <input type="text" value={artigo.titulo} style={styles.input} onChange={e => setArtigo({...artigo, titulo: e.target.value, slug: gerarSlug(e.target.value)})} required />
+            
+            <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Slug (URL)</label>
+            <input type="text" value={artigo.slug} style={{ ...styles.input, opacity: 0.6 }} readOnly />
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+              <div>
+                <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Categoria</label>
+                <select style={styles.input} value={artigo.categoria} onChange={e => setArtigo({...artigo, categoria: e.target.value})}>
+                  <option value="Notícias">Notícias</option>
+                  <option value="Concursos">Concursos</option>
+                  <option value="Dicas de Estudo">Dicas de Estudo</option>
+                  <option value="Desenvolvimento">Desenvolvimento</option>
+                  <option value="UEMA">UEMA</option>
+                  <option value="ENEM">ENEM</option>
+                </select>
+              </div>
+              <div>
+                <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>URL da Capa</label>
+                <input type="text" value={artigo.capa_url} style={styles.input} onChange={e => setArtigo({...artigo, capa_url: e.target.value})} required />
+              </div>
+            </div>
+
+            <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Resumo</label>
+            <input type="text" value={artigo.resumo} style={styles.input} onChange={e => setArtigo({...artigo, resumo: e.target.value})} maxLength={200} required />
+
+            <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Conteúdo (HTML/Markdown)</label>
+            <textarea style={{ ...styles.input, height: '200px', resize: 'vertical' }} value={artigo.conteudo} onChange={e => setArtigo({...artigo, conteudo: e.target.value})} required />
+
+            <button type="submit" style={{ background: styles.primary, color: 'white', border: 'none', padding: '15px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', width: '100%' }}>Publicar Artigo</button>
+          </form>
+        )}
+
+        {/* SEÇÃO: NOVA QUESTÃO COMPLETA */}
+        {secaoAtiva === 'questao' && (
+          <form onSubmit={salvarQuestao}>
+            <h1 style={{ marginBottom: '20px' }}>❓ Cadastrar Nova Questão</h1>
+            
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+              <div>
+                <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Banca</label>
+                <input type="text" placeholder="Ex: Cebraspe, FGV" value={questao.banca} style={styles.input} onChange={e => setQuestao({...questao, banca: e.target.value})} required />
+              </div>
+              <div>
+                <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Disciplina / Assunto</label>
+                <input type="text" placeholder="Ex: Português, Direito" value={questao.disciplina} style={styles.input} onChange={e => setQuestao({...questao, disciplina: e.target.value})} required />
+              </div>
+            </div>
+
+            <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Enunciado da Questão</label>
+            <textarea style={{ ...styles.input, height: '120px', resize: 'vertical' }} value={questao.enunciado} onChange={e => setQuestao({...questao, enunciado: e.target.value, slug: gerarSlug(e.target.value.substring(0, 40))})} required />
+
+            <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Alternativa A</label>
+            <input type="text" value={questao.alternativa_a} style={styles.input} onChange={e => setQuestao({...questao, alternativa_a: e.target.value})} required />
+
+            <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Alternativa B</label>
+            <input type="text" value={questao.alternativa_b} style={styles.input} onChange={e => setQuestao({...questao, alternativa_b: e.target.value})} required />
+
+            <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Alternativa C</label>
+            <input type="text" value={questao.alternativa_c} style={styles.input} onChange={e => setQuestao({...questao, alternativa_c: e.target.value})} required />
+
+            <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Alternativa D</label>
+            <input type="text" value={questao.alternativa_d} style={styles.input} onChange={e => setQuestao({...questao, alternativa_d: e.target.value})} required />
+
+            <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Alternativa E (Opcional)</label>
+            <input type="text" value={questao.alternativa_e} style={styles.input} onChange={e => setQuestao({...questao, alternativa_e: e.target.value})} />
+
+            <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Alternativa Correta</label>
+            <select style={styles.input} value={questao.alternativa_correta} onChange={e => setQuestao({...questao, alternativa_correta: e.target.value})}>
+              <option value="A">A</option>
+              <option value="B">B</option>
+              <option value="C">C</option>
+              <option value="D">D</option>
+              <option value="E">E</option>
+            </select>
+
+            <button type="submit" style={{ background: styles.primary, color: 'white', border: 'none', padding: '15px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', width: '100%' }}>Salvar Questão no Banco</button>
+          </form>
+        )}
+
+        {/* SEÇÃO: NOVO EDITAL COMPLETO */}
+        {secaoAtiva === 'concurso' && (
+          <form onSubmit={salvarConcurso}>
+            <h1 style={{ marginBottom: '20px' }}>🏛️ Cadastrar Novo Edital</h1>
+            
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+              <div>
+                <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Órgão Institucional</label>
+                <input type="text" placeholder="Ex: UEMA, Prefeitura de São Luís" value={concurso.orgao} style={styles.input} onChange={e => setConcurso({...concurso, orgao: e.target.value})} required />
+              </div>
+              <div>
+                <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Cidade / Região</label>
+                <input type="text" placeholder="Ex: São Luís - MA, Estadual" value={concurso.cidade} style={styles.input} onChange={e => setConcurso({...concurso, cidade: e.target.value})} required />
+              </div>
+            </div>
+
+            <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Banca Organizadora</label>
+            <input type="text" placeholder="Ex: FGV, Cebraspe" value={concurso.banca} style={styles.input} onChange={e => setConcurso({...concurso, banca: e.target.value})} disabled={aDefinir.banca} required={!aDefinir.banca} />
+            <label style={styles.rowCheck}>
+              <input type="checkbox" checked={aDefinir.banca} onChange={() => toggleADefinir('banca')} /> Banca a definir
+            </label>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+              <div>
+                <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Período de Inscrição</label>
+                <input type="text" placeholder="Ex: 10/10 a 12/11" value={concurso.periodo_inscricao} style={styles.input} onChange={e => setConcurso({...concurso, periodo_inscricao: e.target.value})} disabled={aDefinir.periodo_inscricao} required={!aDefinir.periodo_inscricao} />
+                <label style={styles.rowCheck}>
+                  <input type="checkbox" checked={aDefinir.periodo_inscricao} onChange={() => toggleADefinir('periodo_inscricao')} /> Período a definir
+                </label>
+              </div>
+              <div>
+                <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Taxa / Valor da Inscrição</label>
+                <input type="text" placeholder="Ex: R$ 85,00" value={concurso.valor_inscricao} style={styles.input} onChange={e => setConcurso({...concurso, valor_inscricao: e.target.value})} disabled={aDefinir.valor_inscricao} required={!aDefinir.valor_inscricao} />
+                <label style={styles.rowCheck}>
+                  <input type="checkbox" checked={aDefinir.valor_inscricao} onChange={() => toggleADefinir('valor_inscricao')} /> Valor a definir
+                </label>
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+              <div>
+                <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Cargos Ofertados</label>
+                <input type="text" placeholder="Ex: Assistente, Técnico, Professor" value={concurso.cargos} style={styles.input} onChange={e => setConcurso({...concurso, cargos: e.target.value})} disabled={aDefinir.cargos} required={!aDefinir.cargos} />
+                <label style={styles.rowCheck}>
+                  <input type="checkbox" checked={aDefinir.cargos} onChange={() => toggleADefinir('cargos')} /> Cargos a definir
+                </label>
+              </div>
+              <div>
+                <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Remuneração / Salários</label>
+                <input type="text" placeholder="Ex: Até R$ 5.400,00" value={concurso.salarios} style={styles.input} onChange={e => setConcurso({...concurso, salarios: e.target.value})} disabled={aDefinir.salarios} required={!aDefinir.salarios} />
+                <label style={styles.rowCheck}>
+                  <input type="checkbox" checked={aDefinir.salarios} onChange={() => toggleADefinir('salarios')} /> Salários a definir
+                </label>
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+              <div>
+                <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Escolaridade Exigida</label>
+                <input type="text" placeholder="Ex: Médio e Superior" value={concurso.escolaridade} style={styles.input} onChange={e => setConcurso({...concurso, escolaridade: e.target.value})} disabled={aDefinir.escolaridade} required={!aDefinir.escolaridade} />
+                <label style={styles.rowCheck}>
+                  <input type="checkbox" checked={aDefinir.escolaridade} onChange={() => toggleADefinir('escolaridade')} /> Escolaridade a definir
+                </label>
+              </div>
+              <div>
+                <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Data Prevista da Prova</label>
+                <input type="text" placeholder="Ex: 24/11/2026" value={concurso.data_prova} style={styles.input} onChange={e => setConcurso({...concurso, data_prova: e.target.value})} disabled={aDefinir.data_prova} required={!aDefinir.data_prova} />
+                <label style={styles.rowCheck}>
+                  <input type="checkbox" checked={aDefinir.data_prova} onChange={() => toggleADefinir('data_prova')} /> Data a definir
+                </label>
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+              <div>
+                <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Status do Certame</label>
+                <select style={styles.input} value={concurso.status} onChange={e => setConcurso({...concurso, status: e.target.value})}>
+                  <option value="Inscrições Abertas">Inscrições Abertas</option>
+                  <option value="Previsto / Anunciado">Previsto / Anunciado</option>
+                  <option value="Edital Publicado">Edital Publicado</option>
+                  <option value="Encerrado">Encerrado</option>
+                </select>
+              </div>
+              <div>
+                <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Link Oficial do Edital</label>
+                <input type="url" placeholder="https://..." value={concurso.link_oficial} style={styles.input} onChange={e => setConcurso({...concurso, link_oficial: e.target.value})} required />
+              </div>
+            </div>
+
+            <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Resumo / Descrição Completa</label>
+            <textarea style={{ ...styles.input, height: '120px' }} placeholder="Insira detalhes adicionais sobre as vagas do edital..." value={concurso.descricao} onChange={e => setConcurso({...concurso, descricao: e.target.value})} required />
+
+            <button type="submit" style={{ background: styles.primary, color: 'white', border: 'none', padding: '15px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', width: '100%' }}>Publicar Edital</button>
+          </form>
+        )}
+
+        {/* SEÇÃO: GERENCIAR / EXCLUIR CONTEÚDOS */}
+        {secaoAtiva === 'gerenciar' && (
+          <div>
+            <h1 style={{ marginBottom: '25px' }}>🗑️ Gerenciar Conteúdos Existentes</h1>
+
+            {/* EDITAIS */}
+            <h2 style={{ fontSize: '1.2rem', color: '#10b981', marginBottom: '15px', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '5px' }}>🏛️ Editais / Concursos Ativos</h2>
+            {listaConcursos.length === 0 ? <p style={{ color: '#64748b', marginBottom: '20px' }}>Nenhum concurso encontrado.</p> : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '30px' }}>
+                {listaConcursos.map(c => (
+                  <div key={c.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#0f172a', padding: '12px 15px', borderRadius: '8px', border: `1px solid ${styles.border}` }}>
+                    <div>
+                      <span style={{ fontWeight: 'bold', display: 'block' }}>{c.orgao}</span>
+                      <span style={{ fontSize: '0.75rem', color: '#3b82f6' }}>📍 {c.city || c.cidade} | {c.status}</span>
+                    </div>
+                    <button onClick={() => excluirConcurso(c.id, c.orgao)} style={{ background: '#ef4444', border: 'none', color: 'white', padding: '8px 12px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>Apagar</button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* ARTIGOS */}
+            <h2 style={{ fontSize: '1.2rem', color: '#3b82f6', marginBottom: '15px', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '5px' }}>📄 Artigos Publicados</h2>
+            {listaArtigos.length === 0 ? <p style={{ color: '#64748b', marginBottom: '30px' }}>Nenhum artigo encontrado.</p> : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '40px' }}>
+                {listaArtigos.map(art => (
+                  <div key={art.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#0f172a', padding: '12px 15px', borderRadius: '8px', border: `1px solid ${styles.border}` }}>
+                    <div>
+                      <span style={{ fontWeight: 'bold', display: 'block' }}>{art.titulo}</span>
+                      <span style={{ fontSize: '0.75rem', color: '#10b981' }}>{art.categoria}</span>
+                    </div>
+                    <button onClick={() => excluirArtigo(art.id, art.titulo)} style={{ background: '#ef4444', border: 'none', color: 'white', padding: '8px 12px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>Apagar</button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* QUESTÕES */}
+            <h2 style={{ fontSize: '1.2rem', color: '#e11d48', marginBottom: '15px', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '5px' }}>❓ Questões Cadastradas</h2>
+            {listaQuestoes.length === 0 ? <p style={{ color: '#64748b' }}>Nenhuma questão encontrada.</p> : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                {listaQuestoes.map(q => {
+                  const textoEnunciado = q.enunciado || 'Questão sem enunciado cadastrado'
+                  return (
+                    <div key={q.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#0f172a', padding: '12px 15px', borderRadius: '8px', border: `1px solid ${styles.border}` }}>
+                      <div style={{ flex: 1, marginRight: '15px' }}>
+                        <span style={{ fontSize: '0.9rem', display: 'block', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '550px' }}>{textoEnunciado}</span>
+                        <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
+                          <span style={{ fontSize: '0.7rem', color: '#94a3b8', background: '#334155', padding: '1px 6px', borderRadius: '4px' }}>{q.banca}</span>
+                          <span style={{ fontSize: '0.7rem', color: '#94a3b8', background: '#334155', padding: '1px 6px', borderRadius: '4px' }}>{q.disciplina}</span>
+                        </div>
+                      </div>
+                      <button onClick={() => excluirQuestao(q.id, textoEnunciado)} style={{ background: '#ef4444', border: 'none', color: 'white', padding: '8px 12px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>Apagar</button>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+        )}
       </div>
-    </main>
+    </div>
   )
 }
