@@ -53,12 +53,12 @@ export default function AdminPage() {
     banca: '', 
     status: 'Inscrições Abertas',
     periodo_inscricao: '', 
-    valor_inscricao: '', // mapeado temporariamente pelo input
+    valor_inscricao: '', 
     cargos: '',
-    salarios: '',        // mapeado temporariamente pelo input
+    salarios: '',        
     escolaridade: '', 
     data_prova: '',
-    sobre_concurso: '',  // 🔄 Alterado de 'descricao' para 'sobre_concurso'
+    sobre_concurso: '',  
     link_oficial: ''
   })
 
@@ -111,16 +111,38 @@ export default function AdminPage() {
     setUser(null)
   }
 
-  async function carregarDadosGerenciamento() {
-    const { data: artigos } = await supabase.from('artigos').select('id, titulo, categoria').order('created_at', { ascending: false })
-    if (artigos) setListaArtigos(artigos)
+async function carregarDadosGerenciamento() {
+  // Busca os artigos
+  const { data: artigos, error: errArtigos } = await supabase
+    .from('artigos')
+    .select('id, titulo, categoria')
+    .order('created_at', { ascending: false })
+  if (errArtigos) console.error("Erro ao carregar artigos:", errArtigos.message)
+  if (artigos) setListaArtigos(artigos)
 
-    const { data: questoes } = await supabase.from('questoes').select('id, enunciado, banca, disciplina').order('created_at', { ascending: false })
-    if (questoes) setListaQuestoes(questoes)
+  // Busca as questões
+  const { data: questoes, error: errQuestoes } = await supabase
+    .from('questoes')
+    .select('id, enunciado, banca, disciplina')
+    .order('created_at', { ascending: false })
+  if (errQuestoes) console.error("Erro ao carregar questões:", errQuestoes.message)
+  if (questoes) setListaQuestoes(questoes)
 
-    const { data: concursos } = await supabase.from('concursos').select('id, orgao,cidade, status').order('created_at', { ascending: false })
-    if (concursos) setListaConcursos(concursos)
+  // 🛠️ BUSCA DE CONCURSOS COM DEBUGGER DE ERRO
+  // Certifique-se de que os campos abaixo existem EXATAMENTE com esses nomes na sua tabela do banco
+  const { data: concursos, error: errConcursos } = await supabase
+    .from('concursos')
+    .select('id, orgao, cidade, status') 
+    .order('id', { ascending: false }) // Mudado temporariamente para 'id' caso não use 'created_at' nela
+
+  if (errConcursos) {
+    console.error("🚨 ERRO CRÍTICO AO BUSCAR CONCURSOS:", errConcursos.message)
+    alert("Erro ao listar editais: " + errConcursos.message)
+  } else {
+    console.log("📂 Concursos carregados com sucesso:", concursos)
+    setListaConcursos(concursos || [])
   }
+}
 
   // FUNÇÕES DE REMOÇÃO
   async function excluirArtigo(id: string, titulo: string) {
@@ -199,23 +221,24 @@ export default function AdminPage() {
   async function salvarConcurso(e: React.FormEvent) {
     e.preventDefault()
 
-    // 🔄 Mapeamento seguro das strings dos inputs para a estrutura exata do seu Postgres
+    // 🛠️ Mapeamento corrigido enviando o estado real do formulário
     const dadosConcurso = {
       orgao: concurso.orgao,
       cidade: concurso.cidade,
-      banca: concurso.banca,
+      banca: concurso.banca || 'A definir',
       status: concurso.status,
-      cargos: concurso.cargos || 'Consultar edital',
-      escolaridade: concurso.escolaridade || 'Não informado',
-      data_prova: concurso.data_prova,
+      periodo_inscricao: concurso.periodo_inscricao || 'A definir', // 💡 Faltava este campo!
+      cargos: concurso.cargos || 'A definir',
+      escolaridade: concurso.escolaridade || 'A definir',
+      data_prova: concurso.data_prova || 'A definir',
       link_oficial: concurso.link_oficial,
       sobre_concurso: concurso.sobre_concurso,
-      faixa_salarial: concurso.salarios, // Evita erro de tipo numérico salvando o texto livre aqui
-      
-      // Valores opcionais/padrão para evitar quebra de tipos numéricos
+      faixa_salarial: concurso.salarios || 'A definir', 
+      valor_inscricao: concurso.valor_inscricao || 'A definir', // 💡 Salvando texto livre do input de forma segura
+
+      // Mantidos como nulos caso sua tabela exija colunas numéricas adicionais
       salario_max: null,
-      salario_min: null,
-      valor_inscricao: null
+      salario_min: null
     }
 
     const { error } = await supabase.from('concursos').insert([dadosConcurso])
@@ -438,7 +461,6 @@ export default function AdminPage() {
             </div>
 
             <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Resumo / Descrição Completa</label>
-            {/* 🔄 Alterado o value e onChange de concurso.descricao para concurso.sobre_concurso */}
             <textarea style={{ ...styles.input, height: '120px' }} placeholder="Insira detalhes adicionais sobre as vagas do edital..." value={concurso.sobre_concurso} onChange={e => setConcurso({...concurso, sobre_concurso: e.target.value})} required />
 
             <button type="submit" style={{ background: styles.primary, color: 'white', border: 'none', padding: '15px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', width: '100%' }}>Publicar Edital</button>
