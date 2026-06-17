@@ -88,13 +88,17 @@ export default function AdminPage() {
     
     if (!errArt && artigos) setListaArtigos(artigos)
 
-    // Busca questões
+    // Busca questões - Alterado para trazer os campos gerais cadastrados no banco
     const { data: questoes, error: errQue } = await supabase
       .from('questoes')
-      .select('id, enunciado, banca, disciplina')
+      .select('*')
       .order('created_at', { ascending: false })
     
-    if (!errQue && questoes) setListaQuestoes(questoes)
+    if (errQue) {
+      console.error("Erro ao buscar questões:", errQue.message)
+    } else if (questoes) {
+      setListaQuestoes(questoes)
+    }
   }
 
   // FUNÇÕES DE EXCLUSÃO
@@ -110,8 +114,9 @@ export default function AdminPage() {
     }
   }
 
-  async function excluirQuestao(id: string, enunciado: string) {
-    const resumoEnunciado = enunciado.substring(0, 30) + '...'
+  async function excluirQuestao(id: string, enunciadoCompleto: string) {
+    const textoValidado = enunciadoCompleto || 'Questão sem enunciado'
+    const resumoEnunciado = textoValidado.substring(0, 30) + '...'
     if (!confirm(`Tem certeza que deseja apagar a questão: "${resumoEnunciado}"?`)) return
 
     const { error } = await supabase.from('questoes').delete().eq('id', id)
@@ -328,26 +333,31 @@ export default function AdminPage() {
               </div>
             )}
 
-            {/* LISTAGEM DE QUESTÕES */}
+            {/* LISTAGEM DE QUESTÕES CORRIGIDA */}
             <h2 style={{ fontSize: '1.2rem', color: '#10b981', marginBottom: '15px', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '5px' }}>❓ Questões Cadastradas</h2>
             {listaQuestoes.length === 0 ? (
               <p style={{ color: '#64748b', fontSize: '0.9rem' }}>Nenhuma questão encontrada.</p>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                {listaQuestoes.map(q => (
-                  <div key={q.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#0f172a', padding: '12px 15px', borderRadius: '8px', border: `1px solid ${styles.border}` }}>
-                    <div style={{ flex: 1, marginRight: '15px' }}>
-                      <span style={{ fontSize: '0.9rem', display: 'block', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '550px' }}>
-                        {q.enunciado}
-                      </span>
-                      <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
-                        <span style={{ fontSize: '0.7rem', color: '#94a3b8', background: '#334155', padding: '1px 6px', borderRadius: '4px' }}>{q.banca}</span>
-                        <span style={{ fontSize: '0.7rem', color: '#94a3b8', background: '#334155', padding: '1px 6px', borderRadius: '4px' }}>{q.disciplina}</span>
+                {listaQuestoes.map(q => {
+                  // Fallback inteligente para extrair o enunciado independente de onde esteja salvo na row
+                  const textoEnunciado = q.enunciado || (q.opcoes && typeof q.opcoes === 'object' ? q.opcoes.enunciado : '') || 'Questão sem enunciado cadastrado'
+                  
+                  return (
+                    <div key={q.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#0f172a', padding: '12px 15px', borderRadius: '8px', border: `1px solid ${styles.border}` }}>
+                      <div style={{ flex: 1, marginRight: '15px' }}>
+                        <span style={{ fontSize: '0.9rem', display: 'block', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '550px' }}>
+                          {textoEnunciado}
+                        </span>
+                        <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
+                          <span style={{ fontSize: '0.7rem', color: '#94a3b8', background: '#334155', padding: '1px 6px', borderRadius: '4px' }}>{q.banca || 'Sem Banca'}</span>
+                          <span style={{ fontSize: '0.7rem', color: '#94a3b8', background: '#334155', padding: '1px 6px', borderRadius: '4px' }}>{q.disciplina || 'Sem Disciplina'}</span>
+                        </div>
                       </div>
+                      <button onClick={() => excluirQuestao(q.id, textoEnunciado)} style={{ background: '#ef4444', border: 'none', color: 'white', padding: '8px 12px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.85rem' }}>Apagar</button>
                     </div>
-                    <button onClick={() => excluirQuestao(q.id, q.enunciado)} style={{ background: '#ef4444', border: 'none', color: 'white', padding: '8px 12px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.85rem' }}>Apagar</button>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             )}
           </div>
