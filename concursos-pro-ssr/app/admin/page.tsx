@@ -3,9 +3,12 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@supabase/supabase-js'
 
-// Configuração do Supabase
-const URL_SB = 'https://mczmhvuxujvhrudqmpvg.supabase.co'
-const KEY_SB = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1jem1odnV4dWp2aHJ1ZHFtcHZnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5MzgwMDksImV4cCI6MjA5MTUxNDAwOX0.vqNvzVRzpH9Otqb7DISpWXLw4b6eegdwzpaLBRJPwfY'
+'use client'
+
+// Next.js puxa automaticamente do seu arquivo .env.local de forma segura
+const URL_SB = process.env.NEXT_PUBLIC_SUPABASE_URL!
+const KEY_SB = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+
 const supabase = createClient(URL_SB, KEY_SB)
 
 export default function AdminPage() {
