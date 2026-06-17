@@ -32,9 +32,9 @@ export default function AdminPage() {
   })
 
   // Estados para Artigo
-  const [artigo, setArtigo] = useState({
-    titulo: '', slug: '', categoria: 'noticias', capa_url: '', resumo: '', conteudo: ''
-  })
+const [artigo, setArtigo] = useState({
+  titulo: '', slug: '', categoria: 'Notícias', capa_url: '', resumo: '', conteudo: ''
+})
 
   const styles = {
     bg: '#0f172a',
@@ -176,17 +176,21 @@ export default function AdminPage() {
             <input type="text" value={artigo.slug} style={{ ...styles.input, opacity: 0.6 }} readOnly />
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-              <div>
-                <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Categoria</label>
-                <select style={styles.input} value={artigo.categoria} onChange={e => setArtigo({...artigo, categoria: e.target.value})}>
-                  <option value="noticias">Notícias</option>
-                  <option value="noticias">Notícias</option>
-                  <option value="dicas">Dicas de Estudo</option>
-                  <option value="dev">Desenvolvimento Pessoal</option>
-                  <option value="uema">UEMA</option>
-                  <option value="enem">ENEM</option>
-                </select>
-              </div>
+<div>
+  <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Categoria</label>
+  <select 
+    style={styles.input} 
+    value={artigo.categoria} 
+    onChange={e => setArtigo({...artigo, categoria: e.target.value})}
+  >
+    <option value="Notícias">Notícias</option>
+    <option value="Concursos">Concursos</option>
+    <option value="Dicas de Estudo">Dicas de Estudo</option>
+    <option value="Desenvolvimento">Desenvolvimento</option>
+    <option value="UEMA">UEMA</option>
+    <option value="ENEM">ENEM</option>
+  </select>
+</div>
               <div>
                 <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>URL da Capa</label>
                 <input type="text" value={artigo.capa_url} style={styles.input} onChange={e => setArtigo({...artigo, capa_url: e.target.value})} required />
