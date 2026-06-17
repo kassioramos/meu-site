@@ -88,16 +88,33 @@ export default function DetalhesPage() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
-        <div className="bg-slate-800/40 p-6 rounded-2xl border border-white/5 hover:border-blue-500/30 transition-colors">
-          <p className="text-xs text-slate-500 uppercase font-black tracking-widest mb-1">Salário Estimado</p>
-          <p className="text-2xl font-bold text-emerald-400">
-            {dados.salario_max ? `R$ ${Number(dados.salario_max).toLocaleString('pt-BR')}` : 'Consultar Edital'}
+      {/* Grid de Informações Técnicas Expandido com 6 Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+        <div className="bg-slate-800/40 p-5 rounded-2xl border border-white/5 hover:border-blue-500/30 transition-colors">
+          <p className="text-xs text-slate-500 uppercase font-black tracking-widest mb-1">💰 Salários / Remuneração</p>
+          <p className="text-xl font-bold text-emerald-400">
+            {dados.salarios || (dados.salario_max ? `R$ ${Number(dados.salario_max).toLocaleString('pt-BR')}` : 'A definir')}
           </p>
         </div>
-        <div className="bg-slate-800/40 p-6 rounded-2xl border border-white/5 hover:border-blue-500/30 transition-colors">
-          <p className="text-xs text-slate-500 uppercase font-black tracking-widest mb-1">Data da Prova</p>
-          <p className="text-2xl font-bold text-slate-200">{dados.data_prova || 'A definir'}</p>
+        <div className="bg-slate-800/40 p-5 rounded-2xl border border-white/5 hover:border-blue-500/30 transition-colors">
+          <p className="text-xs text-slate-500 uppercase font-black tracking-widest mb-1">📅 Data da Prova</p>
+          <p className="text-xl font-bold text-slate-200">{dados.data_prova || 'A definir'}</p>
+        </div>
+        <div className="bg-slate-800/40 p-5 rounded-2xl border border-white/5 hover:border-blue-500/30 transition-colors">
+          <p className="text-xs text-slate-500 uppercase font-black tracking-widest mb-1">📝 Período de Inscrição</p>
+          <p className="text-xl font-bold text-blue-400">{dados.periodo_inscricao || 'A definir'}</p>
+        </div>
+        <div className="bg-slate-800/40 p-5 rounded-2xl border border-white/5 hover:border-blue-500/30 transition-colors">
+          <p className="text-xs text-slate-500 uppercase font-black tracking-widest mb-1">💳 Taxa de Inscrição</p>
+          <p className="text-xl font-bold text-yellow-400">{dados.valor_inscricao || 'A definir'}</p>
+        </div>
+        <div className="bg-slate-800/40 p-5 rounded-2xl border border-white/5 hover:border-blue-500/30 transition-colors">
+          <p className="text-xs text-slate-500 uppercase font-black tracking-widest mb-1">💼 Cargos Disponíveis</p>
+          <p className="text-xl font-bold text-purple-400 truncate" title={dados.cargos}>{dados.cargos || 'A definir'}</p>
+        </div>
+        <div className="bg-slate-800/40 p-5 rounded-2xl border border-white/5 hover:border-blue-500/30 transition-colors">
+          <p className="text-xs text-slate-500 uppercase font-black tracking-widest mb-1">🎓 Escolaridade</p>
+          <p className="text-xl font-bold text-orange-400">{dados.escolaridade || 'A definir'}</p>
         </div>
       </div>
 
@@ -183,7 +200,6 @@ export default function DetalhesPage() {
         </button>
         
         <article className="bg-[#1e293b]/50 backdrop-blur-sm rounded-3xl p-6 md:p-12 border border-white/5 shadow-2xl relative overflow-hidden">
-          {/* Decoração sutil de fundo */}
           <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/5 rounded-full blur-3xl -mr-32 -mt-32"></div>
           
           <div className="relative z-10">
