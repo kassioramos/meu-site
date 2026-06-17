@@ -22,6 +22,10 @@ export default function AdminPage() {
   const [email, setEmail] = useState('')
   const [senha, setSenha] = useState('')
 
+  // Estados para controle de Edição de Concurso
+  const [idEditalEmEdicao, setIdEditalEmEdicao] = useState<any>(null)
+  const [isEditando, setIsEditando] = useState(false)
+
   // 1. FORMULÁRIO DE QUESTÃO COMPLETAMENTE ESTRUTURADO (JSONB)
   const [questao, setQuestao] = useState({
     enunciado: '',
@@ -111,38 +115,34 @@ export default function AdminPage() {
     setUser(null)
   }
 
-async function carregarDadosGerenciamento() {
-  // Busca os artigos
-  const { data: artigos, error: errArtigos } = await supabase
-    .from('artigos')
-    .select('id, titulo, categoria')
-    .order('created_at', { ascending: false })
-  if (errArtigos) console.error("Erro ao carregar artigos:", errArtigos.message)
-  if (artigos) setListaArtigos(artigos)
+  async function carregarDadosGerenciamento() {
+    const { data: artigos, error: errArtigos } = await supabase
+      .from('artigos')
+      .select('id, titulo, categoria')
+      .order('created_at', { ascending: false })
+    if (errArtigos) console.error("Erro ao carregar artigos:", errArtigos.message)
+    if (artigos) setListaArtigos(artigos)
 
-  // Busca as questões
-  const { data: questoes, error: errQuestoes } = await supabase
-    .from('questoes')
-    .select('id, enunciado, banca, disciplina')
-    .order('created_at', { ascending: false })
-  if (errQuestoes) console.error("Erro ao carregar questões:", errQuestoes.message)
-  if (questoes) setListaQuestoes(questoes)
+    const { data: questoes, error: errQuestoes } = await supabase
+      .from('questoes')
+      .select('id, enunciado, banca, disciplina')
+      .order('created_at', { ascending: false })
+    if (errQuestoes) console.error("Erro ao carregar questões:", errQuestoes.message)
+    if (questoes) setListaQuestoes(questoes)
 
-  // 🛠️ BUSCA DE CONCURSOS COM DEBUGGER DE ERRO
-  // Certifique-se de que os campos abaixo existem EXATAMENTE com esses nomes na sua tabela do banco
-  const { data: concursos, error: errConcursos } = await supabase
-    .from('concursos')
-    .select('id, orgao, cidade, status') 
-    .order('id', { ascending: false }) // Mudado temporariamente para 'id' caso não use 'created_at' nela
+    const { data: concursos, error: errConcursos } = await supabase
+      .from('concursos')
+      .select('*') // Buscando tudo para quando for alimentar a edição ter os dados completos
+      .order('id', { ascending: false })
 
-  if (errConcursos) {
-    console.error("🚨 ERRO CRÍTICO AO BUSCAR CONCURSOS:", errConcursos.message)
-    alert("Erro ao listar editais: " + errConcursos.message)
-  } else {
-    console.log("📂 Concursos carregados com sucesso:", concursos)
-    setListaConcursos(concursos || [])
+    if (errConcursos) {
+      console.error("🚨 ERRO CRÍTICO AO BUSCAR CONCURSOS:", errConcursos.message)
+      alert("Erro ao listar editais: " + errConcursos.message)
+    } else {
+      console.log("📂 Concursos carregados com sucesso:", concursos)
+      setListaConcursos(concursos || [])
+    }
   }
-}
 
   // FUNÇÕES DE REMOÇÃO
   async function excluirArtigo(id: string, titulo: string) {
@@ -180,6 +180,53 @@ async function carregarDadosGerenciamento() {
       }
       return novoEstado;
     });
+  }
+
+  // PREPARAR FORMULÁRIO PARA EDIÇÃO
+  function prepararEdicaoConcurso(item: any) {
+    setIdEditalEmEdicao(item.id)
+    setIsEditando(true)
+    
+    // Alimenta o formulário do edital com os dados antigos vindos do banco
+    setConcurso({
+      orgao: item.orgao || '',
+      cidade: item.cidade || '',
+      banca: item.banca === 'A definir' ? '' : item.banca || '',
+      status: item.status || 'Inscrições Abertas',
+      periodo_inscricao: item.periodo_inscricao === 'A definir' ? '' : item.periodo_inscricao || '',
+      valor_inscricao: item.valor_inscricao === 'A definir' ? '' : item.valor_inscricao || '',
+      cargos: item.cargos === 'A definir' ? '' : item.cargos || '',
+      salarios: item.faixa_salarial === 'A definir' ? '' : item.faixa_salarial || '',
+      escolaridade: item.escolaridade === 'A definir' ? '' : item.escolaridade || '',
+      data_prova: item.data_prova === 'A definir' ? '' : item.data_prova || '',
+      sobre_concurso: item.sobre_concurso || '',
+      link_oficial: item.link_oficial || ''
+    })
+
+    // Seta os checkboxes com base no conteúdo atual do banco
+    setADefinir({
+      banca: item.banca === 'A definir',
+      periodo_inscricao: item.periodo_inscricao === 'A definir',
+      valor_inscricao: item.valor_inscricao === 'A definir',
+      cargos: item.cargos === 'A definir',
+      salarios: item.faixa_salarial === 'A definir',
+      escolaridade: item.escolaridade === 'A definir',
+      data_prova: item.data_prova === 'A definir'
+    })
+
+    // Redireciona o usuário visualmente para a aba do formulário
+    setSecaoAtiva('concurso')
+  }
+
+  // CANCELAR MODO EDIÇÃO
+  function cancelarEdicao() {
+    setIsEditando(false)
+    setIdEditalEmEdicao(null)
+    setConcurso({
+      orgao: '', cidade: '', banca: '', status: 'Inscrições Abertas', periodo_inscricao: '',
+      valor_inscricao: '', cargos: '', salarios: '', escolaridade: '', data_prova: '', sobre_concurso: '', link_oficial: ''
+    })
+    setADefinir({ periodo_inscricao: false, valor_inscricao: false, cargos: false, salarios: false, banca: false, escolaridade: false, data_prova: false })
   }
 
   // ENVIO DOS FORMULÁRIOS
@@ -221,35 +268,49 @@ async function carregarDadosGerenciamento() {
   async function salvarConcurso(e: React.FormEvent) {
     e.preventDefault()
 
-    // 🛠️ Mapeamento corrigido enviando o estado real do formulário
     const dadosConcurso = {
       orgao: concurso.orgao,
       cidade: concurso.cidade,
       banca: concurso.banca || 'A definir',
       status: concurso.status,
-      periodo_inscricao: concurso.periodo_inscricao || 'A definir', // 💡 Faltava este campo!
+      periodo_inscricao: concurso.periodo_inscricao || 'A definir',
       cargos: concurso.cargos || 'A definir',
       escolaridade: concurso.escolaridade || 'A definir',
       data_prova: concurso.data_prova || 'A definir',
       link_oficial: concurso.link_oficial,
       sobre_concurso: concurso.sobre_concurso,
       faixa_salarial: concurso.salarios || 'A definir', 
-      valor_inscricao: concurso.valor_inscricao || 'A definir', // 💡 Salvando texto livre do input de forma segura
-
-      // Mantidos como nulos caso sua tabela exija colunas numéricas adicionais
+      valor_inscricao: concurso.valor_inscricao || 'A definir',
       salario_max: null,
       salario_min: null
     }
 
-    const { error } = await supabase.from('concursos').insert([dadosConcurso])
-    if (error) alert("Erro ao salvar edital: " + error.message)
-    else {
-      alert("✅ Novo Edital cadastrado com sucesso!")
-      setConcurso({
-        orgao: '', cidade: '', banca: '', status: 'Inscrições Abertas', periodo_inscricao: '',
-        valor_inscricao: '', cargos: '', salarios: '', escolaridade: '', data_prova: '', sobre_concurso: '', link_oficial: ''
-      })
-      setADefinir({ periodo_inscricao: false, valor_inscricao: false, cargos: false, salarios: false, banca: false, escolaridade: false, data_prova: false })
+    if (isEditando) {
+      // Executa o UPDATE caso esteja no modo edição
+      const { error } = await supabase
+        .from('concursos')
+        .update(dadosConcurso)
+        .eq('id', idEditalEmEdicao)
+
+      if (error) {
+        alert("Erro ao atualizar edital: " + error.message)
+      } else {
+        alert("✅ Edital atualizado com sucesso!")
+        cancelarEdicao()
+        setSecaoAtiva('gerenciar') // Devolve o usuário para a lista após editar
+      }
+    } else {
+      // Executa o INSERT tradicional se for novo
+      const { error } = await supabase.from('concursos').insert([dadosConcurso])
+      if (error) alert("Erro ao salvar edital: " + error.message)
+      else {
+        alert("✅ Novo Edital cadastrado com sucesso!")
+        setConcurso({
+          orgao: '', cidade: '', banca: '', status: 'Inscrições Abertas', periodo_inscricao: '',
+          valor_inscricao: '', cargos: '', salarios: '', escolaridade: '', data_prova: '', sobre_concurso: '', link_oficial: ''
+        })
+        setADefinir({ periodo_inscricao: false, valor_inscricao: false, cargos: false, salarios: false, banca: false, escolaridade: false, data_prova: false })
+      }
     }
   }
 
@@ -278,9 +339,11 @@ async function carregarDadosGerenciamento() {
         {/* NAVEGAÇÃO DE SEÇÕES */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '30px', borderBottom: `1px solid ${styles.border}`, paddingBottom: '20px' }}>
           <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-            <button onClick={() => setSecaoAtiva('artigo')} style={{ background: secaoAtiva === 'artigo' ? '#3b82f6' : '#334155', color: '#fff', border: 'none', padding: '10px 16px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>📄 Novo Artigo</button>
-            <button onClick={() => setSecaoAtiva('questao')} style={{ background: secaoAtiva === 'questao' ? '#3b82f6' : '#334155', color: '#fff', border: 'none', padding: '10px 16px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>❓ Nova Questão</button>
-            <button onClick={() => setSecaoAtiva('concurso')} style={{ background: secaoAtiva === 'concurso' ? '#10b981' : '#334155', color: '#fff', border: 'none', padding: '10px 16px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>🏛️ Novo Edital</button>
+            <button onClick={() => { if(isEditando) cancelarEdicao(); setSecaoAtiva('artigo') }} style={{ background: secaoAtiva === 'artigo' ? '#3b82f6' : '#334155', color: '#fff', border: 'none', padding: '10px 16px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>📄 Novo Artigo</button>
+            <button onClick={() => { if(isEditando) cancelarEdicao(); setSecaoAtiva('questao') }} style={{ background: secaoAtiva === 'questao' ? '#3b82f6' : '#334155', color: '#fff', border: 'none', padding: '10px 16px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>❓ Nova Questão</button>
+            <button onClick={() => setSecaoAtiva('concurso')} style={{ background: secaoAtiva === 'concurso' ? '#10b981' : '#334155', color: '#fff', border: 'none', padding: '10px 16px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>
+              {isEditando ? '✏️ Editando Edital' : '🏛️ Novo Edital'}
+            </button>
             <button onClick={() => setSecaoAtiva('gerenciar')} style={{ background: secaoAtiva === 'gerenciar' ? '#ef4444' : '#334155', color: '#fff', border: 'none', padding: '10px 16px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>🗑️ Gerenciar / Excluir</button>
           </div>
           <button onClick={logout} style={{ background: '#ef4444', color: 'white', border: 'none', padding: '8px 16px', borderRadius: '6px', cursor: 'pointer' }}>Sair</button>
@@ -371,10 +434,12 @@ async function carregarDadosGerenciamento() {
           </form>
         )}
 
-        {/* SEÇÃO: NOVO EDITAL COMPLETO */}
+        {/* SEÇÃO: FORMULÁRIO COMPARTILHADO (NOVO EDITAL / ATUALIZAR EDITAL) */}
         {secaoAtiva === 'concurso' && (
           <form onSubmit={salvarConcurso}>
-            <h1 style={{ marginBottom: '20px' }}>🏛️ Cadastrar Novo Edital</h1>
+            <h1 style={{ marginBottom: '20px', color: isEditando ? '#3b82f6' : 'white' }}>
+              {isEditando ? `✏️ Atualizar Edital (ID: ${idEditalEmEdicao})` : '🏛️ Cadastrar Novo Edital'}
+            </h1>
             
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
               <div>
@@ -463,7 +528,17 @@ async function carregarDadosGerenciamento() {
             <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Resumo / Descrição Completa</label>
             <textarea style={{ ...styles.input, height: '120px' }} placeholder="Insira detalhes adicionais sobre as vagas do edital..." value={concurso.sobre_concurso} onChange={e => setConcurso({...concurso, sobre_concurso: e.target.value})} required />
 
-            <button type="submit" style={{ background: styles.primary, color: 'white', border: 'none', padding: '15px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', width: '100%' }}>Publicar Edital</button>
+            {/* BOTÕES DINÂMICOS DEPENDENDO DO MODO */}
+            <div style={{ display: 'flex', gap: '12px' }}>
+              {isEditando && (
+                <button type="button" onClick={cancelarEdicao} style={{ background: '#64748b', color: 'white', border: 'none', padding: '15px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', flex: 1 }}>
+                  Cancelar Edição
+                </button>
+              )}
+              <button type="submit" style={{ background: isEditando ? '#3b82f6' : styles.primary, color: 'white', border: 'none', padding: '15px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', flex: 2 }}>
+                {isEditando ? 'Salvar Alterações' : 'Publicar Edital'}
+              </button>
+            </div>
           </form>
         )}
 
@@ -482,7 +557,14 @@ async function carregarDadosGerenciamento() {
                       <span style={{ fontWeight: 'bold', display: 'block' }}>{c.orgao}</span>
                       <span style={{ fontSize: '0.75rem', color: '#3b82f6' }}>📍 {c.cidade} | {c.status}</span>
                     </div>
-                    <button onClick={() => excluirConcurso(c.id, c.orgao)} style={{ background: '#ef4444', border: 'none', color: 'white', padding: '8px 12px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>Apagar</button>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button onClick={() => prepararEdicaoConcurso(c)} style={{ background: '#3b82f6', border: 'none', color: 'white', padding: '8px 14px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>
+                        Editar
+                      </button>
+                      <button onClick={() => excluirConcurso(c.id, c.orgao)} style={{ background: '#ef4444', border: 'none', color: 'white', padding: '8px 12px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>
+                        Apagar
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
