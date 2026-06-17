@@ -46,19 +46,19 @@ export default function AdminPage() {
     conteudo: ''
   })
 
-  // 3. FORMULÁRIO DE CONCURSO / EDITAL ESTRUTURADO
+  // 3. FORMULÁRIO DE CONCURSO AJUSTADO COM AS COLUNAS REAIS DO POSTGRES
   const [concurso, setConcurso] = useState({
     orgao: '', 
     cidade: '', 
     banca: '', 
     status: 'Inscrições Abertas',
     periodo_inscricao: '', 
-    valor_inscricao: '', 
+    valor_inscricao: '', // mapeado temporariamente pelo input
     cargos: '',
-    salarios: '', 
+    salarios: '',        // mapeado temporariamente pelo input
     escolaridade: '', 
     data_prova: '',
-    descricao: '', 
+    sobre_concurso: '',  // 🔄 Alterado de 'descricao' para 'sobre_concurso'
     link_oficial: ''
   })
 
@@ -146,7 +146,6 @@ export default function AdminPage() {
     return texto.normalize('NFD').replace(/[\u0300-\u036f]/g, "").toLowerCase().trim().replace(/[^a-z0-9 ]/g, '').replace(/\s+/g, '-')
   }
 
-  // Tratamento dinâmico de chaves corrigido para o compilador do TypeScript
   const toggleADefinir = (campo: string) => {
     setADefinir(prev => {
       const chaveValida = campo as keyof typeof prev;
@@ -199,13 +198,33 @@ export default function AdminPage() {
 
   async function salvarConcurso(e: React.FormEvent) {
     e.preventDefault()
-    const { error } = await supabase.from('concursos').insert([concurso])
+
+    // 🔄 Mapeamento seguro das strings dos inputs para a estrutura exata do seu Postgres
+    const dadosConcurso = {
+      orgao: concurso.orgao,
+      cidade: concurso.cidade,
+      banca: concurso.banca,
+      status: concurso.status,
+      cargos: concurso.cargos || 'Consultar edital',
+      escolaridade: concurso.escolaridade || 'Não informado',
+      data_prova: concurso.data_prova,
+      link_oficial: concurso.link_oficial,
+      sobre_concurso: concurso.sobre_concurso,
+      faixa_salarial: concurso.salarios, // Evita erro de tipo numérico salvando o texto livre aqui
+      
+      // Valores opcionais/padrão para evitar quebra de tipos numéricos
+      salario_max: null,
+      salario_min: null,
+      valor_inscricao: null
+    }
+
+    const { error } = await supabase.from('concursos').insert([dadosConcurso])
     if (error) alert("Erro ao salvar edital: " + error.message)
     else {
       alert("✅ Novo Edital cadastrado com sucesso!")
       setConcurso({
         orgao: '', cidade: '', banca: '', status: 'Inscrições Abertas', periodo_inscricao: '',
-        valor_inscricao: '', cargos: '', salarios: '', escolaridade: '', data_prova: '', descricao: '', link_oficial: ''
+        valor_inscricao: '', cargos: '', salarios: '', escolaridade: '', data_prova: '', sobre_concurso: '', link_oficial: ''
       })
       setADefinir({ periodo_inscricao: false, valor_inscricao: false, cargos: false, salarios: false, banca: false, escolaridade: false, data_prova: false })
     }
@@ -419,7 +438,8 @@ export default function AdminPage() {
             </div>
 
             <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Resumo / Descrição Completa</label>
-            <textarea style={{ ...styles.input, height: '120px' }} placeholder="Insira detalhes adicionais sobre as vagas do edital..." value={concurso.descricao} onChange={e => setConcurso({...concurso, descricao: e.target.value})} required />
+            {/* 🔄 Alterado o value e onChange de concurso.descricao para concurso.sobre_concurso */}
+            <textarea style={{ ...styles.input, height: '120px' }} placeholder="Insira detalhes adicionais sobre as vagas do edital..." value={concurso.sobre_concurso} onChange={e => setConcurso({...concurso, sobre_concurso: e.target.value})} required />
 
             <button type="submit" style={{ background: styles.primary, color: 'white', border: 'none', padding: '15px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', width: '100%' }}>Publicar Edital</button>
           </form>

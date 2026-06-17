@@ -138,7 +138,7 @@ export default function DetalhesPage() {
         <div className="bg-slate-800/40 p-6 rounded-2xl border border-white/5 hover:border-blue-500/30 transition-colors">
           <p className="text-xs text-slate-500 uppercase font-black tracking-widest mb-1">Salário Estimado</p>
           <p className="text-2xl font-bold text-emerald-400">
-            {dados.salarios ? dados.salarios : (dados.salario_max ? `R$ ${Number(dados.salario_max).toLocaleString('pt-BR')}` : 'Consultar Edital')}
+            {dados.faixa_salarial ? dados.faixa_salarial : (dados.salario_max ? `R$ ${Number(dados.salario_max).toLocaleString('pt-BR')}` : 'Consultar Edital')}
           </p>
         </div>
         <div className="bg-slate-800/40 p-6 rounded-2xl border border-white/5 hover:border-blue-500/30 transition-colors">
@@ -154,7 +154,8 @@ export default function DetalhesPage() {
         </h3>
         <div className="bg-slate-800/20 p-6 rounded-2xl border border-white/5">
           <p className="text-slate-300 leading-relaxed whitespace-pre-line text-lg">
-            {dados.descricao || `Informações completas sobre o concurso do órgão ${dados.orgao} no estado do Maranhão.`}
+            {/* 🔄 Alterado aqui para 'sobre_concurso' combinado com a sua tabela */}
+            {dados.sobre_concurso || `Informações completas sobre o concurso do órgão ${dados.orgao} no estado do Maranhão.`}
           </p>
         </div>
       </div>
@@ -217,7 +218,6 @@ export default function DetalhesPage() {
     )
   }
 
-  // GERENCIADOR DE RENDERIZAÇÃO BASEADO NO TIPO
   const renderConteudoDinamico = () => {
     switch (tipo) {
       case 'concurso':
@@ -243,7 +243,6 @@ export default function DetalhesPage() {
         </button>
         
         <article className="bg-[#1e293b]/50 backdrop-blur-sm rounded-3xl p-6 md:p-12 border border-white/5 shadow-2xl relative overflow-hidden">
-          {/* Decoração sutil de fundo */}
           <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/5 rounded-full blur-3xl -mr-32 -mt-32"></div>
           
           <div className="relative z-10">
