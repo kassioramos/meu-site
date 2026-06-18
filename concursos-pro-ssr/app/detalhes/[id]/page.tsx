@@ -1,11 +1,12 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, use } from 'react'
 import { useParams, useSearchParams, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 
 export default function DetalhesPage() {
-  const params = useParams()
+  // Tratando params de forma segura para Next.js 14/15
+  const rawParams = useParams()
   const searchParams = useSearchParams()
   const router = useRouter()
   
@@ -13,10 +14,11 @@ export default function DetalhesPage() {
   const [loading, setLoading] = useState(true)
   const [respostaMarcada, setRespostaMarcada] = useState<string | null>(null)
 
-  const id = params.id 
+  const id = rawParams?.id as string
   const tipo = searchParams.get('tipo') || 'concurso'
 
   useEffect(() => {
+    // Validação extra se o ID vier como string literal "id" ou vazio
     if (!id || id === 'id') {
       setLoading(false)
       return
@@ -25,12 +27,12 @@ export default function DetalhesPage() {
     async function carregarConteudo() {
       setLoading(true)
       try {
-        let query;
+        let query = null;
         
         if (tipo === 'concurso') {
           query = supabase.from('concursos')
             .select('*')
-            .eq('id', Number(id)) 
+            .eq('id', Number(id)) // Se no banco for UUID, mude para id string
             .single()
         } else if (tipo === 'questao') {
           query = supabase.from('questoes')
@@ -44,7 +46,13 @@ export default function DetalhesPage() {
             .single()
         }
 
-        const { data, error } = await query!
+        // Evita quebra caso o tipo seja inválido e query fique nula
+        if (!query) {
+          setDados(null)
+          return
+        }
+
+        const { data, error } = await query
         
         if (error || !data) throw error
         setDados(data)
@@ -154,25 +162,33 @@ export default function DetalhesPage() {
         </h3>
         <div className="bg-slate-800/20 p-6 rounded-2xl border border-white/5">
           <p className="text-slate-300 leading-relaxed whitespace-pre-line text-lg">
-            {/* 🔄 Alterado aqui para 'sobre_concurso' combinado com a sua tabela */}
             {dados.sobre_concurso || `Informações completas sobre o concurso do órgão ${dados.orgao} no estado do Maranhão.`}
           </p>
         </div>
       </div>
 
-      <a 
-        href={dados.link_oficial} 
-        target="_blank" 
-        rel="noopener noreferrer"
-        className="mt-12 block w-full bg-blue-600 text-white text-center py-5 rounded-2xl font-black text-lg hover:bg-blue-500 hover:-translate-y-1 transition-all shadow-[0_10px_20px_-10px_rgba(59,130,246,0.5)]"
-      >
-        ACESSAR PÁGINA DO EDITAL
-      </a>
+      {dados.link_oficial && (
+        <a 
+          href={dados.link_oficial} 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="mt-12 block w-full bg-blue-600 text-white text-center py-5 rounded-2xl font-black text-lg hover:bg-blue-500 hover:-translate-y-1 transition-all shadow-[0_10px_20px_-10px_rgba(59,130,246,0.5)]"
+        >
+          ACESSAR PÁGINA DO EDITAL
+        </a>
+      )}
     </>
   )
 
   const renderQuestao = () => {
-    const opcoes = typeof dados.opcoes === 'string' ? JSON.parse(dados.opcoes) : dados.opcoes
+    // Tratamento ultra-seguro para o objeto/string de opções
+    let opcoes: Record<string, string> = {}
+    try {
+      opcoes = typeof dados.opcoes === 'string' ? JSON.parse(dados.opcoes) : (dados.opcoes || {})
+    } catch (e) {
+      console.error("Erro ao tratar opções da questão", e)
+    }
+
     return (
       <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
         <div className="mb-8">
@@ -187,7 +203,7 @@ export default function DetalhesPage() {
         </div>
 
         <div className="grid gap-4">
-          {Object.entries(opcoes).map(([letra, texto]: any) => {
+          {Object.entries(opcoes).map(([letra, texto]: [string, any]) => {
             const isCorreta = letra === dados.alternativa_correta
             const isSelecionada = letra === respostaMarcada
             

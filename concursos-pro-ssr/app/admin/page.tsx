@@ -167,17 +167,13 @@ export default function AdminPage() {
 
   async function excluirConcurso(id: any, orgao: string) {
     if (!confirm(`Tem certeza que deseja apagar o edital do órgão: "${orgao}"?`)) return
-    
-    // Garantindo que o ID passe como número se o banco usar bigint/int
     const idBusca = typeof id === 'string' && !isNaN(Number(id)) ? Number(id) : id
-
     const { error } = await supabase.from('concursos').delete().eq('id', idBusca)
     
     if (error) {
       console.error("Erro retornado pelo Supabase na exclusão:", error)
       alert("Erro ao excluir do banco de dados: " + error.message)
     } else {
-      // Atualiza o estado usando callback seguro para evitar problemas de concorrência
       setListaConcursos(prev => prev.filter(c => c.id !== id))
       alert("Edital removido com sucesso!")
     }
@@ -209,14 +205,14 @@ export default function AdminPage() {
     setConcurso({
       orgao: item.orgao || '',
       cidade: item.cidade || '',
-      banca: item.banca === 'A definir' ? '' : item.banca || '',
+      banca: item.banca || '',
       status: item.status || 'Inscrições Abertas',
-      periodo_inscricao: item.periodo_inscricao === 'A definir' ? '' : item.periodo_inscricao || '',
-      valor_inscricao: item.valor_inscricao === 'A definir' ? '' : item.valor_inscricao || '',
-      cargos: item.cargos === 'A definir' ? '' : item.cargos || '',
-      salarios: item.faixa_salarial === 'A definir' ? '' : item.faixa_salarial || '',
-      escolaridade: item.escolaridade === 'A definir' ? '' : item.escolaridade || '',
-      data_prova: item.data_prova === 'A definir' ? '' : item.data_prova || '',
+      periodo_inscricao: item.periodo_inscricao || '',
+      valor_inscricao: item.valor_inscricao !== null ? String(item.valor_inscricao) : 'A definir',
+      cargos: item.cargos || '',
+      salarios: item.faixa_salarial || '',
+      escolaridade: item.escolaridade || '',
+      data_prova: item.data_prova || '',
       sobre_concurso: item.sobre_concurso || '',
       link_oficial: item.link_oficial || ''
     })
@@ -224,7 +220,7 @@ export default function AdminPage() {
     setADefinir({
       banca: item.banca === 'A definir',
       periodo_inscricao: item.periodo_inscricao === 'A definir',
-      valor_inscricao: item.valor_inscricao === 'A definir',
+      valor_inscricao: item.valor_inscricao === null || item.valor_inscricao === 'A definir',
       cargos: item.cargos === 'A definir',
       salarios: item.faixa_salarial === 'A definir',
       escolaridade: item.escolaridade === 'A definir',
@@ -260,7 +256,7 @@ export default function AdminPage() {
       banca: questao.banca,
       disciplina: questao.disciplina,
       enunciado: questao.enunciado,
-      alternativa_correta: questao.alternativa_correta,
+      alternative_correta: questao.alternativa_correta,
       alternativa_e: questao.alternativa_e || null,
       slug: questao.slug || null,
       opcoes: {
@@ -282,6 +278,14 @@ export default function AdminPage() {
   async function salvarConcurso(e: React.FormEvent) {
     e.preventDefault()
 
+    // Função interna auxiliar para tratar os inputs numéricos de forma limpa para a estrutura do banco
+    const extrairValorNumerico = (texto: string) => {
+      if (!texto || texto === 'A definir') return null;
+      const apenasNumeros = texto.replace(/[^\d,.-]/g, '').replace(',', '.');
+      const resultado = parseFloat(apenasNumeros);
+      return isNaN(resultado) ? null : resultado;
+    }
+
     const dadosConcurso = {
       orgao: concurso.orgao,
       cidade: concurso.cidade,
@@ -294,9 +298,11 @@ export default function AdminPage() {
       link_oficial: concurso.link_oficial,
       sobre_concurso: concurso.sobre_concurso,
       faixa_salarial: concurso.salarios || 'A definir', 
-      valor_inscricao: concurso.valor_inscricao || 'A definir',
-      salario_max: null,
-      salario_min: null
+      
+      // Validações numéricas cruciais para as colunas do tipo numeric do Postgres
+      valor_inscricao: extrairValorNumerico(concurso.valor_inscricao),
+      salario_max: extrairValorNumerico(concurso.salarios),
+      salario_min: extrairValorNumerico(concurso.salarios)
     }
 
     if (isEditando) {
@@ -309,7 +315,7 @@ export default function AdminPage() {
       if (error) {
         alert("Erro ao atualizar edital: " + error.message)
       } else {
-        alert("✅ Edital updated com sucesso!")
+        alert("✅ Edital atualizado com sucesso!")
         cancelarEdicao()
         setSecaoAtiva('gerenciar')
       }
@@ -481,7 +487,7 @@ export default function AdminPage() {
               </div>
               <div>
                 <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Taxa / Valor da Inscrição</label>
-                <input type="text" placeholder="Ex: R$ 85,00" value={concurso.valor_inscricao} style={styles.input} onChange={e => setConcurso({...concurso, valor_inscricao: e.target.value})} disabled={aDefinir.valor_inscricao} required={!aDefinir.valor_inscricao} />
+                <input type="text" placeholder="Ex: 85.00" value={concurso.valor_inscricao} style={styles.input} onChange={e => setConcurso({...concurso, valor_inscricao: e.target.value})} disabled={aDefinir.valor_inscricao} required={!aDefinir.valor_inscricao} />
                 <label style={styles.rowCheck}>
                   <input type="checkbox" checked={aDefinir.valor_inscricao} onChange={() => toggleADefinir('valor_inscricao')} /> Valor a definir
                 </label>
@@ -498,7 +504,7 @@ export default function AdminPage() {
               </div>
               <div>
                 <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Remuneração / Salários</label>
-                <input type="text" placeholder="Ex: Até R$ 5.400,00" value={concurso.salarios} style={styles.input} onChange={e => setConcurso({...concurso, salarios: e.target.value})} disabled={aDefinir.salarios} required={!aDefinir.salarios} />
+                <input type="text" placeholder="Ex: 5400.00" value={concurso.salarios} style={styles.input} onChange={e => setConcurso({...concurso, salarios: e.target.value})} disabled={aDefinir.salarios} required={!aDefinir.salarios} />
                 <label style={styles.rowCheck}>
                   <input type="checkbox" checked={aDefinir.salarios} onChange={() => toggleADefinir('salarios')} /> Salários a definir
                 </label>
@@ -590,7 +596,7 @@ export default function AdminPage() {
                   <div key={art.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#0f172a', padding: '12px 15px', borderRadius: '8px', border: `1px solid ${styles.border}` }}>
                     <div>
                       <span style={{ fontWeight: 'bold', display: 'block' }}>{art.titulo}</span>
-                      <span style={{ fontSize: '0.75rem', color: '#10b981' }}>📁 {art.categoria}</span>
+                      <span style={{ fontSize: '0.75rem', color: '#a3e635' }}>📁 {art.categoria}</span>
                     </div>
                     <button onClick={() => excluirArtigo(art.id, art.titulo)} style={{ background: '#ef4444', border: 'none', color: 'white', padding: '8px 12px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>
                       Apagar
@@ -607,8 +613,8 @@ export default function AdminPage() {
                 {listaQuestoes.map(q => (
                   <div key={q.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#0f172a', padding: '12px 15px', borderRadius: '8px', border: `1px solid ${styles.border}` }}>
                     <div style={{ maxWidth: '75%' }}>
-                      <span style={{ fontWeight: 'bold', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{q.enunciado}</span>
-                      <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>✏️ {q.banca} | {q.disciplina}</span>
+                      <span style={{ fontSize: '0.9rem', display: 'block', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{q.enunciado}</span>
+                      <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>🏷️ {q.banca} | {q.disciplina}</span>
                     </div>
                     <button onClick={() => excluirQuestao(q.id, q.enunciado)} style={{ background: '#ef4444', border: 'none', color: 'white', padding: '8px 12px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>
                       Apagar
@@ -619,7 +625,6 @@ export default function AdminPage() {
             )}
           </div>
         )}
-
       </div>
     </div>
   )
