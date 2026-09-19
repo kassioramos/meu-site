@@ -9,28 +9,6 @@ interface Props {
   searchParams: Promise<{ tipo?: string }>
 }
 
-// Funçao auxiliar para tratar a renderizaçao do texto e evitar o bug [object Object]
-function formatarTexto(conteudo: any): string {
-  if (!conteudo) return ''
-  if (typeof conteudo === 'string') return conteudo
-  if (Array.isArray(conteudo)) {
-    return conteudo
-      .map((item) => {
-        if (typeof item === 'string') return item
-        if (typeof item === 'object' && item !== null) {
-          return item.texto || item.content || item.paragrafo || JSON.stringify(item)
-        }
-        return ''
-      })
-      .filter(Boolean)
-      .join('\n\n')
-  }
-  if (typeof conteudo === 'object') {
-    return conteudo.texto || conteudo.content || conteudo.paragrafo || ''
-  }
-  return String(conteudo)
-}
-
 // 1. Geração Dinâmica de Metadados (SEO para SERP)
 export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
   const resolvedParams = await params
@@ -45,11 +23,7 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
     let description = 'Confira os detalhes completos sobre os concursos e seleções no estado do Maranhão.'
 
     if (tipo === 'concurso') {
-      const { data } = await supabaseServer
-        .from('concursos')
-        .select('orgao, cidade, banca, salario_max')
-        .eq('id', id)
-        .single()
+      const { data } = await supabaseServer.from('concursos').select('orgao, cidade, banca, salario_max').eq('id', id).single()
       if (data) {
         title = `Concurso ${data.orgao} (${data.cidade || 'MA'}): Edital, Vagas e Salários`
         description = `Informações atualizadas sobre o concurso do(a) ${data.orgao}. Banca: ${data.banca || 'A definir'}. Confira salários e detalhes do edital.`
@@ -98,7 +72,7 @@ export default async function DetalhesPage({ params, searchParams }: Props) {
     notFound()
   }
 
-  // 2. Fetch de dados no servidor
+  // 2. Fetch de dados no servidor (Server-side rendering puro para rápida indexação)
   let dados: any = null
   try {
     let query = null
@@ -139,12 +113,11 @@ export default async function DetalhesPage({ params, searchParams }: Props) {
   // 3. Schema.org dinâmico em JSON-LD
   const renderSchema = () => {
     if (tipo === 'concurso') {
-      const sobreFormatado = formatarTexto(dados.sobre_concurso)
       return {
         '@context': 'https://schema.org',
         '@type': 'JobPosting',
-        'title': `Concurso ${dados.orgao}`,
-        'description': sobreFormatado || `Edital de concurso para ${dados.orgao} em ${dados.cidade || 'Maranhão'}.`,
+        'title': dados.orgao,
+        'description': dados.sobre_concurso || `Edital de concurso para ${dados.orgao} em ${dados.cidade || 'Maranhão'}.`,
         'hiringOrganization': {
           '@type': 'Organization',
           'name': dados.orgao,
@@ -192,20 +165,6 @@ export default async function DetalhesPage({ params, searchParams }: Props) {
 
   const jsonLd = renderSchema()
 
-  // Tratamento de exibição do salário para corrigir o erro ortográfico
-  const renderSalario = () => {
-    if (dados.faixa_salarial) {
-      if (dados.faixa_salarial.toLowerCase().includes('agurdando')) {
-        return 'Aguardando atualizações'
-      }
-      return dados.faixa_salarial
-    }
-    if (dados.salario_max) {
-      return `R$ ${Number(dados.salario_max).toLocaleString('pt-BR')}`
-    }
-    return 'Consultar Edital'
-  }
-
   return (
     <main className="min-h-screen bg-[#0f172a] p-4 md:p-8 text-white selection:bg-blue-500/30">
       {jsonLd && (
@@ -251,7 +210,11 @@ export default async function DetalhesPage({ params, searchParams }: Props) {
                       Salário Estimado
                     </p>
                     <p className="text-2xl font-bold text-emerald-400">
-                      {renderSalario()}
+                      {dados.faixa_salarial
+                        ? dados.faixa_salarial
+                        : dados.salario_max
+                        ? `R$ ${Number(dados.salario_max).toLocaleString('pt-BR')}`
+                        : 'Consultar Edital'}
                     </p>
                   </div>
                   <div className="bg-slate-800/40 p-6 rounded-2xl border border-white/5">
@@ -271,7 +234,7 @@ export default async function DetalhesPage({ params, searchParams }: Props) {
                   </h2>
                   <div className="bg-slate-800/20 p-6 rounded-2xl border border-white/5">
                     <p className="text-slate-300 leading-relaxed whitespace-pre-line text-lg">
-                      {formatarTexto(dados.sobre_concurso) ||
+                      {dados.sobre_concurso ||
                         `Informações completas sobre o concurso do órgão ${dados.orgao} no estado do Maranhão.`}
                     </p>
                   </div>
@@ -309,7 +272,7 @@ export default async function DetalhesPage({ params, searchParams }: Props) {
                   </div>
                 )}
                 <div className="text-slate-300 text-lg leading-relaxed whitespace-pre-line">
-                  {formatarTexto(dados.conteudo)}
+                  {dados.conteudo}
                 </div>
               </div>
             )}
