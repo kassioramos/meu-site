@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Script from "next/script";
@@ -8,71 +8,79 @@ import Footer from '@/components/Footer';
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
+  display: "swap", // Melhora a métrica LCP e CLS do Core Web Vitals
 });
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+  display: "swap",
 });
 
-// Domínio de Produção Real detectado no painel da Vercel
-const SITE_URL = "https://meu-site-five-delta.vercel.app";
+// Domínio Principal Oficial
+const SITE_URL = "https://concursosmaranhao.com.br";
+
+export const viewport: Viewport = {
+  themeColor: "#0b1120",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+};
 
 export const metadata: Metadata = {
-  // O metadataBase garante que todas as URLs relativas de imagens (como /og.png) virem caminhos absolutos corretos
   metadataBase: new URL(SITE_URL),
 
   title: {
-    default: "Concursos Maranhão 2026 - Editais, Salários e Previsões",
+    default: "Concursos Maranhão 2026: Editais Abertos, Salários e Vagas",
     template: "%s | Concursos Maranhão Pro",
   },
 
   description:
-    "Confira concursos abertos no Maranhão, salários atualizados, previsões de editais e banco de questões para estudar.",
+    "Acompanhe concursos públicos e seletivos abertos no Maranhão em 2026. Editais atualizados, salários, simulados e banco de questões para aprovação.",
 
   verification: {
     google: "0Z_754Cw5srRkVIMK3NOaLltkeMBk3HrY17mFIivPGg",
   },
 
   keywords: [
-    "concursos maranhão",
-    "editais abertos",
-    "concursos 2026",
-    "uema",
-    "enem",
-    "banco de questões",
-    "simulados maranhão"
+    "concursos maranhão 2026",
+    "editais abertos maranhão",
+    "concurso público maranhão",
+    "seletivo maranhão",
+    "banco de questões concursos",
+    "simulados concursos ma"
   ],
 
   authors: [{ name: "Concursos Maranhão Pro", url: SITE_URL }],
+  publisher: "Concursos Maranhão Pro",
 
   alternates: {
-    canonical: "./", // Evita problemas de conteúdo duplicado (SEO Técnico)
+    canonical: SITE_URL,
   },
 
   openGraph: {
-    title: "Concursos Maranhão 2026 - Editais, Salários e Previsões",
+    title: "Concursos Maranhão 2026: Editais Abertos, Salários e Vagas",
     description:
-      "Confira concursos abertos no Maranhão, salários atualizados, previsões de editais e banco de questões para estudar.",
+      "Acompanhe concursos públicos e seletivos abertos no Maranhão em 2026. Editais atualizados, salários, simulados e banco de questões para aprovação.",
     url: SITE_URL,
     siteName: "Concursos Maranhão Pro",
+    locale: "pt_BR",
+    type: "website",
     images: [
       {
         url: "/og.png",
         width: 1200,
         height: 630,
-        alt: "Banner Oficial Concursos Maranhão Pro",
+        alt: "Concursos Maranhão Pro - Editais e Vagas",
       },
     ],
-    locale: "pt_BR",
-    type: "website",
   },
 
   twitter: {
     card: "summary_large_image",
-    title: "Concursos Maranhão 2026",
+    title: "Concursos Maranhão 2026: Editais Abertos e Salários",
     description:
-      "Veja editais abertos e previsões atualizadas para o Maranhão.",
+      "Confira os editais abertos no Maranhão com vagas e salários atualizados.",
     images: ["/og.png"],
   },
 
@@ -95,29 +103,43 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Dados estruturados Schema.org combinando WebSite e Organization
+  const jsonLdData = [
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "@id": `${SITE_URL}/#website`,
+      "url": SITE_URL,
+      "name": "Concursos Maranhão Pro",
+      "description": "Notícias, editais e questões de concursos públicos no Maranhão.",
+      "inLanguage": "pt-BR",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": `${SITE_URL}/questoes?q={search_term_string}`,
+        "query-input": "required name=search_term_string"
+      }
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "@id": `${SITE_URL}/#organization`,
+      "name": "Concursos Maranhão Pro",
+      "url": SITE_URL,
+      "logo": `${SITE_URL}/favicon.ico`
+    }
+  ];
+
   return (
     <html
       lang="pt-BR"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body style={{ backgroundColor: '#0b1120' }} className="min-h-full flex flex-col text-white">
-        
-        {/* Schema JSON-LD Otimizado para Site Estruturado com caixa de pesquisa interna potencial */}
         <Script
-          id="schema-site"
+          id="schema-org-global"
           type="application/ld+json"
           dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              "@context": "https://schema.org",
-              "@type": "WebSite",
-              "name": "Concursos Maranhão Pro",
-              "url": SITE_URL,
-              "potentialAction": {
-                "@type": "SearchAction",
-                "target": `${SITE_URL}/questoes?q={search_term_string}`,
-                "query-input": "required name=search_term_string"
-              }
-            }),
+            __html: JSON.stringify(jsonLdData),
           }}
         />
 
@@ -128,7 +150,6 @@ export default function RootLayout({
         <Footer />
 
         <GoogleAnalytics gaId="G-HNMVXY4P0G" />
-        
       </body>
     </html>
   );

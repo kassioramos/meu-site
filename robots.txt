@@ -1,4 +1,15 @@
-User-agent: *
-Allow: /
-Disallow: /admin  # Caso você venha a ter uma área restrita
-Sitemap: https://meu-site-five-delta.vercel.app/sitemap.xml
+import { MetadataRoute } from 'next'
+
+export default function robots(): MetadataRoute.Robots {
+  // Domínio de Produção Oficial
+  const SITE_URL = 'https://concursosmaranhao.com.br'
+
+  return {
+    rules: {
+      userAgent: '*',
+      allow: '/',
+      disallow: ['/admin/', '/api/'],
+    },
+    sitemap: `${SITE_URL}/sitemap.xml`,
+  }
+}
