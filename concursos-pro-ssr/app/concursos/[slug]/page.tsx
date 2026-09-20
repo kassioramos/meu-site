@@ -1,6 +1,5 @@
 import { Metadata } from 'next'
 import Link from 'next/link'
-import Script from 'next/script'
 import { notFound } from 'next/navigation'
 import { supabaseServer } from '@/lib/supabaseServer'
 
@@ -12,12 +11,18 @@ interface Props {
 function renderTextoFormatado(conteudo: any) {
   if (!conteudo) return null
 
-  // Limpa qualquer ocorrência literal de [object Object] se vier corrompido do banco
-  const limparString = (str: string) => str.replace(/,?\s*\[object Object\]\s*,?/g, '').trim()
+  // Expressão regular aprimorada para remover [object Object] e vírgulas residuais
+  const limparString = (str: string) =>
+    str
+      .replace(/,?\s*\[object Object\]\s*,?/g, '')
+      .replace(/^[\s,]+|[\s,]+$/g, '')
+      .trim()
 
   if (typeof conteudo === 'string') {
     const texto = limparString(conteudo)
-    return <p className="text-slate-300 leading-relaxed whitespace-pre-line text-lg">{texto}</p>
+    return texto ? (
+      <p className="text-slate-300 leading-relaxed whitespace-pre-line text-lg">{texto}</p>
+    ) : null
   }
 
   if (Array.isArray(conteudo)) {
@@ -26,13 +31,26 @@ function renderTextoFormatado(conteudo: any) {
         {conteudo.map((item, index) => {
           if (typeof item === 'string') {
             const texto = limparString(item)
-            return texto ? <p key={index} className="text-slate-300 leading-relaxed text-lg">{texto}</p> : null
+            return texto ? (
+              <p key={index} className="text-slate-300 leading-relaxed text-lg">
+                {texto}
+              </p>
+            ) : null
           }
           if (typeof item === 'object' && item !== null) {
-            const texto = limparString(
-              item.texto || item.paragrafo || item.content || Object.values(item).filter(v => typeof v === 'string').join(' ')
-            )
-            return texto ? <p key={index} className="text-slate-300 leading-relaxed text-lg">{texto}</p> : null
+            const textoExtraido =
+              item.texto ||
+              item.paragrafo ||
+              item.content ||
+              Object.values(item)
+                .filter(v => typeof v === 'string')
+                .join(' ')
+            const texto = limparString(textoExtraido)
+            return texto ? (
+              <p key={index} className="text-slate-300 leading-relaxed text-lg">
+                {texto}
+              </p>
+            ) : null
           }
           return null
         })}
@@ -41,10 +59,14 @@ function renderTextoFormatado(conteudo: any) {
   }
 
   if (typeof conteudo === 'object' && conteudo !== null) {
-    const texto = limparString(
-      conteudo.texto || conteudo.descricao || Object.values(conteudo).filter(v => typeof v === 'string').join(' ')
-    )
-    return <p className="text-slate-300 leading-relaxed text-lg">{texto}</p>
+    const textoExtraido =
+      conteudo.texto ||
+      conteudo.descricao ||
+      Object.values(conteudo)
+        .filter(v => typeof v === 'string')
+        .join(' ')
+    const texto = limparString(textoExtraido)
+    return texto ? <p className="text-slate-300 leading-relaxed text-lg">{texto}</p> : null
   }
 
   return null
@@ -54,11 +76,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params
   const SITE_URL = 'https://concursosmaranhao.com.br'
 
-  const { data } = await supabaseServer
-    .from('concursos')
-    .select('orgao, cidade, banca')
-    .eq('slug', slug)
-    .single()
+  const isNumeric = /^\d+$/.test(slug)
+  const query = isNumeric
+    ? supabaseServer.from('concursos').select('orgao, cidade, banca').eq('id', slug).single()
+    : supabaseServer.from('concursos').select('orgao, cidade, banca').eq('slug', slug).single()
+
+  const { data } = await query
 
   if (!data) {
     return { title: 'Concurso não encontrado | Concursos Maranhão Pro' }
@@ -78,7 +101,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function ConcursoSlugPage({ params }: Props) {
   const { slug } = await params
 
-  // Busca por slug ou por id (caso receba id numérico no slug como fallback)
   const isNumeric = /^\d+$/.test(slug)
   const query = isNumeric
     ? supabaseServer.from('concursos').select('*').eq('id', slug).single()
