@@ -9,47 +9,61 @@ interface Props {
   searchParams: Promise<{ tipo?: string }>
 }
 
-// Funçao utilitária para tratar o campo `sobre_concurso` quando for Array ou Objeto
+// 1. Função utilitária para tratar o campo `sobre_concurso` (evita o [object Object] e vírgulas soltas)
 function renderTextoFormatado(conteudo: any) {
   if (!conteudo) return null
 
-  // Se já for uma string simples
+  // Se for uma string simples
   if (typeof conteudo === 'string') {
     return <p className="text-slate-300 leading-relaxed whitespace-pre-line text-lg">{conteudo}</p>
   }
 
-  // Se for um Array (muitas vezes vindo de parsers/scrapers em JSON)
+  // Se for um Array (comum em retornos JSON do Supabase/scrapers)
   if (Array.isArray(conteudo)) {
-    return conteudo.map((item, index) => {
-      if (typeof item === 'string') {
-        return (
-          <p key={index} className="text-slate-300 leading-relaxed text-lg mb-4">
-            {item}
-          </p>
-        )
-      }
-      if (typeof item === 'object' && item !== null) {
-        // Extrai propriedades comuns de objeto (ex: item.texto, item.paragraph)
-        const texto = item.texto || item.paragrafo || item.content || JSON.stringify(item)
-        return (
-          <p key={index} className="text-slate-300 leading-relaxed text-lg mb-4">
-            {texto}
-          </p>
-        )
-      }
-      return null
-    })
+    return (
+      <div className="space-y-4">
+        {conteudo.map((item, index) => {
+          if (typeof item === 'string') {
+            return (
+              <p key={index} className="text-slate-300 leading-relaxed text-lg">
+                {item}
+              </p>
+            )
+          }
+          if (typeof item === 'object' && item !== null) {
+            const texto =
+              item.texto ||
+              item.paragrafo ||
+              item.content ||
+              item.descricao ||
+              Object.values(item).filter(val => typeof val === 'string').join(' ')
+
+            return (
+              <p key={index} className="text-slate-300 leading-relaxed text-lg">
+                {texto}
+              </p>
+            )
+          }
+          return null
+        })}
+      </div>
+    )
   }
 
   // Se for um Objeto isolado
-  if (typeof conteudo === 'object') {
-    const texto = conteudo.texto || conteudo.descricao || JSON.stringify(conteudo)
+  if (typeof conteudo === 'object' && conteudo !== null) {
+    const texto =
+      conteudo.texto ||
+      conteudo.descricao ||
+      Object.values(conteudo).filter(val => typeof val === 'string').join(' ')
+
     return <p className="text-slate-300 leading-relaxed text-lg">{texto}</p>
   }
 
   return null
 }
 
+// 2. Geração Dinâmica de Metadados (SEO para SERP)
 export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
   const resolvedParams = await params
   const resolvedSearchParams = await searchParams
@@ -117,6 +131,7 @@ export default async function DetalhesPage({ params, searchParams }: Props) {
     notFound()
   }
 
+  // 3. Fetch de dados no servidor
   let dados: any = null
   try {
     let query = null
@@ -152,14 +167,23 @@ export default async function DetalhesPage({ params, searchParams }: Props) {
     )
   }
 
-  // Schema.org aprimorado com 'validThrough' e tratamento de string no JobPosting
+  // 4. Schema.org com limpeza da string do JobPosting
   const renderSchema = () => {
     if (tipo === 'concurso') {
       const descricaoLimpa =
         typeof dados.sobre_concurso === 'string'
           ? dados.sobre_concurso
           : Array.isArray(dados.sobre_concurso)
-          ? dados.sobre_concurso.map((i: any) => (typeof i === 'string' ? i : i.texto || '')).join(' ')
+          ? dados.sobre_concurso
+              .map((i: any) =>
+                typeof i === 'string'
+                  ? i
+                  : typeof i === 'object' && i !== null
+                  ? i.texto || i.paragrafo || i.content || Object.values(i).join(' ')
+                  : ''
+              )
+              .filter(Boolean)
+              .join(' ')
           : `Edital de concurso para ${dados.orgao} em ${dados.cidade || 'Maranhão'}.`
 
       return {
@@ -177,7 +201,7 @@ export default async function DetalhesPage({ params, searchParams }: Props) {
           '@type': 'Place',
           'address': {
             '@type': 'PostalAddress',
-            'addressLocality': dados.cidade || 'São José de Ribamar',
+            'addressLocality': dados.cidade || 'Maranhão',
             'addressRegion': 'MA',
             'addressCountry': 'BR',
           },
@@ -284,7 +308,7 @@ export default async function DetalhesPage({ params, searchParams }: Props) {
                     Descrição do Certame
                   </h2>
                   <div className="bg-slate-800/20 p-6 rounded-2xl border border-white/5">
-                    {/* AQUI ESTÁ A CORREÇÃO PRINCIPAL QUE EVITA O [object Object] */}
+                    {/* Renderização do texto tratado sem gerar [object Object] */}
                     {renderTextoFormatado(dados.sobre_concurso) || (
                       <p className="text-slate-300 leading-relaxed text-lg">
                         Informações completas sobre o concurso do órgão {dados.orgao} no estado do Maranhão.
