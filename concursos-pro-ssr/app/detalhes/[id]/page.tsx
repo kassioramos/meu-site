@@ -9,7 +9,47 @@ interface Props {
   searchParams: Promise<{ tipo?: string }>
 }
 
-// 1. Geração Dinâmica de Metadados (SEO para SERP)
+// Funçao utilitária para tratar o campo `sobre_concurso` quando for Array ou Objeto
+function renderTextoFormatado(conteudo: any) {
+  if (!conteudo) return null
+
+  // Se já for uma string simples
+  if (typeof conteudo === 'string') {
+    return <p className="text-slate-300 leading-relaxed whitespace-pre-line text-lg">{conteudo}</p>
+  }
+
+  // Se for um Array (muitas vezes vindo de parsers/scrapers em JSON)
+  if (Array.isArray(conteudo)) {
+    return conteudo.map((item, index) => {
+      if (typeof item === 'string') {
+        return (
+          <p key={index} className="text-slate-300 leading-relaxed text-lg mb-4">
+            {item}
+          </p>
+        )
+      }
+      if (typeof item === 'object' && item !== null) {
+        // Extrai propriedades comuns de objeto (ex: item.texto, item.paragraph)
+        const texto = item.texto || item.paragrafo || item.content || JSON.stringify(item)
+        return (
+          <p key={index} className="text-slate-300 leading-relaxed text-lg mb-4">
+            {texto}
+          </p>
+        )
+      }
+      return null
+    })
+  }
+
+  // Se for um Objeto isolado
+  if (typeof conteudo === 'object') {
+    const texto = conteudo.texto || conteudo.descricao || JSON.stringify(conteudo)
+    return <p className="text-slate-300 leading-relaxed text-lg">{texto}</p>
+  }
+
+  return null
+}
+
 export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
   const resolvedParams = await params
   const resolvedSearchParams = await searchParams
@@ -23,7 +63,12 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
     let description = 'Confira os detalhes completos sobre os concursos e seleções no estado do Maranhão.'
 
     if (tipo === 'concurso') {
-      const { data } = await supabaseServer.from('concursos').select('orgao, cidade, banca, salario_max').eq('id', id).single()
+      const { data } = await supabaseServer
+        .from('concursos')
+        .select('orgao, cidade, banca, salario_max')
+        .eq('id', id)
+        .single()
+
       if (data) {
         title = `Concurso ${data.orgao} (${data.cidade || 'MA'}): Edital, Vagas e Salários`
         description = `Informações atualizadas sobre o concurso do(a) ${data.orgao}. Banca: ${data.banca || 'A definir'}. Confira salários e detalhes do edital.`
@@ -72,7 +117,6 @@ export default async function DetalhesPage({ params, searchParams }: Props) {
     notFound()
   }
 
-  // 2. Fetch de dados no servidor (Server-side rendering puro para rápida indexação)
   let dados: any = null
   try {
     let query = null
@@ -97,9 +141,7 @@ export default async function DetalhesPage({ params, searchParams }: Props) {
       <main className="min-h-screen bg-[#0f172a] p-10 text-white text-center flex flex-col items-center justify-center">
         <p className="text-6xl mb-6">❌</p>
         <h1 className="text-2xl font-bold">Ops! Conteúdo não encontrado.</h1>
-        <p className="text-slate-400 mt-2">
-          Não encontramos dados para o identificador fornecido.
-        </p>
+        <p className="text-slate-400 mt-2">Não encontramos dados para o identificador fornecido.</p>
         <Link
           href="/"
           className="mt-8 bg-blue-600 px-8 py-3 rounded-xl font-bold hover:bg-blue-500 transition-all"
@@ -110,14 +152,23 @@ export default async function DetalhesPage({ params, searchParams }: Props) {
     )
   }
 
-  // 3. Schema.org dinâmico em JSON-LD
+  // Schema.org aprimorado com 'validThrough' e tratamento de string no JobPosting
   const renderSchema = () => {
     if (tipo === 'concurso') {
+      const descricaoLimpa =
+        typeof dados.sobre_concurso === 'string'
+          ? dados.sobre_concurso
+          : Array.isArray(dados.sobre_concurso)
+          ? dados.sobre_concurso.map((i: any) => (typeof i === 'string' ? i : i.texto || '')).join(' ')
+          : `Edital de concurso para ${dados.orgao} em ${dados.cidade || 'Maranhão'}.`
+
       return {
         '@context': 'https://schema.org',
         '@type': 'JobPosting',
-        'title': dados.orgao,
-        'description': dados.sobre_concurso || `Edital de concurso para ${dados.orgao} em ${dados.cidade || 'Maranhão'}.`,
+        'title': `Concurso ${dados.orgao}`,
+        'description': descricaoLimpa,
+        'datePosted': dados.created_at || new Date().toISOString(),
+        'validThrough': dados.data_inscricao_fim || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
         'hiringOrganization': {
           '@type': 'Organization',
           'name': dados.orgao,
@@ -126,7 +177,7 @@ export default async function DetalhesPage({ params, searchParams }: Props) {
           '@type': 'Place',
           'address': {
             '@type': 'PostalAddress',
-            'addressLocality': dados.cidade || 'Maranhão',
+            'addressLocality': dados.cidade || 'São José de Ribamar',
             'addressRegion': 'MA',
             'addressCountry': 'BR',
           },
@@ -192,7 +243,7 @@ export default async function DetalhesPage({ params, searchParams }: Props) {
               <>
                 <div className="mb-8">
                   <span className="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
-                    {dados.status || 'Aberto'}
+                    {dados.status || 'Edital Publicado'}
                   </span>
                   <h1 className="text-3xl md:text-4xl font-extrabold mt-4 text-white leading-tight">
                     {dados.orgao}
@@ -214,7 +265,7 @@ export default async function DetalhesPage({ params, searchParams }: Props) {
                         ? dados.faixa_salarial
                         : dados.salario_max
                         ? `R$ ${Number(dados.salario_max).toLocaleString('pt-BR')}`
-                        : 'Consultar Edital'}
+                        : 'Aguardando atualizações'}
                     </p>
                   </div>
                   <div className="bg-slate-800/40 p-6 rounded-2xl border border-white/5">
@@ -233,10 +284,12 @@ export default async function DetalhesPage({ params, searchParams }: Props) {
                     Descrição do Certame
                   </h2>
                   <div className="bg-slate-800/20 p-6 rounded-2xl border border-white/5">
-                    <p className="text-slate-300 leading-relaxed whitespace-pre-line text-lg">
-                      {dados.sobre_concurso ||
-                        `Informações completas sobre o concurso do órgão ${dados.orgao} no estado do Maranhão.`}
-                    </p>
+                    {/* AQUI ESTÁ A CORREÇÃO PRINCIPAL QUE EVITA O [object Object] */}
+                    {renderTextoFormatado(dados.sobre_concurso) || (
+                      <p className="text-slate-300 leading-relaxed text-lg">
+                        Informações completas sobre o concurso do órgão {dados.orgao} no estado do Maranhão.
+                      </p>
+                    )}
                   </div>
                 </div>
 
