@@ -31,7 +31,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
 
   title: {
-    default: "Concursos Maranhão 2026: Editais Abertos, Salários e Vagas",
+    default: "Concursos Maranhão: Editais Abertos, Salários e Vagas",
     template: "%s | Concursos Maranhão Pro",
   },
 
@@ -40,6 +40,7 @@ export const metadata: Metadata = {
 
   verification: {
     google: "0Z_754Cw5srRkVIMK3NOaLltkeMBk3HrY17mFIivPGg",
+    
   },
 
   keywords: [
