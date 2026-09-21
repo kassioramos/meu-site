@@ -32,7 +32,7 @@ export const metadata: Metadata = {
 
   title: {
     default: "Concursos Maranhão: Editais Abertos, Salários e Vagas",
-    template: "%s | Concursos Maranhãog",
+    template: "%s | Concursos Maranhão",
   },
 
   description:
@@ -72,7 +72,7 @@ export const metadata: Metadata = {
         url: "/og.png",
         width: 1200,
         height: 630,
-        alt: "Concursos Maranhão Pro - Editais e Vagas",
+        alt: "Concursos Maranhão - Editais e Vagas",
       },
     ],
   },
@@ -124,7 +124,7 @@ export default function RootLayout({
       "@context": "https://schema.org",
       "@type": "Organization",
       "@id": `${SITE_URL}/#organization`,
-      "name": "Concursos Maranhão Pro",
+      "name": "Concursos Maranhão",
       "url": SITE_URL,
       "logo": `${SITE_URL}/favicon.ico`
     }

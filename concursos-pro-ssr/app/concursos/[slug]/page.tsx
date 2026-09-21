@@ -84,7 +84,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { data } = await query
 
   if (!data) {
-    return { title: 'Concurso não encontrado | Concursos Maranhão Pro' }
+    return { title: 'Concurso não encontrado | Concursos Maranhão' }
   }
 
   const title = `Concurso ${data.orgao} (${data.cidade || 'MA'}): Edital, Vagas e Salários`
