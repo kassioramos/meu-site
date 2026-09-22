@@ -16,38 +16,45 @@ interface Props {
 function extrairParagrafos(conteudo: any): string[] {
   if (!conteudo) return []
 
+  // Se já for uma string simples
   if (typeof conteudo === 'string') {
-    return [conteudo]
+    return [conteudo.trim()].filter(Boolean)
+  }
+
+  // Função auxiliar para extrair texto de um objeto individual sem gerar [object Object]
+  const extrairTextoDeObjeto = (obj: any): string => {
+    if (!obj || typeof obj !== 'object') return ''
+    if (typeof obj.texto === 'string') return obj.texto
+    if (typeof obj.paragrafo === 'string') return obj.paragrafo
+    if (typeof obj.content === 'string') return obj.content
+    if (typeof obj.descricao === 'string') return obj.descricao
+
+    // Se for um nó do Rich Text ou Editor de bloco (ex: tipo 'paragraph' com children)
+    if (Array.isArray(obj.children)) {
+      return obj.children.map((child: any) => extrairTextoDeObjeto(child)).join(' ')
+    }
+
+    // Pega todos os valores primitivos (strings/números) das chaves do objeto
+    return Object.values(obj)
+      .filter((val) => typeof val === 'string' || typeof val === 'number')
+      .join(' ')
   }
 
   if (Array.isArray(conteudo)) {
     return conteudo
       .map((item) => {
-        if (typeof item === 'string') return item
+        if (typeof item === 'string') return item.trim()
         if (typeof item === 'object' && item !== null) {
-          const textoExtraido =
-            item.texto ||
-            item.paragrafo ||
-            item.content ||
-            item.descricao ||
-            Object.values(item)
-              .filter((val) => typeof val === 'string' || typeof val === 'number')
-              .join(' ')
-          return typeof textoExtraido === 'string' ? textoExtraido : ''
+          return extrairTextoDeObjeto(item).trim()
         }
         return ''
       })
-      .filter((texto) => typeof texto === 'string' && texto.trim().length > 0)
+      .filter((texto) => typeof texto === 'string' && texto.length > 0)
   }
 
   if (typeof conteudo === 'object' && conteudo !== null) {
-    const texto =
-      conteudo.texto ||
-      conteudo.descricao ||
-      Object.values(conteudo)
-        .filter((val) => typeof val === 'string' || typeof val === 'number')
-        .join(' ')
-    return typeof texto === 'string' && texto.trim() ? [texto] : []
+    const texto = extrairTextoDeObjeto(conteudo).trim()
+    return texto ? [texto] : []
   }
 
   return []
