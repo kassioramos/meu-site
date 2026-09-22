@@ -2,80 +2,23 @@ import Link from "next/link"
 import Script from "next/script"
 import { supabaseServer } from "@/lib/supabaseServer"
 
-import type { Metadata, Viewport } from "next";
 export const revalidate = 60
 
-export const metadata: Metadata = {
-  metadataBase: new URL(SITE_URL),
-
-  title: {
-    default: "Concursos Maranhão: Editais Abertos, Salários e Vagas",
-    template: "%s | Concursos Maranhão",
-  },
-
-  description:
-    "Acompanhe concursos públicos e seletivos abertos no Maranhão. Editais atualizados, salários, simulados e banco de questões para aprovação.",
-
-  verification: {
-    google: "0Z_754Cw5srRkVIMK3NOaLltkeMBk3HrY17mFIivPGg",
-    
-  },
-
+export const metadata = {
+  title: "Concursos Maranhão: Editais Abertos, Vagas e Salários",
+  description: "Lista atualizada de concursos públicos e seletivos abertos no Maranhão em 2026. Confidential salários, bancas organizadoras e detalhes dos editais.",
   keywords: [
     "concursos maranhão",
     "editais abertos maranhão",
-    "concurso público maranhão",
+    "concurso público ma",
     "seletivo maranhão",
-    "banco de questões concursos",
-    "simulados concursos ma"
+    "vagas concurso maranhão"
   ],
-
-  authors: [{ name: "Concursos Maranhão", url: SITE_URL }],
-  publisher: "Concursos Maranhão",
-
   alternates: {
-    canonical: SITE_URL,
-  },
+    canonical: "https://concursosmaranhao.com.br",
+  }
+}
 
-  openGraph: {
-    title: "Concursos Maranhão: Editais Abertos, Salários e Vagas",
-    description:
-      "Acompanhe concursos públicos e seletivos abertos no Maranhão. Editais atualizados, salários, simulados e banco de questões para aprovação.",
-    url: SITE_URL,
-    siteName: "Concursos Maranhão",
-    locale: "pt_BR",
-    type: "website",
-    images: [
-      {
-        url: "/og.png",
-        width: 1200,
-        height: 630,
-        alt: "Concursos Maranhão - Editais e Vagas",
-      },
-    ],
-  },
-
-  twitter: {
-    card: "summary_large_image",
-    title: "Concursos Maranhão: Editais Abertos e Salários",
-    description:
-      "Confira os editais abertos no Maranhão com vagas e salários atualizados.",
-    images: ["/og.png"],
-  },
-
-  robots: {
-    index: true,
-    follow: true,
-    nocache: false,
-    googleBot: {
-      index: true,
-      follow: true,
-      "max-video-preview": -1,
-      "max-image-preview": "large",
-      "max-snippet": -1,
-    },
-  },
-};
 export default async function Home() {
   // 1. Busca os dados no servidor
   const { data: concursos, error } = await supabaseServer
