@@ -6,7 +6,7 @@ export const revalidate = 60
 
 export const metadata = {
   title: "Concursos Maranhão: Editais Abertos, Vagas e Salários",
-  description: "Lista atualizada de concursos públicos e seletivos abertos no Maranhão em 2026. Confidential salários, bancas organizadoras e detalhes dos editais.",
+  description: "Lista atualizada de concursos públicos e seletivos abertos no Maranhão. Confidential salários, bancas organizadoras e detalhes dos editais.",
   keywords: [
     "concursos maranhão",
     "editais abertos maranhão",
@@ -53,7 +53,7 @@ export default async function Home() {
   const itemListSchema = {
     "@context": "https://schema.org",
     "@type": "ItemList",
-    "name": "Concursos Públicos Abertos no Maranhão 2026",
+    "name": "Concursos Públicos Abertos no Maranhão",
     "numberOfItems": lista.length,
     "itemListElement": lista.map((c, index) => ({
       "@type": "ListItem",
@@ -102,7 +102,7 @@ export default async function Home() {
       />
 
       <header className="py-16 px-5 text-center bg-gradient-to-b from-[#1e293b] to-[#0f172a]">
-        <h1 className="text-4xl font-bold mb-2">Concursos Maranhão Pro 2026</h1>
+        <h1 className="text-4xl font-bold mb-2">Concursos Maranhão</h1>
         <p className="text-slate-400">{lista.length} editais disponíveis no estado</p>
         
         {/* Links Rápidos */}
