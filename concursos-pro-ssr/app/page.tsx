@@ -6,7 +6,7 @@ export const revalidate = 60
 
 export const metadata = {
   title: "Concursos Maranhão: Editais Abertos, Vagas e Salários",
-  description: "Lista atualizada de concursos públicos e seletivos abertos no Maranhão. Confidential salários, bancas organizadoras e detalhes dos editais.",
+  description: "Lista atualizada de concursos públicos e seletivos abertos no Maranhão. Confira salários, bancas organizadoras e detalhes dos editais.",
   keywords: [
     "concursos maranhão",
     "editais abertos maranhão",
@@ -49,7 +49,7 @@ export default async function Home() {
   const formatarMoeda = (valor: number) => 
     valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 
-  // Schema.org ItemList para SEO de agregador de oportunidades
+  // Schema.org ItemList limpo para a página inicial (sem JobPosting incompleto)
   const itemListSchema = {
     "@context": "https://schema.org",
     "@type": "ItemList",
@@ -58,34 +58,8 @@ export default async function Home() {
     "itemListElement": lista.map((c, index) => ({
       "@type": "ListItem",
       "position": index + 1,
-      "item": {
-        "@type": "JobPosting",
-        "title": c.orgao,
-        "jobLocation": {
-          "@type": "Place",
-          "address": {
-            "@type": "PostalAddress",
-            "addressLocality": c.cidade || "Maranhão",
-            "addressRegion": "MA",
-            "addressCountry": "BR"
-          }
-        },
-        "hiringOrganization": {
-          "@type": "Organization",
-          "name": c.orgao
-        },
-        ...(c.salario > 0 && {
-          "baseSalary": {
-            "@type": "MonetaryAmount",
-            "currency": "BRL",
-            "value": {
-              "@type": "QuantitativeValue",
-              "value": c.salario,
-              "unitText": "MONTH"
-            }
-          }
-        })
-      }
+      "name": `Concurso ${c.orgao}`,
+      "url": `https://concursosmaranhao.com.br/detalhes/${c.id}?tipo=concurso`
     }))
   }
 
@@ -118,7 +92,7 @@ export default async function Home() {
 
       <section className="max-w-6xl mx-auto p-5">
         
-        {/* Cards de Estatísticas com tags semânticas corrigidas */}
+        {/* Cards de Estatísticas */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-10">
           <div className="bg-white/5 p-6 rounded-xl border border-white/10 text-center">
             <span className="text-xs text-slate-400 block mb-2 uppercase tracking-wider">💰 Média Salarial</span>
@@ -130,7 +104,7 @@ export default async function Home() {
           </div>
         </div>
 
-        {/* Heading H2 Semântico para agrupamento */}
+        {/* Heading H2 Semântico */}
         <h2 className="text-2xl font-bold mb-6 text-slate-200">
           Concursos e Seletivos Abertos
         </h2>
