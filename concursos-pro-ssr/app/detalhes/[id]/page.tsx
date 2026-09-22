@@ -4,12 +4,15 @@ import Script from 'next/script'
 import { notFound } from 'next/navigation'
 import { supabaseServer } from '@/lib/supabaseServer'
 
+// Força a renderização dinâmica no Next.js para evitar requisições com 'socket hang up' no build
+export const dynamic = 'force-dynamic'
+
 interface Props {
   params: Promise<{ id: string }>
   searchParams: Promise<{ tipo?: string }>
 }
 
-// 1. Função robusta para extrair e tratar apenas textos (previne [object Object])
+// 1. Função ultra-robusta para tratar e converter qualquer formato de dados em strings puras
 function extrairParagrafos(conteudo: any): string[] {
   if (!conteudo) return []
 
@@ -22,15 +25,16 @@ function extrairParagrafos(conteudo: any): string[] {
       .map((item) => {
         if (typeof item === 'string') return item
         if (typeof item === 'object' && item !== null) {
-          return (
+          // Extrai o valor do texto ou tenta mapear todas as strings internas do objeto
+          const textoExtraido =
             item.texto ||
             item.paragrafo ||
             item.content ||
             item.descricao ||
             Object.values(item)
-              .filter((val) => typeof val === 'string')
+              .filter((val) => typeof val === 'string' || typeof val === 'number')
               .join(' ')
-          )
+          return typeof textoExtraido === 'string' ? textoExtraido : ''
         }
         return ''
       })
@@ -42,9 +46,9 @@ function extrairParagrafos(conteudo: any): string[] {
       conteudo.texto ||
       conteudo.descricao ||
       Object.values(conteudo)
-        .filter((val) => typeof val === 'string')
+        .filter((val) => typeof val === 'string' || typeof val === 'number')
         .join(' ')
-    return texto.trim() ? [texto] : []
+    return typeof texto === 'string' && texto.trim() ? [texto] : []
   }
 
   return []
