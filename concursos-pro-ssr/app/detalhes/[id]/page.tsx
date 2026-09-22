@@ -25,7 +25,6 @@ function extrairParagrafos(conteudo: any): string[] {
       .map((item) => {
         if (typeof item === 'string') return item
         if (typeof item === 'object' && item !== null) {
-          // Extrai o valor do texto ou tenta mapear todas as strings internas do objeto
           const textoExtraido =
             item.texto ||
             item.paragrafo ||
@@ -186,20 +185,43 @@ export default async function DetalhesPage({ params, searchParams }: Props) {
   const renderSchema = () => {
     if (tipo === 'concurso') {
       const paragrafosDescricao = extrairParagrafos(dados.sobre_concurso || dados.descricao)
+      
+      // 1. Garante uma descrição válida para o Googlebot
+      const descricaoTexto = paragrafosDescricao.join(' ').trim()
       const descricaoLimpa =
-        paragrafosDescricao.join(' ') || `Oportunidades do concurso para ${dados.orgao} no estado do Maranhão.`
+        descricaoTexto.length > 10
+          ? descricaoTexto
+          : `Confira informações completas, edital e vagas sobre o concurso para ${dados.orgao || 'Prefeitura'} no estado do Maranhão.`
+
+      // 2. Garante data de publicação válida em formato ISO (datePosted)
+      let dataPublicacao = new Date().toISOString()
+      if (dados.created_at || dados.data_publicacao || dados.createdat) {
+        const parsedDate = new Date(dados.created_at || dados.data_publicacao || dados.createdat)
+        if (!isNaN(parsedDate.getTime())) {
+          dataPublicacao = parsedDate.toISOString()
+        }
+      }
+
+      // 3. Trata validThrough caso haja data final de inscrição
+      let dataValidade = undefined
+      if (dados.data_inscricao_fim || dados.data_fim) {
+        const parsedFim = new Date(dados.data_inscricao_fim || dados.data_fim)
+        if (!isNaN(parsedFim.getTime())) {
+          dataValidade = parsedFim.toISOString()
+        }
+      }
 
       return {
         '@context': 'https://schema.org',
         '@type': 'JobPosting',
-        title: `Concurso ${dados.orgao}`,
+        title: `Concurso ${dados.orgao || 'Público'}`,
         description: descricaoLimpa,
-        datePosted: dados.created_at || new Date().toISOString(),
-        validThrough: dados.data_inscricao_fim || undefined,
+        datePosted: dataPublicacao,
+        validThrough: dataValidade,
         employmentType: 'FULL_TIME',
         hiringOrganization: {
           '@type': 'Organization',
-          name: dados.orgao,
+          name: dados.orgao || 'Prefeitura Municipal',
           sameAs: dados.link_oficial || undefined,
         },
         jobLocation: {
@@ -230,9 +252,9 @@ export default async function DetalhesPage({ params, searchParams }: Props) {
         '@context': 'https://schema.org',
         '@type': 'Article',
         headline: dados.titulo,
-        description: dados.resumo,
+        description: dados.resumo || dados.titulo,
         image: dados.capa_url ? [dados.capa_url] : [],
-        datePublished: dados.created_at,
+        datePublished: dados.created_at || new Date().toISOString(),
         author: {
           '@type': 'Organization',
           name: 'Concursos Maranhão Pro',
