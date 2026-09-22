@@ -1,11 +1,10 @@
 import Link from "next/link"
-import Script from "next/script"
 import { supabaseServer } from "@/lib/supabaseServer"
 
 export const revalidate = 60
 
 export const metadata = {
-  title: "Concursos Maranhão: Editais Abertos, Vagas e Salários",
+  title: "Concursos Maranhão 2026: Editais Abertos, Vagas e Salários",
   description: "Lista atualizada de concursos públicos e seletivos abertos no Maranhão. Confira salários, bancas organizadoras e detalhes dos editais.",
   keywords: [
     "concursos maranhão",
@@ -16,7 +15,29 @@ export const metadata = {
   ],
   alternates: {
     canonical: "https://concursosmaranhao.com.br",
-  }
+  },
+  openGraph: {
+    title: "Concursos Maranhão Pro 2026: Editais Abertos e Seletivos",
+    description: "Confira todos os editais abertos no Maranhão, salários e bancas organizadoras.",
+    url: "https://concursosmaranhao.com.br",
+    siteName: "Concursos Maranhão Pro",
+    images: [
+      {
+        url: "https://concursosmaranhao.com.br/opengraph-image.png",
+        width: 1200,
+        height: 630,
+        alt: "Concursos Maranhão Pro",
+      },
+    ],
+    locale: "pt_BR",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Concursos Maranhão 2026: Editais Abertos e Seletivos",
+    description: "Lista atualizada de concursos públicos e seletivos abertos no Maranhão.",
+    images: ["https://concursosmaranhao.com.br/opengraph-image.png"],
+  },
 }
 
 export default async function Home() {
@@ -49,7 +70,7 @@ export default async function Home() {
   const formatarMoeda = (valor: number) => 
     valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 
-  // Schema.org ItemList limpo para a página inicial (sem JobPosting incompleto)
+  // Schema.org ItemList limpo para a página inicial
   const itemListSchema = {
     "@context": "https://schema.org",
     "@type": "ItemList",
@@ -66,9 +87,8 @@ export default async function Home() {
   return (
     <main className="min-h-screen bg-[#0f172a] text-white font-sans">
       
-      {/* Schema.org estruturado em JSON-LD */}
-      <Script
-        id="schema-itemlist"
+      {/* Schema.org injetado via HTML nativo para indexação imediata do Google */}
+      <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(itemListSchema),
@@ -76,7 +96,7 @@ export default async function Home() {
       />
 
       <header className="py-16 px-5 text-center bg-gradient-to-b from-[#1e293b] to-[#0f172a]">
-        <h1 className="text-4xl font-bold mb-2">Concursos Maranhão</h1>
+        <h1 className="text-4xl font-bold mb-2">Concursos Maranhão Pro 2026</h1>
         <p className="text-slate-400">{lista.length} editais disponíveis no estado</p>
         
         {/* Links Rápidos */}

@@ -2,6 +2,7 @@ import { Metadata } from 'next'
 import Link from 'next/link'
 import Script from 'next/script'
 import { notFound } from 'next/navigation'
+import ReactMarkdown from 'react-markdown'
 import { supabaseServer } from '@/lib/supabaseServer'
 
 // Força a renderização dinâmica no Next.js para evitar requisições com 'socket hang up' no build
@@ -12,16 +13,14 @@ interface Props {
   searchParams: Promise<{ tipo?: string }>
 }
 
-// 1. Função ultra-robusta para tratar e converter qualquer formato de dados em strings puras
-function extrairParagrafos(conteudo: any): string[] {
-  if (!conteudo) return []
+// 1. Função ultra-robusta para tratar e converter qualquer formato de dados em uma única string Markdown/texto
+function extrairTextoMarkdown(conteudo: any): string {
+  if (!conteudo) return ''
 
-  // Se já for uma string simples
   if (typeof conteudo === 'string') {
-    return [conteudo.trim()].filter(Boolean)
+    return conteudo.trim()
   }
 
-  // Função auxiliar para extrair texto de um objeto individual sem gerar [object Object]
   const extrairTextoDeObjeto = (obj: any): string => {
     if (!obj || typeof obj !== 'object') return ''
     if (typeof obj.texto === 'string') return obj.texto
@@ -29,15 +28,13 @@ function extrairParagrafos(conteudo: any): string[] {
     if (typeof obj.content === 'string') return obj.content
     if (typeof obj.descricao === 'string') return obj.descricao
 
-    // Se for um nó do Rich Text ou Editor de bloco (ex: tipo 'paragraph' com children)
     if (Array.isArray(obj.children)) {
       return obj.children.map((child: any) => extrairTextoDeObjeto(child)).join(' ')
     }
 
-    // Pega todos os valores primitivos (strings/números) das chaves do objeto
     return Object.values(obj)
       .filter((val) => typeof val === 'string' || typeof val === 'number')
-      .join(' ')
+      .join('\n\n')
   }
 
   if (Array.isArray(conteudo)) {
@@ -49,29 +46,25 @@ function extrairParagrafos(conteudo: any): string[] {
         }
         return ''
       })
-      .filter((texto) => typeof texto === 'string' && texto.length > 0)
+      .filter(Boolean)
+      .join('\n\n')
   }
 
   if (typeof conteudo === 'object' && conteudo !== null) {
-    const texto = extrairTextoDeObjeto(conteudo).trim()
-    return texto ? [texto] : []
+    return extrairTextoDeObjeto(conteudo).trim()
   }
 
-  return []
+  return ''
 }
 
 function renderTextoFormatado(conteudo: any) {
-  const paragrafos = extrairParagrafos(conteudo)
+  const textoMarkdown = extrairTextoMarkdown(conteudo)
 
-  if (paragrafos.length === 0) return null
+  if (!textoMarkdown) return null
 
   return (
-    <div className="space-y-4">
-      {paragrafos.map((paragrafo, index) => (
-        <p key={index} className="text-slate-300 leading-relaxed text-lg">
-          {paragrafo}
-        </p>
-      ))}
+    <div className="prose prose-invert prose-blue max-w-none">
+      <ReactMarkdown>{textoMarkdown}</ReactMarkdown>
     </div>
   )
 }
@@ -98,7 +91,7 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
 
       if (data) {
         const cidadeFormatada = data.cidade ? `- ${data.cidade}` : 'MA'
-        title = `Concurso ${data.orgao} ${cidadeFormatada}: Edital e Vagas`
+        title = `Concurso ${data.orgao}${cidadeFormatada}: Edital e Vagas`
         description = `Confira edital, banca ${data.banca || 'a definir'} e inscrições para o concurso da ${data.orgao}.`
       }
     } else if (tipo === 'artigo') {
@@ -191,16 +184,12 @@ export default async function DetalhesPage({ params, searchParams }: Props) {
   // Schema.org estruturado em JSON-LD
   const renderSchema = () => {
     if (tipo === 'concurso') {
-      const paragrafosDescricao = extrairParagrafos(dados.sobre_concurso || dados.descricao)
-      
-      // 1. Garante uma descrição válida para o Googlebot
-      const descricaoTexto = paragrafosDescricao.join(' ').trim()
+      const textoMarkdown = extrairTextoMarkdown(dados.sobre_concurso || dados.descricao)
       const descricaoLimpa =
-        descricaoTexto.length > 10
-          ? descricaoTexto
+        textoMarkdown.length > 10
+          ? textoMarkdown.substring(0, 250).replace(/[#*`_]/g, '')
           : `Confira informações completas, edital e vagas sobre o concurso para ${dados.orgao || 'Prefeitura'} no estado do Maranhão.`
 
-      // 2. Garante data de publicação válida em formato ISO (datePosted)
       let dataPublicacao = new Date().toISOString()
       if (dados.created_at || dados.data_publicacao || dados.createdat) {
         const parsedDate = new Date(dados.created_at || dados.data_publicacao || dados.createdat)
@@ -209,7 +198,6 @@ export default async function DetalhesPage({ params, searchParams }: Props) {
         }
       }
 
-      // 3. Trata validThrough caso haja data final de inscrição
       let dataValidade = undefined
       if (dados.data_inscricao_fim || dados.data_fim) {
         const parsedFim = new Date(dados.data_inscricao_fim || dados.data_fim)
@@ -277,8 +265,7 @@ export default async function DetalhesPage({ params, searchParams }: Props) {
   return (
     <main className="min-h-screen bg-[#0f172a] p-4 md:p-8 text-white selection:bg-blue-500/30">
       {jsonLd && (
-        <Script
-          id="schema-detalhes"
+        <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
@@ -402,8 +389,8 @@ export default async function DetalhesPage({ params, searchParams }: Props) {
                     <p className="text-slate-300 text-lg italic leading-relaxed">{dados.resumo}</p>
                   </div>
                 )}
-                <div className="text-slate-300 text-lg leading-relaxed whitespace-pre-line">
-                  {dados.conteudo}
+                <div className="mt-8">
+                  {renderTextoFormatado(dados.conteudo)}
                 </div>
               </div>
             )}

@@ -1,11 +1,12 @@
-/** @type {import('next').NextConfig} */
-const nextConfig = {
+import type { NextConfig } from "next";
+
+const nextConfig: NextConfig = {
   eslint: {
-    // 🚨 ISSO AQUI VAI FAZER O SEU SITE BUILDAR MESMO COM OS ERROS ACIMA
+    // Permite que o build conclua mesmo que existam avisos ou erros do ESLint
     ignoreDuringBuilds: true,
   },
   typescript: {
-    // 🚨 Adicione isso também por garantia, para ignorar erros estritos de tipo no build
+    // Permite que o build conclua mesmo com erros de validação de tipos do TypeScript
     ignoreBuildErrors: true,
   },
 };
