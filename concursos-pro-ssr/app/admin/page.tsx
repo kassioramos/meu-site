@@ -2,11 +2,28 @@
 
 import { useState, useEffect } from 'react'
 import { createClient } from '@supabase/supabase-js'
+import ReactMarkdown from 'react-markdown'
 
 const URL_SB = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const KEY_SB = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
 const supabase = createClient(URL_SB, KEY_SB)
+
+// Função auxiliar para estruturar qualquer texto bruto em Markdown limpo para renderização
+function normalizarMarkdown(texto: string): string {
+  if (!texto) return ''
+
+  return texto
+    // 1. Corrige marcadores comuns de lista (Ex: "• Item", "-Item") para o padrão Markdown ("* Item")
+    .replace(/^[•\-\–\—]\s*/gm, '* ')
+    // 2. Garante que títulos com # tenham quebra de linha antes e espaço depois
+    .replace(/([^\n])\n*(#{1,6})\s*/g, '$1\n\n$2 ')
+    // 3. Converte quebras de linha simples em parágrafos separados
+    .replace(/([^\n])\n([^\n])/g, '$1\n\n$2')
+    // 4. Remove mais de duas quebras de linha consecutivas para evitar espaços gigantes
+    .replace(/\n{3,}/g, '\n\n')
+    .trim()
+}
 
 export default function AdminPage() {
   const [user, setUser] = useState<any>(null)
@@ -144,7 +161,6 @@ export default function AdminPage() {
     }
   }
 
-  // FUNÇÕES DE REMOÇÃO ATUALIZADAS E TRATADAS
   async function excluirArtigo(id: any, titulo: string) {
     if (!confirm(`Tem certeza que deseja apagar o artigo "${titulo}"?`)) return
     const { error } = await supabase.from('artigos').delete().eq('id', id)
@@ -155,7 +171,7 @@ export default function AdminPage() {
     }
   }
 
-  async function excluirQuestao(id: any, enunciado: string) {
+  async function excluirQuestao(id: any) {
     if (!confirm(`Tem certeza que deseja apagar a questão selecionada?`)) return
     const { error } = await supabase.from('questoes').delete().eq('id', id)
     if (error) {
@@ -197,7 +213,6 @@ export default function AdminPage() {
     });
   }
 
-  // PREPARAR FORMULÁRIO PARA EDIÇÃO
   function prepararEdicaoConcurso(item: any) {
     setIdEditalEmEdicao(item.id)
     setIsEditando(true)
@@ -242,7 +257,15 @@ export default function AdminPage() {
 
   async function salvarArtigo(e: React.FormEvent) {
     e.preventDefault()
-    const { error } = await supabase.from('artigos').insert([{ ...artigo, created_at: new Date().toISOString() }])
+    // Normaliza o conteúdo antes de salvar no banco
+    const conteudoFormatado = normalizarMarkdown(artigo.conteudo)
+
+    const { error } = await supabase.from('artigos').insert([{ 
+      ...artigo, 
+      conteudo: conteudoFormatado,
+      created_at: new Date().toISOString() 
+    }])
+
     if (error) alert("Erro: " + error.message)
     else {
       alert("✅ Artigo publicado com sucesso!")
@@ -255,8 +278,8 @@ export default function AdminPage() {
     const dadosParaEnviar = {
       banca: questao.banca,
       disciplina: questao.disciplina,
-      enunciado: questao.enunciado,
-      alternative_correta: questao.alternativa_correta,
+      enunciado: normalizarMarkdown(questao.enunciado),
+      alternativa_correta: questao.alternativa_correta,
       alternativa_e: questao.alternativa_e || null,
       slug: questao.slug || null,
       opcoes: {
@@ -278,7 +301,6 @@ export default function AdminPage() {
   async function salvarConcurso(e: React.FormEvent) {
     e.preventDefault()
 
-    // Função interna auxiliar para tratar os inputs numéricos de forma limpa para a estrutura do banco
     const extrairValorNumerico = (texto: string) => {
       if (!texto || texto === 'A definir') return null;
       const apenasNumeros = texto.replace(/[^\d,.-]/g, '').replace(',', '.');
@@ -296,10 +318,9 @@ export default function AdminPage() {
       escolaridade: concurso.escolaridade || 'A definir',
       data_prova: concurso.data_prova || 'A definir',
       link_oficial: concurso.link_oficial,
-      sobre_concurso: concurso.sobre_concurso,
+      sobre_concurso: normalizarMarkdown(concurso.sobre_concurso),
       faixa_salarial: concurso.salarios || 'A definir', 
       
-      // Validações numéricas cruciais para as colunas do tipo numeric do Postgres
       valor_inscricao: extrairValorNumerico(concurso.valor_inscricao),
       salario_max: extrairValorNumerico(concurso.salarios),
       salario_min: extrairValorNumerico(concurso.salarios)
@@ -341,7 +362,7 @@ export default function AdminPage() {
         <section style={{ maxWidth: '400px', width: '90%', background: styles.card, padding: '30px', borderRadius: '12px', border: `1px solid ${styles.border}`, textAlign: 'center' }}>
           <form onSubmit={handleLogin}>
             <h2 style={{ marginBottom: '10px', color: 'white' }}>🔒 Painel do Mestre</h2>
-            <p style={{ color: '#94a3b8', marginBottom: '25px' }}>Kassio, entre para gerenciar o conteúdo</p>
+            <p style={{ color: '#94a3b8', marginBottom: '25px' }}>Entre para gerenciar o conteúdo</p>
             <input type="email" placeholder="Seu e-mail" required style={styles.input} onChange={e => setEmail(e.target.value)} />
             <input type="password" placeholder="Sua senha" required style={styles.input} onChange={e => setSenha(e.target.value)} />
             <button type="submit" style={{ background: styles.primary, color: 'white', border: 'none', padding: '15px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', width: '100%' }}>Acessar Sistema</button>
@@ -368,7 +389,7 @@ export default function AdminPage() {
           <button onClick={logout} style={{ background: '#ef4444', color: 'white', border: 'none', padding: '8px 16px', borderRadius: '6px', cursor: 'pointer' }}>Sair</button>
         </div>
 
-        {/* SECÃO: NOVO ARTIGO COMPLETO */}
+        {/* SEÇÃO: NOVO ARTIGO */}
         {secaoAtiva === 'artigo' && (
           <form onSubmit={salvarArtigo}>
             <h1 style={{ marginBottom: '20px' }}>🚀 Novo Artigo</h1>
@@ -402,11 +423,21 @@ export default function AdminPage() {
             <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Conteúdo (HTML/Markdown)</label>
             <textarea style={{ ...styles.input, height: '200px', resize: 'vertical' }} value={artigo.conteudo} onChange={e => setArtigo({...artigo, conteudo: e.target.value})} required />
 
+            {/* PREVIEW DO MARKDOWN */}
+            {artigo.conteudo && (
+              <div style={{ background: '#0f172a', padding: '15px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', marginBottom: '15px' }}>
+                <p style={{ fontSize: '0.8rem', color: '#3b82f6', marginBottom: '10px', fontWeight: 'bold' }}>👁️ Visualização do Conteúdo (Prévia):</p>
+                <div className="prose prose-invert prose-blue max-w-none">
+                  <ReactMarkdown>{normalizarMarkdown(artigo.conteudo)}</ReactMarkdown>
+                </div>
+              </div>
+            )}
+
             <button type="submit" style={{ background: styles.primary, color: 'white', border: 'none', padding: '15px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', width: '100%' }}>Publicar Artigo</button>
           </form>
         )}
 
-        {/* SEÇÃO: NOVA QUESTÃO COMPLETA */}
+        {/* SEÇÃO: NOVA QUESTÃO */}
         {secaoAtiva === 'questao' && (
           <form onSubmit={salvarQuestao}>
             <h1 style={{ marginBottom: '20px' }}>❓ Cadastrar Nova Questão</h1>
@@ -544,8 +575,18 @@ export default function AdminPage() {
               </div>
             </div>
 
-            <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Resumo / Descrição Completa</label>
-            <textarea style={{ ...styles.input, height: '120px' }} placeholder="Insira detalhes adicionais sobre as vagas do edital..." value={concurso.sobre_concurso} onChange={e => setConcurso({...concurso, sobre_concurso: e.target.value})} required />
+            <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Resumo / Descrição Completa (Markdown)</label>
+            <textarea style={{ ...styles.input, height: '180px', resize: 'vertical' }} placeholder="Insira detalhes adicionais sobre as vagas do edital em Markdown..." value={concurso.sobre_concurso} onChange={e => setConcurso({...concurso, sobre_concurso: e.target.value})} required />
+
+            {/* PREVIEW DO MARKDOWN PARA EDITAL */}
+            {concurso.sobre_concurso && (
+              <div style={{ background: '#0f172a', padding: '15px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', marginBottom: '15px' }}>
+                <p style={{ fontSize: '0.8rem', color: '#10b981', marginBottom: '10px', fontWeight: 'bold' }}>👁️ Visualização da Descrição (Prévia):</p>
+                <div className="prose prose-invert prose-blue max-w-none">
+                  <ReactMarkdown>{normalizarMarkdown(concurso.sobre_concurso)}</ReactMarkdown>
+                </div>
+              </div>
+            )}
 
             <div style={{ display: 'flex', gap: '12px' }}>
               {isEditando && (
@@ -591,14 +632,14 @@ export default function AdminPage() {
             {/* ARTIGOS */}
             <h2 style={{ fontSize: '1.2rem', color: '#3b82f6', marginBottom: '15px', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '5px' }}>📄 Artigos Publicados</h2>
             {listaArtigos.length === 0 ? <p style={{ color: '#64748b', marginBottom: '30px' }}>Nenhum artigo encontrado.</p> : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '40px' }}>
-                {listaArtigos.map(art => (
-                  <div key={art.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#0f172a', padding: '12px 15px', borderRadius: '8px', border: `1px solid ${styles.border}` }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '30px' }}>
+                {listaArtigos.map(a => (
+                  <div key={a.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#0f172a', padding: '12px 15px', borderRadius: '8px', border: `1px solid ${styles.border}` }}>
                     <div>
-                      <span style={{ fontWeight: 'bold', display: 'block' }}>{art.titulo}</span>
-                      <span style={{ fontSize: '0.75rem', color: '#a3e635' }}>📁 {art.categoria}</span>
+                      <span style={{ fontWeight: 'bold', display: 'block' }}>{a.titulo}</span>
+                      <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>🏷️ Categoria: {a.categoria}</span>
                     </div>
-                    <button onClick={() => excluirArtigo(art.id, art.titulo)} style={{ background: '#ef4444', border: 'none', color: 'white', padding: '8px 12px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>
+                    <button onClick={() => excluirArtigo(a.id, a.titulo)} style={{ background: '#ef4444', border: 'none', color: 'white', padding: '8px 12px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>
                       Apagar
                     </button>
                   </div>
@@ -607,16 +648,16 @@ export default function AdminPage() {
             )}
 
             {/* QUESTÕES */}
-            <h2 style={{ fontSize: '1.2rem', color: '#a3e635', marginBottom: '15px', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '5px' }}>❓ Banco de Questões</h2>
+            <h2 style={{ fontSize: '1.2rem', color: '#a855f7', marginBottom: '15px', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '5px' }}>❓ Banco de Questões</h2>
             {listaQuestoes.length === 0 ? <p style={{ color: '#64748b' }}>Nenhuma questão encontrada.</p> : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 {listaQuestoes.map(q => (
                   <div key={q.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#0f172a', padding: '12px 15px', borderRadius: '8px', border: `1px solid ${styles.border}` }}>
-                    <div style={{ maxWidth: '75%' }}>
-                      <span style={{ fontSize: '0.9rem', display: 'block', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{q.enunciado}</span>
-                      <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>🏷️ {q.banca} | {q.disciplina}</span>
+                    <div style={{ maxWidth: '80%' }}>
+                      <span style={{ fontWeight: 'bold', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{q.enunciado}</span>
+                      <span style={{ fontSize: '0.75rem', color: '#a855f7' }}>🏛️ {q.banca} | 📚 {q.disciplina}</span>
                     </div>
-                    <button onClick={() => excluirQuestao(q.id, q.enunciado)} style={{ background: '#ef4444', border: 'none', color: 'white', padding: '8px 12px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>
+                    <button onClick={() => excluirQuestao(q.id)} style={{ background: '#ef4444', border: 'none', color: 'white', padding: '8px 12px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>
                       Apagar
                     </button>
                   </div>
@@ -625,6 +666,7 @@ export default function AdminPage() {
             )}
           </div>
         )}
+
       </div>
     </div>
   )
